@@ -39,22 +39,13 @@ else:
     from IPython.core.pylabtools import figsize, getfigs
     pl=pyplot
 
+from camb_spec import camb_spectrum
+from cosmo_funcs import matgrow, H
+
 import grid3D as gr
 import gauss_pk_class as pkgauss
 
-# Load NumCosmo
-import gi
-gi.require_version('NumCosmo', '1.0')
-gi.require_version('NumCosmoMath', '1.0')
-from gi.repository import NumCosmo as Nc
-from gi.repository import NumCosmoMath as Ncm
-from gi.repository import GObject
-#  Initializing the library objects, this must be called before
-#  any other library function.
-#
-Ncm.cfg_init ()
-
-small = 1.e-6
+small=1.e-8
 
 
 #####################################################
@@ -117,72 +108,21 @@ if len(os.listdir(dir_figs)) != 0:
 exec("from " + handle_sims + " import *")
 
 
-
-# If using a previously defined lightcone, uncomment the line below
-#from input_define_lightcones import *
-#
-# If z_min and z_max were defined in input_define_lightcone:
-#try:
-#    z_min
-#except:
-#    zcentral = (z_min + z_max)/2
-#    zbinwidth = z_max - z_min
-
-
-try:
-    t = GObject.type_from_name ("NcHICosmoDEXcdm")
-    cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDEXcdm")
-    print( "Attention! NumCosmo method NcHICosmoDEXcdm does not allow dynamical dark energy!")
-except:
-    print( "Did not find NumCosmo method NcHICosmoDEXcdm. Trying another...")
-
-try:
-    t = GObject.type_from_name ("NcHICosmoDELinder")
-    cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDELinder")
-    print ("Found NumCosmo method NcHICosmoDELinder.")
-except:
-    print( "Did not find NumCosmo method NcHICosmoDELinder.")
-
-try:
-    t = GObject.type_from_name ("NcHICosmoDECpl")
-    cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDECpl")
-    print ("Found NumCosmo method NcHICosmoDECpl.")
-except:
-    print( "Did not find NumCosmo method NcHICosmoDECpl.")
-
-
-cosmo.omega_x2omega_k ()
-cosmo.param_set_by_name ("Omegak", Omegak)
-cosmo.param_set_by_name ("w0", w0)
-cosmo.param_set_by_name ("w1", w1)
-cosmo.param_set_by_name ("Omegab", Omegab)
-cosmo.param_set_by_name ("Omegac", Omegac)
-reion = Nc.HIReionCamb.new ()
-prim  = Nc.HIPrimPowerLaw.new ()
-cosmo.param_set_by_name ("H0", H0)
-prim.param_set_by_name ("n_SA", n_SA)
-prim.param_set_by_name ("ln10e10ASA", ln10e10ASA)
-reion.param_set_by_name ("z_re", z_re)
-cosmo.add_submodel (reion)
-cosmo.add_submodel (prim)
-
-
-# Distances from NumCosmo
-dist = Nc.Distance.new(1.0)
-dist.prepare(cosmo)
-
 # Growth rate and its derivative
-grow = Nc.GrowthFunc.new()
-grow.prepare(cosmo)
+Omegam = Omegac + Omegab
+OmegaDE = 1. - Omegam - Omegak
+h = H0/100.
 
-# matter growth rate
-(G,dG) = grow.eval_both(cosmo,zcentral)
-growcentral = G
+try:
+    gamma
+except:
+    gamma = 0.55
+
 
 try:
     matgrowcentral
 except:
-    matgrowcentral = - (1.0 + zcentral)/G*dG
+    matgrowcentral = matgrow(Omegam, OmegaDE, w0, w1, zcentral, gamma)
 else:
     print('ATTENTION: pre-defined (on input) matter growth rate =',matgrowcentral)
 
@@ -192,60 +132,20 @@ else:
 f_grow = np.ones(nhalos)*matgrowcentral
 #######################################################
 
+#############Calling CAMB for calculations of the spectra#################
+print('Beggining CAMB calculations\n')
 
-# Inverse Hubble function, c/H(z), in units of h^-1 Mpc
-def hubrad(z):
-    return 2998.7*cosmo.H0()/cosmo.H(z)
-
-# power spectrum from CLASS backend
-k_min = 1.0e-5
-k_max = 1.0e2
-
-# Linear power spectrum
-ps_cbe = Nc.PowspecMLCBE.new ()
-ps_cbe.set_kmin (k_min)
-ps_cbe.set_kmax (k_max)
-ps_cbe.require_zi (zcentral-zbinwidth)
-ps_cbe.require_zf (zcentral+zbinwidth)
-
-# Non-linear power spectrum from Halo Fit
-pshf = Nc.PowspecMNLHaloFit.new (ps_cbe, zcentral, 1.0e-5)
-pshf.pkequal(False)
-pshf.set_kmin (k_min)
-pshf.set_kmax (k_max)
-pshf.require_zi (zcentral-zbinwidth)
-pshf.require_zf (zcentral+zbinwidth)
-pshf.prepare(cosmo)
-
-# Non-linear power spectrum from Halo Fit + PkEqual
-pshf_pkeq = Nc.PowspecMNLHaloFit.new (ps_cbe, zcentral, 1.0e-5)
-pshf_pkeq.pkequal(True)
-pshf_pkeq.set_kmin (k_min)
-pshf_pkeq.set_kmax (k_max)
-pshf_pkeq.require_zi (zcentral-zbinwidth)
-pshf_pkeq.require_zf (zcentral+zbinwidth)
-pshf_pkeq.prepare(cosmo)
+# It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
+k_min_camb = 1.0e-4
+k_max_camb = 1.5e1
 
 # Where to evaluate spectra:
 nklist = 2000
-k_camb = np.logspace(-4.3,1.5,nklist)
+k_camb = np.logspace(-4.0,1.5,nklist)
 
-spec_lin = np.vectorize(ps_cbe.eval)
-spec = np.vectorize(pshf.eval)
-spec_pkeq = np.vectorize(pshf_pkeq.eval)
+kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, n_SA, k_min_camb, k_max_camb, whichspec)
+Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 
-Pk_camb_lin = spec_lin(cosmo,zcentral, k_camb * cosmo.h()) * (np.power(cosmo.h(),3))
-Pk_camb = spec(cosmo,zcentral, k_camb * cosmo.h()) * (np.power(cosmo.h(),3))
-Pk_camb_pkeq = spec_pkeq(cosmo,zcentral, k_camb * cosmo.h()) * (np.power(cosmo.h(),3))
-
-# Define which spectrum to use here
-k_camb=np.asarray(k_camb)
-if whichspec == 0:
-    Pk_camb=np.asarray(Pk_camb_lin)
-elif whichspec == 1:
-    Pk_camb=np.asarray(Pk_camb)
-else:
-    Pk_camb=np.asarray(Pk_camb_pkeq)
 
 try:
 	power_low
@@ -321,11 +221,11 @@ print('Will generate maps for ', ntracers, ' tracers,')
 
 # Print out which spectrum is used
 if whichspec == 0:
-    print('using LINEAR power spectrum from CLASS ')
+    print('using LINEAR power spectrum from CAMB ')
 elif whichspec == 1:
-    print('using power spectrum from CLASS + HaloFit ')
+    print('using power spectrum from CAMB + HaloFit ')
 else:
-    print('using power spectrum from CLASS + HaloFit with PkEqual')
+    print('using power spectrum from CAMB + HaloFit with PkEqual')
 
 print('Creating ' + str(n_maps) + ' simulated map(s) for each tracer, of (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'), of cell_size=' + str(cell_size))
 print()
@@ -641,11 +541,13 @@ for i in range(ntracers):
 Pk_ln_Quad_norm = Fnorm * np.average( (lnmaps_fourier_rsds*np.conjugate(lnmaps_Bterm_fourier)).real , axis=1 ) - Pk_ln_Mono_norm
 
 Cross_Pk_ln_Quad_norm = np.zeros((ntracers*(ntracers-1)//2,n_x,n_y,n_z//2+1))
+
 index=0
 for i in range(ntracers):
 	for j in range(i+1,ntracers):
 		Cross_Pk_ln_Quad_norm[index] = 0.5 * Fnorm * np.real( np.average( lnmaps_fourier_rsds[i]*np.conjugate(lnmaps_Bterm_fourier[j]) + lnmaps_fourier_rsds[j]*np.conjugate(lnmaps_Bterm_fourier[i]) , axis=0 ) )
 		index += 1
+
 
 lnmaps_fourier_rsds = None
 del lnmaps_fourier_rsds
@@ -748,8 +650,9 @@ ks_interest = np.argsort(np.abs(k_interp - kph_central))
 ks_interest = ks_interest[ks_interest > 3][:15]
 mono_box_mean = np.mean(mono_box_interp[:,ks_interest],axis=1)
 quad_box_mean = np.mean(quad_box_interp[:,ks_interest],axis=1)
-crossmono_box_mean = np.mean(crossmono_box_interp[:,ks_interest],axis=1)
-crossquad_box_mean = np.mean(crossquad_box_interp[:,ks_interest],axis=1)
+
+#crossmono_box_mean = np.mean(crossmono_box_interp[:,ks_interest],axis=1)
+#crossquad_box_mean = np.mean(crossquad_box_interp[:,ks_interest],axis=1)
 
 
 # There are several types of spectra corrections (biases,
@@ -806,7 +709,6 @@ mycolor = [ cm.jet(x) for x in cm_subsection ]
 
 pl.loglog(k_interp,Pk_camb_interp,'k-')
 
-index=0
 for nt in range(ntracers):
     # Flatten, then order Pk_ln_unnorm
     Spec_ln_flat = ((Pk_ln_norm[nt].flatten())[k_order])
@@ -828,17 +730,42 @@ for nt in range(ntracers):
     spec_corrections[nt+1,np.abs(spec_corrections[nt+1])<0.2] = 1.0
     # Smooth this function some more
     spec_corrections[nt+1] = ndimage.gaussian_filter1d(spec_corrections[nt+1],0.5,mode="reflect")
-
     # These are the "model" monopole and quadrupole
     mono_box_model[nt+1] = Mono_ln_interp * spec_corrections[nt+1]
     quad_box_model[nt+1] = Quad_ln_interp * spec_corrections[nt+1]
     mono_halos_box_model[nt+1] = Mono_ln_halos_interp * spec_corrections[nt+1]
-
     # Theory values for box monopole and quadrupole
     mono_box_theory[nt+1] = mono_box_interp[nt] * Pk_camb_interp
     quad_box_theory[nt+1] = quad_box_interp[nt] * Pk_camb_interp
+    # Plot
+    pl.loglog(k_interp, spec_corrections[nt+1]*Pk_camb_interp, color=mycolor[nt], linestyle=':')
+    pl.loglog(k_interp,mono_box_model[nt+1],color=mycolor[nt],linestyle='-')
+    pl.loglog(k_interp,mono_box_theory[nt+1],color=mycolor[nt],linestyle='--')
+    pl.loglog(k_interp,mono_halos_box_model[nt+1],color=mycolor[nt],linestyle='-.')
+    pl.loglog(k_interp,quad_box_model[nt+1],color=mycolor[nt],linestyle='-')
+    pl.loglog(k_interp,quad_box_theory[nt+1],color=mycolor[nt],linestyle='--')
 
-    # Theory values for the cross spectra
+pl.title('Spectral corrections; theory monopoles and quadrupoles')
+pl.xlim([2.0*k_min,0.75*k_max])
+ylow=np.mean(np.abs(mono_box_model[1:,-10:-5]))*0.1*(0.1+matgrowcentral)
+yhigh=np.mean(mono_box_model[1:,5:10])*10.0
+pl.ylim([ylow,yhigh])
+pl.savefig(dir_figs + '/spec_corrs_P0_P2_theory.png')
+pl.close()
+
+
+index=0
+for nt in range(ntracers):
+    Spec_ln_flat = ((Pk_ln_norm[nt].flatten())[k_order])
+    Spec_ln_interp = np.asarray( [ Spec_ln_flat[k_sort_bins == i].mean() for i in range(1,k_max_index+1) ] )
+    spec_corrections[nt+1] = bias[nt]**2 * Pk_camb_interp/Spec_ln_interp
+    # Where it deviates too much from 1, or is nan, substitute for 1.0
+    spec_corrections[nt+1,np.isnan(spec_corrections[nt+1])] = 1.0
+    spec_corrections[nt+1,np.abs(spec_corrections[nt+1])>5.0] = 1.0
+    spec_corrections[nt+1,np.abs(spec_corrections[nt+1])<0.2] = 1.0
+    # Smooth this function some more
+    spec_corrections[nt+1] = ndimage.gaussian_filter1d(spec_corrections[nt+1],0.5,mode="reflect")
+    # These are the "model" monopole and quadrupole
     for ntp in range(nt+1,ntracers):        
         crossmono_box_theory[index] = crossmono_box_interp[index] * Pk_camb_interp
         crossquad_box_theory[index] = crossquad_box_interp[index] * Pk_camb_interp
@@ -849,23 +776,7 @@ for nt in range(ntracers):
         crossmono_box_model[index] = Cross_Mono_ln_interp * np.sqrt(spec_corrections[nt+1]*spec_corrections[ntp+1])
         crossquad_box_model[index] = Cross_Quad_ln_interp * np.sqrt(spec_corrections[nt+1]*spec_corrections[ntp+1])
         index += 1
-        
-    # Plot
-    pl.loglog(k_interp, spec_corrections[nt+1]*Pk_camb_interp, color=mycolor[nt], linestyle=':')
-    pl.loglog(k_interp,mono_box_model[nt+1],color=mycolor[nt],linestyle='-')
-    pl.loglog(k_interp,mono_box_theory[nt+1],color=mycolor[nt],linestyle='--')
-    pl.loglog(k_interp,mono_halos_box_model[nt+1],color=mycolor[nt],linestyle='-.')
-    pl.loglog(k_interp,quad_box_model[nt+1],color=mycolor[nt],linestyle='-')
-    pl.loglog(k_interp,quad_box_theory[nt+1],color=mycolor[nt],linestyle='--')
 
-
-pl.title('Spectral corrections; theory monopoles and quadrupoles')
-pl.xlim([2.0*k_min,0.75*k_max])
-ylow=np.mean(np.abs(mono_box_model[1:,-10:-5]))*0.1*(0.1+matgrowcentral)
-yhigh=np.mean(mono_box_model[1:,5:10])*10.0
-pl.ylim([ylow,yhigh])
-pl.savefig(dir_figs + '/spec_corrs_P0_P2_theory.png')
-pl.close()
 
 np.savetxt(dir_specs + '/spec_corrections.dat',spec_corrections.T,fmt="%2.3f")
 np.savetxt(dir_specs + '/monopole_model.dat',mono_box_model.T,fmt="%4.3f")

@@ -157,7 +157,7 @@ cH = 299792.458*h/H(H0, Omegam, OmegaDE, w0, w1, zcentral)  # c/H(z) , in units 
 try:
     gamma
 except:
-    gamma = 0.56
+    gamma = 0.55
 
 try:
     matgrowcentral
@@ -186,11 +186,11 @@ Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 ############# Ended CAMB calculation #####################################
 
 try:
-	power_low
+    power_low
 except:
-	pass
+    pass
 else:
-	Pk_camb = power_low*np.power(Pk_camb,pk_power)
+    Pk_camb = power_low*np.power(Pk_camb,pk_power)
 
 
 # Construct spectrum that decays sufficiently rapidly, and interpolate
@@ -213,7 +213,7 @@ if do_galaxies:
     try:
         hod = np.loadtxt("inputs/" + hod_file)
         if len(hod.shape) < 2:
-        	hod = np.eye(nhalos)
+            hod = np.eye(nhalos)
         mass_fun = mult_sel_fun*np.loadtxt("inputs/" + mass_fun_file)
         halo_bias = np.loadtxt("inputs/" + halo_bias_file)
         # N.B.: the mass function is given in units of h^3 Mpc^-3 !
@@ -234,8 +234,14 @@ if do_galaxies:
 
         # HODs for the density contrast -- notice that Tr(hod_delta) = 1
         hod_delta = ((hod*mass_fun).T/np.dot(hod,mass_fun)).T
-        halo_bias = np.asarray(halo_bias)
-        bias = np.dot(hod,halo_bias*mass_fun)/np.dot(hod,mass_fun)
+        gal_bias = np.asarray(halo_bias)
+        gal_bias = np.dot(hod,gal_bias*mass_fun)/np.dot(hod,mass_fun)
+        gal_adip = np.asarray(adip)
+        gal_adip = np.dot(hod,gal_adip*mass_fun)/np.dot(hod,mass_fun)
+        gal_sigz_est = np.asarray(sigz_est)
+        gal_sigz_est = np.sqrt( np.dot(hod,gal_sigz_est**2*mass_fun)/np.dot(hod,mass_fun) )
+        gal_vdisp = np.asarray(vdisp)
+        gal_vdisp = np.sqrt( np.dot(hod,gal_vdisp**2*mass_fun)/np.dot(hod,mass_fun) )
 
     except:
         print ("Something's wrong... did not find HOD and/or mass function!")
@@ -247,6 +253,10 @@ else:
         mass_fun = mult_sel_fun * np.loadtxt("inputs/" + mass_fun_file)
         halo_bias = np.loadtxt("inputs/" + halo_bias_file)
         bias = np.asarray(halo_bias)
+        gal_bias = np.asarray(halo_bias)
+        gal_adip = np.asarray(adip)
+        gal_sigz_est = np.asarray(sigz_est)
+        gal_vdisp = np.asarray(vdisp)
     except:
         print()
         print ("Could not find halo mass function or/and halo bias values from input files!")
@@ -281,24 +291,26 @@ if sel_fun_data:
         print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
         print ('Please correct/check input files and/or maps. Aborting now.')
         sys.exit(-1)
-    # Check if everything is OK
-    if (len(bias) != ngals) or (np.shape(n_bar_matrix_fid)[0] != ngals) or (len(adip) != ngals):
-        print ('Inputs must specify parameters (bias, etc.) for each of the ' , ngals, ' galaxy types!')
-        print ('Please correct/check input files and/or maps. Aborting now.')
-        sys.exit(-1)
     # Normalize the galaxy densities from the HODs with the galaxy densities from the data selection function
     if do_galaxies:
+    # Check if everything is OK
+        if (len(gal_bias) != ngals) or (len(gal_adip) != ngals):
+            print ('There should be values of bias & adip for each tracers; ngals= ' , ngals, ' galaxy types!')
+            print ('Please correct/check input files, HOD file or maps. Aborting now.')
+            sys.exit(-1)
         hod_3D = np.zeros((ngals,nhalos,n_x,n_y,n_z),dtype='float32')
         for ng in range(ngals):
             for nh in range(nhalos):
                 hod_3D[ng,nh] = np.asarray(hod[ng,nh]/gal_densities_cell[ng]*n_bar_matrix_fid[ng],dtype='float32')
+        bias = gal_bias
 else:
     if do_galaxies:
         # Use analytical fit for selection function, from selection_function.py
         from selection_function_multitracer import *
         print ("Att.: using analytical selection function for galaxies (check parameters in input file).")
         nbar = mult_sel_fun*gal_densities_cell
-        if (len(bias) != ngals) or (len(nbar) != ngals) or (len(ncentral) != ngals) or (len(nsigma) != ngals) or (len(bias) != ngals) or (len(adip) != ngals):
+        #if (len(bias) != ngals) or (len(nbar) != ngals) or (len(ncentral) != ngals) or (len(nsigma) != ngals) or (len(bias) != ngals) or (len(adip) != ngals):
+        if (len(gal_bias) != ngals) or (len(nbar) != ngals) or (len(gal_bias) != ngals) or (len(gal_adip) != ngals):
             print ('Inputs (bias, sel. function parameters, etc.) must all have lengths equal to the number of tracers = ' , ngals, ' !')
             print ('Please correct/check input file and/or maps. Aborting now.')
             sys.exit(-1)
@@ -317,7 +329,7 @@ else:
         except:
             print ("Could not find either halo mass function or/and halo bias files on inputs/ !")
             print ("Please check. Aborting now...")
-        sys.exit(-1)
+            sys.exit(-1)
         # N.B.: the mass function is given in units of h^3 Mpc^-3 !
         # nbar below is in cell units
         halo_densities_cell = np.asarray(mass_fun)*(cell_size)**3
@@ -326,7 +338,7 @@ else:
         n_bar_matrix_fid = np.zeros((nhalos,n_x,n_y,n_z),dtype='float32')
         for nh in range(nhalos):
             n_bar_matrix_fid[nh] = nbar[nh]*np.ones((n_x,n_y,n_z))
-
+ 
 
 
 if sims_only:
@@ -415,17 +427,17 @@ else:
     print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
 
 dip = np.asarray(adip) * kdip_phys
-pk_mg = pkmg.pkmg(bias,dip,matgrowcentral,k_camb,vdisp,sigz_est,cH,zcentral)
+pk_mg = pkmg.pkmg(halo_bias,dip,matgrowcentral,k_camb,vdisp,sigz_est,cH,zcentral)
 
 monopoles = pk_mg.mono
 quadrupoles = pk_mg.quad
 
-pk_mg_cross = pkmg_cross.pkmg_cross(bias,dip,matgrowcentral,k_camb,vdisp,sigz_est,cH,zcentral)
+pk_mg_cross = pkmg_cross.pkmg_cross(halo_bias,dip,matgrowcentral,k_camb,vdisp,sigz_est,cH,zcentral)
 
 cross_monopoles = pk_mg_cross.monos
 cross_quadrupoles = pk_mg_cross.quads
 
-# Compute effective dipole and bias of tracers (here only use photo-z err)
+# Compute effective dipole and bias of tracers
 where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 
 effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
@@ -443,8 +455,10 @@ except:
 
 # Import correction factors for the lognormal halo simulations
 # Use these to correct the spectra of the lognormal sims
+# halo_spec_corr are the corrections in REAL (not redshift) space
 dir_spec_corr_sims = 'spectra/' + handle_sims
 try:
+    Pk_camb_sim = np.loadtxt(dir_spec_corr_sims + '/Pk_camb.dat')[:,1]
     halo_spec_corr = np.loadtxt(dir_spec_corr_sims + '/spec_corrections.dat')
     halo_mono_model = np.loadtxt(dir_spec_corr_sims + '/monopole_model.dat')
     halo_quad_model = np.loadtxt(dir_spec_corr_sims + '/quadrupole_model.dat')
@@ -493,7 +507,6 @@ except:
             halo_crossquad_theory[:,index] = cross_quadrupoles[index]*Pk_camb
             index += 1
 
-    #sys.exit(-1)
 
 # Discard the first column of the auto-spectra ("model" and "theory"), since they are simply the values of k
 halo_spec_corr = halo_spec_corr[:,1:]
@@ -510,19 +523,19 @@ all_halo_quadrupoles_theory = np.zeros((nks,nhalos,nhalos))
 
 index=0
 for i in range(nhalos):
-	all_halo_monopoles_model[:,i,i] = halo_mono_model[:,i]
-	all_halo_monopoles_theory[:,i,i] = halo_mono_theory[:,i]
-	all_halo_quadrupoles_model[:,i,i] = halo_quad_model[:,i]
-	all_halo_quadrupoles_theory[:,i,i] = halo_quad_theory[:,i]
-	for j in range(i+1,nhalos):
-		all_halo_monopoles_model[:,i,j] = halo_crossmono_model[:,index]
-		all_halo_monopoles_theory[:,i,j] = halo_crossmono_theory[:,index]
-		all_halo_quadrupoles_model[:,i,j] = halo_crossquad_model[:,index]
-		all_halo_quadrupoles_theory[:,i,j] = halo_crossquad_theory[:,index]
-		all_halo_monopoles_model[:,j,i] = all_halo_monopoles_model[:,i,j] 
-		all_halo_monopoles_theory[:,j,i] = all_halo_monopoles_theory[:,i,j] 
-		all_halo_quadrupoles_model[:,j,i] = all_halo_quadrupoles_model[:,i,j] 
-		all_halo_quadrupoles_theory[:,j,i] = all_halo_quadrupoles_theory[:,i,j] 
+    all_halo_monopoles_model[:,i,i] = halo_mono_model[:,i]
+    all_halo_monopoles_theory[:,i,i] = halo_mono_theory[:,i]
+    all_halo_quadrupoles_model[:,i,i] = halo_quad_model[:,i]
+    all_halo_quadrupoles_theory[:,i,i] = halo_quad_theory[:,i]
+    for j in range(i+1,nhalos):
+        all_halo_monopoles_model[:,i,j] = halo_crossmono_model[:,index]
+        all_halo_monopoles_theory[:,i,j] = halo_crossmono_theory[:,index]
+        all_halo_quadrupoles_model[:,i,j] = halo_crossquad_model[:,index]
+        all_halo_quadrupoles_theory[:,i,j] = halo_crossquad_theory[:,index]
+        all_halo_monopoles_model[:,j,i] = halo_crossmono_model[:,index] 
+        all_halo_monopoles_theory[:,j,i] = halo_crossmono_theory[:,index] 
+        all_halo_quadrupoles_model[:,j,i] = halo_crossquad_model[:,index]
+        all_halo_quadrupoles_theory[:,j,i] = halo_crossquad_theory[:,index]
         index += 1
 
 
@@ -541,11 +554,28 @@ if do_galaxies:
 
     mat_pspec = np.interp(k_corr,k_camb,Pk_camb)
 
-    spec_corr = np.dot( np.dot(hod_delta,halo_spec_corr), hod_delta.T)
-    all_mono_model = np.dot( np.dot(hod_delta,all_halo_monopoles_model), hod_delta.T)
-    all_mono_theory = np.dot( np.dot(hod_delta,all_halo_monopoles_theory), hod_delta.T)
-    all_quad_model = np.dot( np.dot(hod_delta,all_halo_quadrupoles_model), hod_delta.T)
-    all_quad_theory = np.dot( np.dot(hod_delta,all_halo_quadrupoles_theory), hod_delta.T)
+    spec_corr = (np.dot(hod_delta,np.sqrt(halo_spec_corr).T).T)**2
+
+    all_mono_model = np.zeros((nks,ngals,ngals))
+    all_mono_theory = np.zeros((nks,ngals,ngals))
+    all_quad_model = np.zeros((nks,ngals,ngals))
+    all_quad_theory = np.zeros((nks,ngals,ngals))
+
+    all_mono_model = np.einsum('ij,kjl',hod_delta,all_halo_monopoles_model)
+    all_mono_model = np.einsum('ij,lkj',hod_delta,all_mono_model)
+    all_mono_model = np.swapaxes(all_mono_model,0,1)
+
+    all_mono_theory = np.einsum('ij,kjl',hod_delta,all_halo_monopoles_model)
+    all_mono_theory = np.einsum('ij,lkj',hod_delta,all_mono_theory)
+    all_mono_theory = np.swapaxes(all_mono_theory,0,1)
+
+    all_quad_model = np.einsum('ij,kjl',hod_delta,all_halo_quadrupoles_model)
+    all_quad_model = np.einsum('ij,lkj',hod_delta,all_quad_model)
+    all_quad_model = np.swapaxes(all_quad_model,0,1)
+
+    all_quad_theory = np.einsum('ij,kjl',hod_delta,all_halo_quadrupoles_model)
+    all_quad_theory = np.einsum('ij,lkj',hod_delta,all_quad_theory)
+    all_quad_theory = np.swapaxes(all_quad_theory,0,1)
 
     index = 0
     for i in range(ngals):
@@ -555,10 +585,7 @@ if do_galaxies:
             cross_quad_model[:,index] = all_quad_model[:,i,j]
             cross_quad_theory[:,index] = all_quad_theory[:,i,j]
             index += 1
-
-
 else:
-    spec_corr = np.zeros((nks,nhalos))
 
     mono_model = np.zeros((nks,nhalos))
     quad_model = np.zeros((nks,nhalos))
@@ -578,15 +605,36 @@ else:
 
 # Now define which "tracers" we will use: galaxies, or halos
 if do_galaxies:
-	ntracers = ngals
+    ntracers = ngals
 else:
-	ntracers = nhalos
+    ntracers = nhalos
 
 for ng in range(ntracers):
     mono_model[:,ng] = all_mono_model[:,ng,ng]
     quad_model[:,ng] = all_quad_model[:,ng,ng]
     mono_theory[:,ng] = all_mono_theory[:,ng,ng]
     quad_theory[:,ng] = all_quad_theory[:,ng,ng]
+
+
+# Get effective bias (sqrt of monopoles) for final tracers
+pk_mg = pkmg.pkmg(gal_bias,gal_adip,matgrowcentral,k_camb,gal_vdisp,gal_sigz_est,cH,zcentral)
+
+monopoles = pk_mg.mono
+quadrupoles = pk_mg.quad
+
+# Compute effective dipole and bias of tracers
+where_kph_central = np.argmin(np.abs(k_camb - kph_central))
+
+effadip = gal_adip*matgrowcentral/(0.00000000001 + kph_central)
+effbias = np.sqrt(monopoles[:,where_kph_central])
+
+try:
+    data_bias
+    pk_mg_data = pkmg.pkmg(data_bias,gal_adip,matgrowcentral,k_camb,gal_vdisp,gal_sigz_est,cH,zcentral)
+    monopoles_data = pk_mg_data.mono
+    effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
+except:
+    pass
 
 
 
@@ -611,14 +659,14 @@ cross_quad_theory = np.vstack((np.vstack((np.asarray(cross_quad_theory[0]),np.as
 # Start computing physical sizes of boxes
 #####################################################
 L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size     # size of the box
-box_vol = L_x*L_y*L_z			# Box's volume
-L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)	
+box_vol = L_x*L_y*L_z            # Box's volume
+L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)    
 
 #####################################################
 # Generate real- and Fourier-space grids for FFTs
 #####################################################
 # print 'Generating the k-space Grid...'
-grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)		# generates the grid
+grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)        # generates the grid
 
 ##########################################
 #  Generating the Bins Matrix M^a_{ijl}
@@ -696,9 +744,6 @@ k_bar = kminbar + dk0*np.arange(num_binsk)
 r_bar = 1/2.0 + ((1.0*n_x)/num_binsk)*np.arange(num_binsk)
 
 
-# Given the matter growth rate and the biases, this defines the quadrupole moments:
-beta = matgrowcentral*np.power(bias,-1)
-quad = 2*beta/(3.0 + beta)
 
 ###############################
 #R
@@ -736,28 +781,6 @@ powercentral = np.mean( Pk_camb[ (k_camb > kcmin) & (k_camb < kcmax) ] )
 powtrue = np.interp(kph,k_camb,Pk_camb)
 pow_bins = len(kph)
 
-
-# Compute monopoles and quadrupoles using z-err and v-disp
-dip = np.asarray(adip) * kdip_phys
-pk_mg = pkmg.pkmg(bias,dip,matgrowcentral,kph,vdisp,sigz_est,cH,zcentral)
-
-monopoles = pk_mg.mono
-quadrupoles = pk_mg.quad
-
-
-# Compute effective dipole and bias of tracers (here only use photo-z err)
-where_kph_central = np.argmin(np.abs(kph - kph_central))
-
-effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
-effbias = np.sqrt(monopoles[:,where_kph_central])
-
-try:
-    data_bias
-    pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,kph,vdisp,sigz_est,cH,zcentral)
-    monopoles_data = pk_mg_data.mono
-    effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
-except:
-    pass
 
 
 
@@ -840,7 +863,7 @@ print()
 print ('Now estimating the power spectra...')
 
 ######################################################################
-#R	FKP of the data to get the P_data(k) -- using MR and MRk
+#R    FKP of the data to get the P_data(k) -- using MR and MRk
 #R
 #R  N.B.: In this code, we do this n_maps times -- once for each map, independently.
 #R  Also, we make 4 estimates, for 4 "bandpower ranges" between k_min and k_max .
@@ -879,9 +902,9 @@ for i in range(ntracers):
 cross_pk_ln_spec_corr_kbar=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
 index = 0
 for i in range(ntracers):
-	for j in range(i+1,ntracers):
-		cross_pk_ln_spec_corr_kbar[index] = np.sqrt(pk_ln_spec_corr_kbar[i]*pk_ln_spec_corr_kbar[j])
-		index +=1
+    for j in range(i+1,ntracers):
+        cross_pk_ln_spec_corr_kbar[index] = np.sqrt(pk_ln_spec_corr_kbar[i]*pk_ln_spec_corr_kbar[j])
+        index +=1
 
 # These are the theory values for the total effective power spectrum
 nbarbar = np.mean(n_bar_matrix_fid,axis=(1,2,3))/(cell_size)**3
@@ -911,8 +934,8 @@ dd_P_spec_kbar = biaserr*np.sqrt(np.var(pk_ln_spec_corr_kbar))*pk_ln_spec_corr_k
 #############################################################################
 # Here we prepare to apply the Jing (2005) deconvolution of the mass assignement function
 # For the situations when this is necessary, see the input file
-winmass_sims=np.ones(len(kph))
-winmass_data=np.ones(len(kph))
+winmass_sims=np.ones(pow_bins)
+winmass_data=np.ones(pow_bins)
 if (jing_dec_sims) or (not sims_only):
     print ('Preparing to apply Jing deconvolution of mass assignement window function...')
 
@@ -946,7 +969,7 @@ if (jing_dec_sims) or (not sims_only):
     def wj02(ki,ni,power_jing):
         return np.abs(np.power(np.abs(special.j0(np.pi*(ki/kN/2. + ni))),power_jing))
 
-    for i_k in range(len(kph)):
+    for i_k in range(pow_bins):
         kxyz = kph[i_k]*unitxyz_flat
         sum_sims=0.0
         sum_data=0.0
@@ -1077,7 +1100,6 @@ for nm in range(n_maps):
             print()
             sys.exit(-1)
         h5map_data.close
-
         # read and store sims maps
     elif nm > 0:
         print ('Loading simulated box #', nm)
@@ -1100,7 +1122,8 @@ for nm in range(n_maps):
                 for nh in range(nhalos):
                     maps[ng] += hod_3D[ng,nh]*maps_halos[nh]
                 # Poisson sampling
-                maps[ng] = np.random.poisson(maps[ng])
+                if do_poisson:
+                    maps[ng] = np.random.poisson(maps[ng])
     else:
         maps = maps_halos
 
@@ -1254,7 +1277,6 @@ if sims_only:
     P2_fkp = (P2_fkp)/winmass_sims
     Cross0 = Cross0/winmass_sims
     Cross2 = Cross2/winmass_sims
-
 else:
     P0_fkp[0] = (P0_fkp[0])/winmass_data
     P2_fkp[0] = (P2_fkp[0])/winmass_data
@@ -1287,7 +1309,7 @@ P2_mean = np.mean(P2_data[1:],axis=0)
 
 ################################################################################
 # 2) Extra shot noise/1-halo-term subtraction
-ksn1 = (3*len(kph))//4
+ksn1 = (3*pow_bins)//4
 ksn2 = -1
 spec_index = np.mean(np.diff(np.log(powtrue[ksn1:ksn2]))/np.diff(np.log(kph[ksn1:ksn2])))
 
@@ -1350,7 +1372,7 @@ P2_fkp_mean_dec = np.mean(P2_fkp_dec[1:],axis=0)
 P2_mean_dec = np.mean(P2_data_dec[1:],axis=0)
 
 
-#H#H
+#
 # Plot MT estimates along with theory -- convolved spectra
 
 pl.rcParams["axes.titlesize"] = 8
@@ -1411,7 +1433,7 @@ for nt in range(ntracers):
 print()
 print ("Fiducial bias of the mocks, compared with data, before deconvolution:")
 for nt in range(ntracers):
-    print ('Fiducial (mocks):', np.around(bias[nt],3), '; based on these mocks, data bias should be:', np.around(normmonos[nt]*bias[nt],3), ' (chi^2 = ', np.around(chi2_red[nt],3), ')')
+    print ('Fiducial (mocks):', np.around(gal_bias[nt],3), '; based on these mocks, data bias should be:', np.around(normmonos[nt]*gal_bias[nt],3), ' (chi^2 = ', np.around(chi2_red[nt],3), ')')
 
 print ()
 
@@ -1451,11 +1473,11 @@ P2_mean_dec = np.mean(P2_data_dec[1:],axis=0)
 ################################################################################
 # 4) Window functions corrections (computed from simulations or from theory)
 
-winfun0 = np.ones((ntracers,len(kph)))
-winfun0_cross = np.ones((ntracers*(ntracers-1)//2,len(kph)))
+winfun0 = np.ones((ntracers,pow_bins))
+winfun0_cross = np.ones((ntracers*(ntracers-1)//2,pow_bins))
 
-winfun2 = np.ones((ntracers,len(kph)))
-winfun2_cross = np.ones((ntracers*(ntracers-1)//2,len(kph)))
+winfun2 = np.ones((ntracers,pow_bins))
+winfun2_cross = np.ones((ntracers*(ntracers-1)//2,pow_bins))
 
 if is_n_body_sims:
     win_fun_file=glob.glob("spectra/"+win_fun_dir+"*Win*")
@@ -1464,9 +1486,9 @@ if is_n_body_sims:
     if (len(win_fun_file)!=1) | (len(win_fun_file_cross0)!=1) | (len(win_fun_file_cross2)!=1):
         print ("Could not find (or found more than one) specified window functions at", "spectra/", win_fun_dir)
         print ("Using no window function")
-        wf = np.ones((len(kph),2*ntracers))
-        wf_c0 = np.ones((len(kph),ntracers*(ntracers-1)//2))
-        wf_c2 = np.ones((len(kph),ntracers*(ntracers-1)//2))
+        wf = np.ones((pow_bins,2*ntracers))
+        wf_c0 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
+        wf_c2 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
     else:
         win_fun_file = win_fun_file[0]
         win_fun_file_cross0 = win_fun_file_cross0[0]
@@ -1476,17 +1498,17 @@ if is_n_body_sims:
         wf_c0 = np.loadtxt(win_fun_file_cross0)
         wf_c2 = np.loadtxt(win_fun_file_cross2)
 
-        if (len(wf) != len(kph)) | (len(wf.T) != 2*ntracers):
+        if (len(wf) != pow_bins) | (len(wf.T) != 2*ntracers):
             print ("Dimensions of window functions (P0 auto & P2 auto) do not match those of this estimation code!")
             print ("Please check that window function, or create a new one. Aborting now...")
             sys.exit(-1)
 
-        if (len(wf_c0) != len(kph)) | (len(wf_c0.T) != ntracers*(ntracers-1)//2):
+        if (len(wf_c0) != pow_bins) | (len(wf_c0.T) != ntracers*(ntracers-1)//2):
             print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
             print ("Please check that window function, or create a new one. Aborting now...")
             sys.exit(-1)
 
-        if (len(wf_c2) != len(kph)) | (len(wf_c2.T) != ntracers*(ntracers-1)//2):
+        if (len(wf_c2) != pow_bins) | (len(wf_c2.T) != ntracers*(ntracers-1)//2):
             print ("Dimensions of window function of cross spectra for P2 do not match those of this estimation code!")
             print ("Please check that window function, or create a new one. Aborting now...")
             sys.exit(-1)
@@ -1511,6 +1533,8 @@ if is_n_body_sims:
             Cross2_dec[:,index] = Cross2_dec[:,index] / (small + wf_c2[:,index])
             index += 1
 else:
+    wf_c0 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
+    wf_c2 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
     for nt in range(ntracers):
         # FKP has its window function...
         winfun0[nt] = effbias[nt]**2*P0_fkp_mean_dec[nt]/(small + P0_model[nt])
@@ -1532,8 +1556,8 @@ else:
         for j in range(i+1,ntracers):
             model0 = np.sqrt( P0_model[i]*P0_model[j] )
             model2 = np.sqrt( P2_model[i]*P0_model[j] )
-            Cross0_dec[:,index] = Cross0_dec[:,index] / (small + wf_c0[:,index])
-            Cross2_dec[:,index] = Cross2_dec[:,index] / (small + wf_c2[:,index])
+            wf_c0[:,index] = effbias[i]*effbias[j]*Cross0_mean_dec[index] / (small + model0)
+            wf_c2[:,index] = effbias[i]*effbias[j]*Cross2_mean_dec[index] / (small + model2)
             index += 1
 
 
@@ -1723,54 +1747,54 @@ mycolor = [ cm.jet(x) for x in cm_subsection ]
 print('Plotting results to /figures...')
 
 if plot_all_cov:
-	# Plot 2D correlation of Ptot and ratios
-	nblocks=1+ntracers*(ntracers-1)//2
-	indexcov = np.arange(0,nblocks*num_binsk,np.int(num_binsk//4))
-	nameindex = nblocks*[str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//4)]]
-	onesk=np.diag(np.ones((nblocks*num_binsk)))
-	dF=np.sqrt(np.abs(np.diag(cov_Pt_ratios_FKP)))
-	dM=np.sqrt(np.abs(np.diag(cov_Pt_ratios_MT)))
-	dF2 = small + np.outer(dF,dF)
-	dM2 = small + np.outer(dM,dM)
-	fullcov = np.tril(np.abs(cov_Pt_ratios_FKP)/dF2) + np.triu(np.abs(cov_Pt_ratios_MT.T)/dM2) - onesk
-	pl.imshow(fullcov,origin='lower',interpolation='none')
-	pl.title("Covariance of total effective power spectrum and ratios of spectra (monopoles only)")
-	pl.xticks(indexcov,nameindex,size=6,name='monospace')
-	pl.yticks(indexcov,nameindex,size=8,name='monospace')
-	pl.annotate('FKP',(np.int(len(kph)/5.),2*len(kph)),fontsize=20)
-	pl.annotate('Multi-tracer',(2*len(kph),np.int(len(kph)/5.)),fontsize=20)
-	pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
-	pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
-	pl.colorbar()
-	pl.savefig(dir_figs + '/' + handle_estimates + '_2D_tot_ratios_corr.pdf')
-	pl.close('all')
+    # Plot 2D correlation of Ptot and ratios
+    nblocks=1+ntracers*(ntracers-1)//2
+    indexcov = np.arange(0,nblocks*num_binsk,np.int(num_binsk//4))
+    nameindex = nblocks*[str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//4)]]
+    onesk=np.diag(np.ones((nblocks*num_binsk)))
+    dF=np.sqrt(np.abs(np.diag(cov_Pt_ratios_FKP)))
+    dM=np.sqrt(np.abs(np.diag(cov_Pt_ratios_MT)))
+    dF2 = small + np.outer(dF,dF)
+    dM2 = small + np.outer(dM,dM)
+    fullcov = np.tril(np.abs(cov_Pt_ratios_FKP)/dF2) + np.triu(np.abs(cov_Pt_ratios_MT.T)/dM2) - onesk
+    pl.imshow(fullcov,origin='lower',interpolation='none')
+    pl.title("Covariance of total effective power spectrum and ratios of spectra (monopoles only)")
+    pl.xticks(indexcov,nameindex,size=6,name='monospace')
+    pl.yticks(indexcov,nameindex,size=8,name='monospace')
+    pl.annotate('FKP',(np.int(pow_bins/5.),2*pow_bins),fontsize=20)
+    pl.annotate('Multi-tracer',(2*pow_bins,np.int(pow_bins/5.)),fontsize=20)
+    pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
+    pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
+    pl.colorbar()
+    pl.savefig(dir_figs + '/' + handle_estimates + '_2D_tot_ratios_corr.pdf')
+    pl.close('all')
 
-	# Plot 2D correlation coefficients
-	indexcov = np.arange(0,num_binsk,np.int(num_binsk//5))
-	nameindex = [str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//5)]]
-	onesk=np.diag(np.ones(num_binsk))
-	for nt in range(ntracers):
-	    for ntp in range(nt,ntracers):
-	        kk = np.outer(kph,kph)
-	        FKPcov=relcov0_FKP[nt,ntp]
-	        MTcov=relcov0_MT[nt,ntp]
-	        dF=np.sqrt(np.abs(np.diag(FKPcov)))
-	        dM=np.sqrt(np.abs(np.diag(MTcov)))
-	        FKPcorr=FKPcov/(small+np.outer(dF,dF))
-	        MTcorr=MTcov/(small+np.outer(dM,dM))
-	        fullcov = np.tril(np.abs(FKPcorr)) + np.triu(np.abs(MTcorr.T)) - onesk
-	        thistitle = 'Corr(P_' + str(nt) + ',P_' + str(ntp) + ') '
-	        pl.imshow(fullcov,origin='lower',interpolation='none')
-	        pl.title(thistitle)
-	        pl.xticks(indexcov,nameindex,size=20,name='monospace')
-	        pl.yticks(indexcov,nameindex,size=20,name='monospace')
-	        pl.annotate('FKP',(np.int(len(kph)//10),np.int(len(kph)/2.5)),fontsize=20)
-	        pl.annotate('Multi-tracer',(np.int(len(kph)//2),np.int(len(kph)//10)),fontsize=20)
-	        pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
-	        pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
-	        pl.colorbar()
-	        pl.savefig(dir_figs + '/' + handle_estimates + '_2Dcorr_' + str(nt) + '_' + str(ntp) + '.pdf')
-	        pl.close('all')
+    # Plot 2D correlation coefficients
+    indexcov = np.arange(0,num_binsk,np.int(num_binsk//5))
+    nameindex = [str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//5)]]
+    onesk=np.diag(np.ones(num_binsk))
+    for nt in range(ntracers):
+        for ntp in range(nt,ntracers):
+            kk = np.outer(kph,kph)
+            FKPcov=relcov0_FKP[nt,ntp]
+            MTcov=relcov0_MT[nt,ntp]
+            dF=np.sqrt(np.abs(np.diag(FKPcov)))
+            dM=np.sqrt(np.abs(np.diag(MTcov)))
+            FKPcorr=FKPcov/(small+np.outer(dF,dF))
+            MTcorr=MTcov/(small+np.outer(dM,dM))
+            fullcov = np.tril(np.abs(FKPcorr)) + np.triu(np.abs(MTcorr.T)) - onesk
+            thistitle = 'Corr(P_' + str(nt) + ',P_' + str(ntp) + ') '
+            pl.imshow(fullcov,origin='lower',interpolation='none')
+            pl.title(thistitle)
+            pl.xticks(indexcov,nameindex,size=20,name='monospace')
+            pl.yticks(indexcov,nameindex,size=20,name='monospace')
+            pl.annotate('FKP',(np.int(pow_bins//10),np.int(pow_bins/2.5)),fontsize=20)
+            pl.annotate('Multi-tracer',(np.int(pow_bins//2),np.int(pow_bins//10)),fontsize=20)
+            pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
+            pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
+            pl.colorbar()
+            pl.savefig(dir_figs + '/' + handle_estimates + '_2Dcorr_' + str(nt) + '_' + str(ntp) + '.pdf')
+            pl.close('all')
 
 
 # Marker: open circle
@@ -1808,26 +1832,26 @@ for nt in range(ntracers):
 # Plot relative errors (diagonal of covariance)
 # of the monopoles and quadrupoles for the CROSS-COVARIANCE between tracers
 if plot_all_cov:
-	if ntracers > 1:
-	    for nt in range(ntracers):
-	        for ntp in range(nt+1,ntracers):
-	            fkpcov= np.diagonal(relcov0_FKP[nt,ntp])
-	            fkpcov2= np.diagonal(relcov2_FKP[nt,ntp])
-	            pl.semilogy(kph,np.abs(fkpcov),marker='x',color='r',linestyle='')
-	            pl.semilogy(kph,np.abs(fkpcov2),marker='+',color='g',linestyle='')
-	            mtcov = np.diagonal(relcov0_MT[nt,ntp])
-	            mtcov2 = np.diagonal(relcov2_MT[nt,ntp])
-	            pl.semilogy(kph,np.abs(mtcov),marker='o',color='k',linestyle='')
-	            pl.semilogy(kph,np.abs(mtcov2),marker='.',color='b',linestyle='')
-	            ymin, ymax = 0.00000001, 10.0
-	            pl.xlim([kph[2],kph[-2]])
-	            pl.ylim([ymin,ymax])
-	            pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=14)
-	            pl.ylabel('Cross-covariances (relative)',fontsize=12)
-	            thistitle = 'Cross-covariance of tracers ' + str(nt) + ' , ' + str(ntp)
-	            pl.title(thistitle,fontsize=16)
-	            pl.savefig(dir_figs + '/'  + handle_estimates + '_cross_cov_' + str(nt+1) + str(ntp+1) +'.pdf')
-	            pl.close('all')
+    if ntracers > 1:
+        for nt in range(ntracers):
+            for ntp in range(nt+1,ntracers):
+                fkpcov= np.diagonal(relcov0_FKP[nt,ntp])
+                fkpcov2= np.diagonal(relcov2_FKP[nt,ntp])
+                pl.semilogy(kph,np.abs(fkpcov),marker='x',color='r',linestyle='')
+                pl.semilogy(kph,np.abs(fkpcov2),marker='+',color='g',linestyle='')
+                mtcov = np.diagonal(relcov0_MT[nt,ntp])
+                mtcov2 = np.diagonal(relcov2_MT[nt,ntp])
+                pl.semilogy(kph,np.abs(mtcov),marker='o',color='k',linestyle='')
+                pl.semilogy(kph,np.abs(mtcov2),marker='.',color='b',linestyle='')
+                ymin, ymax = 0.00000001, 10.0
+                pl.xlim([kph[2],kph[-2]])
+                pl.ylim([ymin,ymax])
+                pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=14)
+                pl.ylabel('Cross-covariances (relative)',fontsize=12)
+                thistitle = 'Cross-covariance of tracers ' + str(nt) + ' , ' + str(ntp)
+                pl.title(thistitle,fontsize=16)
+                pl.savefig(dir_figs + '/'  + handle_estimates + '_cross_cov_' + str(nt+1) + str(ntp+1) +'.pdf')
+                pl.close('all')
 
 
 # Plot relative errors (diagonal of covariance) of the RATIOS
@@ -2090,7 +2114,8 @@ pl.close('all')
 
 
 # Plot the ratios of the spectra with respect to the theoretical expectation
-pl.xscale('log', nonposy='clip')
+#pl.xscale('log', nonposy='clip')
+pl.xscale('log')
 #pl.yscale('log', nonposy='clip')
 ylow = 0
 yhigh= 2*ntracers + 1.
@@ -2132,61 +2157,61 @@ if not os.path.exists(dir_figs + '/selected'):
 
         
 if plot_all_cov:
-	# Plot 2D correlation of Ptot and ratios
-	nblocks=1+ntracers*(ntracers-1)//2
-	indexcov = np.arange(0,nblocks*num_binsk,np.int(num_binsk//4))
-	nameindex = nblocks*[str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//4)]]
-	onesk=np.diag(np.ones((nblocks*num_binsk)))
-	dF=np.sqrt(np.abs(np.diag(cov_Pt_ratios_FKP)))
-	dM=np.sqrt(np.abs(np.diag(cov_Pt_ratios_MT)))
-	dF2 = small + np.outer(dF,dF)
-	dM2 = small + np.outer(dM,dM)
-	fullcov = np.tril(np.abs(cov_Pt_ratios_FKP)/dF2) + np.triu(np.abs(cov_Pt_ratios_MT.T)/dM2) - onesk
-	pl.imshow(fullcov,origin='lower',interpolation='none')
-	pl.title("Covariance of total effective power spectrum and ratios of spectra (monopoles only)")
-	pl.xticks(indexcov,nameindex,size=6,name='monospace')
-	pl.yticks(indexcov,nameindex,size=8,name='monospace')
-	pl.annotate('FKP',(np.int(len(kph)/5.),2*len(kph)),fontsize=20)
-	pl.annotate('Multi-tracer',(2*len(kph),np.int(len(kph)/5.)),fontsize=20)
-	pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
-	pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
-	pl.colorbar()
-	pl.savefig(dir_figs + '/' +'selected/' + handle_estimates + '_2D_tot_ratios_corr_newformat.pdf')
-	pl.close('all')
+    # Plot 2D correlation of Ptot and ratios
+    nblocks=1+ntracers*(ntracers-1)//2
+    indexcov = np.arange(0,nblocks*num_binsk,np.int(num_binsk//4))
+    nameindex = nblocks*[str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//4)]]
+    onesk=np.diag(np.ones((nblocks*num_binsk)))
+    dF=np.sqrt(np.abs(np.diag(cov_Pt_ratios_FKP)))
+    dM=np.sqrt(np.abs(np.diag(cov_Pt_ratios_MT)))
+    dF2 = small + np.outer(dF,dF)
+    dM2 = small + np.outer(dM,dM)
+    fullcov = np.tril(np.abs(cov_Pt_ratios_FKP)/dF2) + np.triu(np.abs(cov_Pt_ratios_MT.T)/dM2) - onesk
+    pl.imshow(fullcov,origin='lower',interpolation='none')
+    pl.title("Covariance of total effective power spectrum and ratios of spectra (monopoles only)")
+    pl.xticks(indexcov,nameindex,size=6,name='monospace')
+    pl.yticks(indexcov,nameindex,size=8,name='monospace')
+    pl.annotate('FKP',(np.int(pow_bins/5.),2*pow_bins),fontsize=20)
+    pl.annotate('Multi-tracer',(2*pow_bins,np.int(pow_bins/5.)),fontsize=20)
+    pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
+    pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
+    pl.colorbar()
+    pl.savefig(dir_figs + '/' +'selected/' + handle_estimates + '_2D_tot_ratios_corr_newformat.pdf')
+    pl.close('all')
 
-	# Plot 2D correlation coefficients
-	num_binsk0 = 26
-	kph0=kph[:num_binsk0]
-	indexcov = np.arange(0,num_binsk0+1,np.int(num_binsk0//5))
-	#nameindex = [str(0.001*np.round(1000*kin)) for kin in kph0[0:-1:np.int(num_binsk0/6)]]
-	nameindex = [str(0.001*np.round(1000*kin))[0:5] for kin in kph0[0:num_binsk0:np.int(num_binsk0/5)]]
-	onesk=np.diag(np.ones(num_binsk))
-	for nt in range(ntracers):
-	    for ntp in range(nt,ntracers):
-	        kk = np.outer(kph,kph)
-	        FKPcov=relcov0_FKP[nt,ntp]
-	        MTcov=relcov0_MT[nt,ntp]
-	        dF=np.sqrt(np.abs(np.diag(FKPcov)))
-	        dM=np.sqrt(np.abs(np.diag(MTcov)))
-	        FKPcorr=FKPcov/(small+np.outer(dF,dF))
-	        MTcorr=MTcov/(small+np.outer(dM,dM))
-	        #fullcov = np.tril(np.abs(FKPcorr)) + np.triu(np.abs(MTcorr.T)) - onesk
-	        fullcov = np.tril(FKPcorr) + np.triu(MTcorr.T) - onesk  
-	        thistitle = 'Corr(P_' + str(nt) + ',P_' + str(ntp) + ') '
-	        pl.imshow(fullcov,extent=[0,26,0,26],origin='lower',interpolation='nearest',cmap='jet')
-	        #pl.title(thistitle)
-	        #print(indexcov,nameindex)   
-	        pl.xticks(indexcov,nameindex,size=12,name='monospace')
-	        pl.yticks(indexcov,nameindex,size=12,name='monospace')
-	        pl.annotate(r'$\bf{FKP}$',(np.int(len(kph0)//10),np.int(len(kph0)/2.5)),fontsize=28, color='white')
-	        pl.annotate(r'$\bf{MTOE}$',(np.int(len(kph0)//2),np.int(len(kph0)//10)),fontsize=28,color='white')
-	        pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=12)
-	        pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=12)
-	        #pl.xlim([0.,0.4])
-	        #pl.ylim([0.,0.4])
-	        pl.colorbar()
-	        pl.savefig(dir_figs + '/' + 'selected/' + handle_estimates + '_2Dcorr_' + str(nt) + '_' + str(ntp) + 'newformat.pdf')
-	        pl.close('all')
+    # Plot 2D correlation coefficients
+    num_binsk0 = 26
+    kph0=kph[:num_binsk0]
+    indexcov = np.arange(0,num_binsk0+1,np.int(num_binsk0//5))
+    #nameindex = [str(0.001*np.round(1000*kin)) for kin in kph0[0:-1:np.int(num_binsk0/6)]]
+    nameindex = [str(0.001*np.round(1000*kin))[0:5] for kin in kph0[0:num_binsk0:np.int(num_binsk0/5)]]
+    onesk=np.diag(np.ones(num_binsk))
+    for nt in range(ntracers):
+        for ntp in range(nt,ntracers):
+            kk = np.outer(kph,kph)
+            FKPcov=relcov0_FKP[nt,ntp]
+            MTcov=relcov0_MT[nt,ntp]
+            dF=np.sqrt(np.abs(np.diag(FKPcov)))
+            dM=np.sqrt(np.abs(np.diag(MTcov)))
+            FKPcorr=FKPcov/(small+np.outer(dF,dF))
+            MTcorr=MTcov/(small+np.outer(dM,dM))
+            #fullcov = np.tril(np.abs(FKPcorr)) + np.triu(np.abs(MTcorr.T)) - onesk
+            fullcov = np.tril(FKPcorr) + np.triu(MTcorr.T) - onesk  
+            thistitle = 'Corr(P_' + str(nt) + ',P_' + str(ntp) + ') '
+            pl.imshow(fullcov,extent=[0,26,0,26],origin='lower',interpolation='nearest',cmap='jet')
+            #pl.title(thistitle)
+            #print(indexcov,nameindex)   
+            pl.xticks(indexcov,nameindex,size=12,name='monospace')
+            pl.yticks(indexcov,nameindex,size=12,name='monospace')
+            pl.annotate(r'$\bf{FKP}$',(np.int(len(kph0)//10),np.int(len(kph0)/2.5)),fontsize=28, color='white')
+            pl.annotate(r'$\bf{MTOE}$',(np.int(len(kph0)//2),np.int(len(kph0)//10)),fontsize=28,color='white')
+            pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=12)
+            pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=12)
+            #pl.xlim([0.,0.4])
+            #pl.ylim([0.,0.4])
+            pl.colorbar()
+            pl.savefig(dir_figs + '/' + 'selected/' + handle_estimates + '_2Dcorr_' + str(nt) + '_' + str(ntp) + 'newformat.pdf')
+            pl.close('all')
 
 
         
@@ -2365,12 +2390,12 @@ for nt in range(ntracers):
 # Return bias to the computed cross-spectra (done in FKP) as well:
 index=0
 for i in range(ntracers):
-	for j in range(i+1,ntracers):
-		Cross0[:,index] = effbias[i]*effbias[j]*Cross0[:,index]
-		Cross0_dec[:,index] = effbias[i]*effbias[j]*Cross0_dec[:,index]
-		Cross2[:,index] = effbias[i]*effbias[j]*Cross2[:,index]
-		Cross2_dec[:,index] = effbias[i]*effbias[j]*Cross2_dec[:,index]
-		index += 1
+    for j in range(i+1,ntracers):
+        Cross0[:,index] = effbias[i]*effbias[j]*Cross0[:,index]
+        Cross0_dec[:,index] = effbias[i]*effbias[j]*Cross0_dec[:,index]
+        Cross2[:,index] = effbias[i]*effbias[j]*Cross2[:,index]
+        Cross2_dec[:,index] = effbias[i]*effbias[j]*Cross2_dec[:,index]
+        index += 1
 
 
 # Export data
@@ -2382,16 +2407,23 @@ np.savetxt(dir_specs + '/' + handle_estimates + '_decP_k_data_MT.dat',p_stack.T,
 np.savetxt(dir_specs + '/' + handle_estimates + '_decP_k_data_FKP.dat',p_stack_FKP.T,fmt="%6.2f")
 
 np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',bias,fmt="%2.3f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
 np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
 
 
 # Saving cross spectra
+
 np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P0_theory.dat',Cross_P0_theory.T,fmt="%6.4f")
 np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P0_model.dat',Cross_P0_model.T,fmt="%6.4f")
 
 np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P2_theory.dat',Cross_P2_theory.T,fmt="%6.4f")
 np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P2_model.dat',Cross_P2_model.T,fmt="%6.4f")
+
+Cross0=np.reshape(Cross0,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+Cross2=np.reshape(Cross2,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+
+Cross0_dec=np.reshape(Cross0_dec,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+Cross2_dec=np.reshape(Cross2_dec,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
 
 np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P0_data.dat',Cross0.T,fmt="%6.4f")
 np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_dec_P0_data.dat',Cross0_dec.T,fmt="%6.4f")
@@ -2403,17 +2435,47 @@ np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_dec_P2_data.dat',Cross2_
 ########################################
 # Window function
 wf = np.zeros((2*ntracers,num_binsk),dtype="float32")
-for k in range(len(kph)):
+for k in range(pow_bins):
     wf[:,k]  = np.hstack((winfun0[:,k],winfun2[:,k]))
 
 # make sure that window function is not zero
 wf[wf==0]=1.0
 wf[np.isnan(wf)]=1.0
 np.savetxt(dir_specs + '/' + handle_estimates + '_WinFun02_k_data.dat',wf.T,fmt="%3.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_WinFun_Cross0_k_data.dat',wf_c0,fmt="%3.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_WinFun_Cross2_k_data.dat',wf_c2,fmt="%3.4f")
 
 
+####################################
+# Checking cross-correlations
+print()
 
+index=0
+for nt in range(ntracers):
+    for ntp in range(nt+1,ntracers):
+        print("Cross-corr of P^0 of tracers", nt, ntp, " -- dec/model, dec/theory")
+        var = np.array([ effbias[nt]*effbias[ntp]*Cross0_mean_dec[index]/Cross_P0_model[index] , effbias[nt]*effbias[ntp]*Cross0_mean_dec[index]/Cross_P0_model[index] ])
+        print(var.T)
+        index += 1
+        print()
 
+print()
+index=0
+for nt in range(ntracers):
+    for ntp in range(nt+1,ntracers):
+        print("Cross-corr of P^0 x Auto-corr of P^0 of tracers", nt, ntp, " -- P_ij^2[fkp]/P_i[MTOE] P_j[MTOE]")
+        print(effbias[nt]**2*effbias[ntp]**2*Cross0_mean_dec[index]**2/P0_mean_dec[nt]/P0_mean_dec[ntp])
+        print()
+        index += 1
+
+print()
+index=0
+for nt in range(ntracers):
+    for ntp in range(nt+1,ntracers):
+        print("Cross-corr of P^0 x Auto-corr of P^0 of tracers", nt, ntp, " -- P_ij^2[fkp]/P_i[FKP] P_j[FKP]")
+        print(Cross0_mean_dec[index]**2/P0_fkp_mean_dec[nt]/P0_fkp_mean_dec[ntp])
+        print()
+        index += 1
 
 
 ####################################
@@ -2443,7 +2505,7 @@ for nt in range(ntracers):
 print()
 print ("Fiducial biases of the mocks, and best-fit values from theory (for updating values in the input file, or HOD)")
 for nt in range(ntracers):
-    print ('Tracer ', nt, ': fiducial bias = ', np.around(bias[nt],3), ' ; best fit:', np.around(normmonos_mocks[nt]*bias[nt],3), ' (chi^2 = ', np.around(chi2_red_mocks[nt],3), ')')
+    print ('Tracer ', nt, ': fiducial bias = ', np.around(gal_bias[nt],3), ' ; best fit:', np.around(normmonos_mocks[nt]*gal_bias[nt],3), ' (chi^2 = ', np.around(chi2_red_mocks[nt],3), ')')
 print()
 
 try:
@@ -2454,12 +2516,12 @@ try:
 except:
     print ("Fiducial biases of the data, and best-fit values from theory (for updating values in the input file, or HOD)")
     for nt in range(ntracers):
-        print ('Tracer ', nt, ' -- data: fiducial bias = ', np.around(bias[nt],3), ' ; update this to:', np.around(normmonos_data[nt]*bias[nt],3), ' (chi^2 = ', np.around(chi2_red_data[nt],3), ')')
+        print ('Tracer ', nt, ' -- data: fiducial bias = ', np.around(gal_bias[nt],3), ' ; update this to:', np.around(normmonos_data[nt]*gal_bias[nt],3), ' (chi^2 = ', np.around(chi2_red_data[nt],3), ')')
 
 print()
 print ("Quick update bias (from MT estimator):")
 for nt in range(ntracers):
-    print (np.around(normmonos_mocks[nt]*bias[nt],3))
+    print (np.around(normmonos_mocks[nt]*gal_bias[nt],3))
 
 sys.exit(-1)
 
