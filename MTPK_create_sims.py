@@ -62,10 +62,10 @@ small = 1.e-6
 #####################################################
 from MTPK import *
 
-print
-print 'Multi-tracer lognormal simulations tool'
-print 'Handle of this run of sims: ', handle_sims
-print
+print()
+print ('Multi-tracer lognormal simulations tool')
+print ('Handle of this run of sims: ', handle_sims)
+print()
 
 input_filename = glob.glob('inputs/' + handle_sims + '.py')
 if len(input_filename)==0 :
@@ -82,34 +82,34 @@ dir_maps = 'maps/sims/' + handle_sims
 if not os.path.exists(dir_maps):
     os.makedirs(dir_maps)
 elif len(os.listdir(dir_maps)) != 0:
-    print
-    print 'Simulated maps were already created with this handle/name, on:'
-    print dir_maps
-    print
+    print()
+    print ('Simulated maps were already created with this handle/name, on:')
+    print( dir_maps)
+    print()
     answer = raw_input('Continuing will overwrite those files. Proceed? y/n  ')
     if answer != 'y':
-        print 'Aborting now...'
-        print
+        print( 'Aborting now...')
+        print()
         sys.exit(-1)
 
 dir_specs = 'spectra/' + handle_sims
 if not os.path.exists(dir_specs):
     os.makedirs(dir_specs)
 elif len(os.listdir(dir_specs)) != 0:
-    print 'WARNING: another run with the same handle/name was already performed!'
+    print( 'WARNING: another run with the same handle/name was already performed!')
     answer = raw_input('Check specs/ . Continue anyway? y/n  ')
     if answer!='y':
-        print 'Aborting now...'
+        print ('Aborting now...')
         sys.exit(-1)
 
 dir_figs = 'figures/' + handle_sims
 if not os.path.exists(dir_figs):
     os.makedirs(dir_figs)
 if len(os.listdir(dir_figs)) != 0:
-    print 'WARNING: another run with the same handle/name was already performed!'
+    print( 'WARNING: another run with the same handle/name was already performed!')
     answer = raw_input('Check figures/ . Continue anyway? y/n  ')
     if answer!='y':
-        print 'Aborting now...'
+        print ('Aborting now...')
         sys.exit(-1)
 
 # Import inputs
@@ -132,23 +132,23 @@ exec "from " + handle_sims + " import *"
 try:
     t = GObject.type_from_name ("NcHICosmoDEXcdm")
     cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDEXcdm")
-    print "Attention! NumCosmo method NcHICosmoDEXcdm does not allow dynamical dark energy!"
+    print( "Attention! NumCosmo method NcHICosmoDEXcdm does not allow dynamical dark energy!")
 except:
-    print "Did not find NumCosmo method NcHICosmoDEXcdm. Trying another..."
+    print( "Did not find NumCosmo method NcHICosmoDEXcdm. Trying another...")
 
 try:
     t = GObject.type_from_name ("NcHICosmoDELinder")
     cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDELinder")
-    print "Found NumCosmo method NcHICosmoDELinder."
+    print ("Found NumCosmo method NcHICosmoDELinder.")
 except:
-    print "Did not find NumCosmo method NcHICosmoDELinder."
+    print( "Did not find NumCosmo method NcHICosmoDELinder.")
 
 try:
     t = GObject.type_from_name ("NcHICosmoDECpl")
     cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDECpl")
-    print "Found NumCosmo method NcHICosmoDECpl."
+    print ("Found NumCosmo method NcHICosmoDECpl.")
 except:
-    print "Did not find NumCosmo method NcHICosmoDECpl."
+    print( "Did not find NumCosmo method NcHICosmoDECpl.")
 
 
 cosmo.omega_x2omega_k ()
@@ -275,8 +275,8 @@ try:
     mass_fun = np.loadtxt("inputs/" + mass_fun_file)
     halo_bias = np.loadtxt("inputs/" + halo_bias_file)
 except:
-    print "Something's wrong... did not find HOD, mass function and/or halo bias files!"
-    print "Check in the /inputs directory. Aborting now..."
+    print( "Something's wrong... did not find HOD, mass function and/or halo bias files!")
+    print( "Check in the /inputs directory. Aborting now...")
     sys.exit(-1)
 
 mass_fun = mult_sel_fun*mass_fun
@@ -328,7 +328,7 @@ else:
     print('using power spectrum from CLASS + HaloFit with PkEqual')
 
 print('Creating ' + str(n_maps) + ' simulated map(s) for each tracer, of (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'), of cell_size=' + str(cell_size))
-print
+print()
 
 print('Halo biases =' + str(bias))
 #print('Gaussian Photo-z errors (added in Fourier space)='+str(sigz_map))
@@ -367,10 +367,10 @@ kyhat = ((grid.KY)/(grid.grid_k+small))
 kzhat = ((grid.KZ)/(grid.grid_k+small))
 
 # Sometimes only need 1/2 of the modes for real-valued functions
-kxhat_half = kxhat[:,:,:n_z/2+1]
-kyhat_half = kyhat[:,:,:n_z/2+1]
-kzhat_half = kzhat[:,:,:n_z/2+1]
-k_half  = grid.grid_k[:,:,:n_z/2+1]
+kxhat_half = kxhat[:,:,:n_z//2+1]
+kyhat_half = kyhat[:,:,:n_z//2+1]
+kzhat_half = kzhat[:,:,:n_z//2+1]
+k_half  = grid.grid_k[:,:,:n_z//2+1]
 
 
 p_mono = np.zeros((ntracers,ntracers,nk))
@@ -464,10 +464,10 @@ print('Now generating the maps...')
 maps=np.zeros((ntracers,n_maps,n_x,n_y,n_z))
 lnmaps=np.zeros((ntracers,n_maps,n_x,n_y,n_z))
 
-lnmaps_fourier=(0.+1j*0.0)*np.zeros((ntracers,n_maps,n_x,n_y,n_z/2+1))
-lnmaps_fourier_rsds=(0.+1j*0.0)*np.zeros((ntracers,n_maps,n_x,n_y,n_z/2+1))
-lnmaps_Bterm_fourier=(0.+1j*0.0)*np.zeros((ntracers,n_maps,n_x,n_y,n_z/2+1))
-lnmaps_halos_fourier=(0.+1j*0.0)*np.zeros((ntracers,n_maps,n_x,n_y,n_z/2+1))
+lnmaps_fourier=(0.+1j*0.0)*np.zeros((ntracers,n_maps,n_x,n_y,n_z//2+1))
+lnmaps_fourier_rsds=(0.+1j*0.0)*np.zeros((ntracers,n_maps,n_x,n_y,n_z//2+1))
+lnmaps_Bterm_fourier=(0.+1j*0.0)*np.zeros((ntracers,n_maps,n_x,n_y,n_z//2+1))
+lnmaps_halos_fourier=(0.+1j*0.0)*np.zeros((ntracers,n_maps,n_x,n_y,n_z//2+1))
 
 delta_k_tracer = (0.+1j*0.0)*np.zeros((ntracers,n_maps,n_x,n_y,n_z))
 
@@ -477,7 +477,7 @@ kr0 = 2.*np.pi*np.mean(grid.grid_k)*np.mean(rL0)
 
 # Create sets of Gaussian modes, and maps of tracers for those modes
 for i in range(n_maps):
-    print 'Map #', i 
+    print( 'Map #', i) 
     phases = np.exp(1j*2.0*np.pi*np.random.rand(n_x,n_y,n_z) )
     # Testing
     X_mu_k = phases*np.random.normal(0.,np.ones((ntracers,n_x,n_y,n_z)))
@@ -588,8 +588,8 @@ for i in range(n_maps):
         lnmaps[nt,i] = delta_xr
 
     frac = halodensity/nbar*cell_size**3
-    print '    densities true/fiducial = ', [ "{:1.4f}".format(x) for x in frac ]
-    print
+    print( '    densities true/fiducial = ', [ "{:1.4f}".format(x) for x in frac ])
+    print()
 
 pch = None
 del pch
@@ -597,7 +597,7 @@ del pch
 pch_kgrid = None
 del pch_kgrid
 
-print
+print()
 print('Computing spectral corrections to lognormal maps...')
 # Compare input spectrum with spectra of lognormal maps (before RSDs!)
 # normalization from Fourier transform to power spectra
@@ -612,7 +612,7 @@ del lnmaps_halos_fourier
 # Spectrum in real (not redshift) space, <delta_k^2>:
 Pk_ln_norm = Fnorm * np.average( np.power(np.abs(lnmaps_fourier),2) , axis=1 )
 
-Cross_Pk_ln_norm = np.zeros((ntracers*(ntracers-1)/2,n_x,n_y,n_z/2+1))
+Cross_Pk_ln_norm = np.zeros((ntracers*(ntracers-1)//2,n_x,n_y,n_z//2+1))
 index=0
 for i in range(ntracers):
 	for j in range(i+1,ntracers):
@@ -628,7 +628,7 @@ del lnmaps_fourier
 #              --> (b^2 + 2/3*b*f + 1/5*f^2) * P(k)
 Pk_ln_Mono_norm = Fnorm * np.average( np.abs(lnmaps_fourier_rsds)**2 , axis=1 )
 
-Cross_Pk_ln_Mono_norm = np.zeros((ntracers*(ntracers-1)/2,n_x,n_y,n_z/2+1))
+Cross_Pk_ln_Mono_norm = np.zeros((ntracers*(ntracers-1)//2,n_x,n_y,n_z//2+1))
 index=0
 for i in range(ntracers):
 	for j in range(i+1,ntracers):
@@ -640,7 +640,7 @@ for i in range(ntracers):
 #              --> 8/5*(b*f/3 + f^2/7) * P(k)
 Pk_ln_Quad_norm = Fnorm * np.average( (lnmaps_fourier_rsds*np.conjugate(lnmaps_Bterm_fourier)).real , axis=1 ) - Pk_ln_Mono_norm
 
-Cross_Pk_ln_Quad_norm = np.zeros((ntracers*(ntracers-1)/2,n_x,n_y,n_z/2+1))
+Cross_Pk_ln_Quad_norm = np.zeros((ntracers*(ntracers-1)//2,n_x,n_y,n_z//2+1))
 index=0
 for i in range(ntracers):
 	for j in range(i+1,ntracers):
@@ -732,8 +732,8 @@ for nt in range(ntracers):
     quad_box_interp[nt] = b[nt]**2 * (3*mu2_interp - 1.0 + 2*beta[nt]*( 3*mu4_interp - mu2_interp ) + beta[nt]**2*(3*mu6_interp - mu4_interp))
 
 # Cross spectra -- used for the "theory" values on the box
-crossmono_box_interp = np.zeros((ntracers*(ntracers-1)/2,len(mu2_interp)))
-crossquad_box_interp = np.zeros((ntracers*(ntracers-1)/2,len(mu2_interp)))
+crossmono_box_interp = np.zeros((ntracers*(ntracers-1)//2,len(mu2_interp)))
+crossquad_box_interp = np.zeros((ntracers*(ntracers-1)//2,len(mu2_interp)))
 index=0
 for nt in range(ntracers):
 	for ntp in range(nt+1,ntracers):
@@ -794,11 +794,11 @@ quad_box_theory = np.zeros((ntracers+1,len(k_interp)))
 quad_box_theory[0]=k_interp
 
 # For the cross spectra, do not include vector of k's
-crossmono_box_model = np.zeros((ntracers*(ntracers-1)/2,len(k_interp)))
-crossquad_box_model = np.zeros((ntracers*(ntracers-1)/2,len(k_interp)))
+crossmono_box_model = np.zeros((ntracers*(ntracers-1)//2,len(k_interp)))
+crossquad_box_model = np.zeros((ntracers*(ntracers-1)//2,len(k_interp)))
 
-crossmono_box_theory = np.zeros((ntracers*(ntracers-1)/2,len(k_interp)))
-crossquad_box_theory = np.zeros((ntracers*(ntracers-1)/2,len(k_interp)))
+crossmono_box_theory = np.zeros((ntracers*(ntracers-1)//2,len(k_interp)))
+crossquad_box_theory = np.zeros((ntracers*(ntracers-1)//2,len(k_interp)))
 
 
 cm_subsection = np.linspace(0, 1, ntracers)
@@ -906,14 +906,14 @@ theory_flatsky_quad = 8./5.*(1./3.*b*f + 1./7.*f**2)
 map_mono = np.average(mono_box_model[1:,ks_interest]/Pk_camb_interp[ks_interest],axis=1)
 map_quad = np.average(quad_box_model[1:,ks_interest]/Pk_camb_interp[ks_interest],axis=1)
 
-print '################'
-print '# Some diagnostics'
-print '# Theory (flat sky) monopoles:', [ "{:2.4f}".format(x) for x in theory_flatsky_mono]
-print '# Real monopoles of sim. maps:', [ "{:2.4f}".format(x) for x in map_mono]
-print '# '
-print '# Theory (flat sky) quadrupoles:', [ "{:2.4f}".format(x) for x in theory_flatsky_quad]
-print '# Real quadrupoles of sim. maps:', [ "{:2.4f}".format(x) for x in map_quad]
-print '################'
+print( '################')
+print('# Some diagnostics')
+print('# Theory (flat sky) monopoles:', [ "{:2.4f}".format(x) for x in theory_flatsky_mono])
+print('# Real monopoles of sim. maps:', [ "{:2.4f}".format(x) for x in map_mono])
+print('# ')
+print('# Theory (flat sky) quadrupoles:', [ "{:2.4f}".format(x) for x in theory_flatsky_quad])
+print('# Real quadrupoles of sim. maps:', [ "{:2.4f}".format(x) for x in map_quad])
+print('################')
 
 
 # Save input parameters for bookkeeping

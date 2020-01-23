@@ -6,6 +6,7 @@ Initial code started by Arthur E. da Mota Loureiro, 04/2015
 Additonal changes by R. Abramo 07/2015, 02/2016
 Added multi-tracer generalization and other changes, 03-12/2016
 Added Halo Model generalization and other changes, 01/2018
+Added cross-spectra -- Francisco Maion, 01/2020
 ------------
 """
 
@@ -43,8 +44,8 @@ from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import vstack
 
+# My classes -- functions used by the MTPK suite
 import fkp_multitracer as fkpmt
-#import fkp_class_multipoles as fkp
 import fkp_class as fkp  # This is the new class, which computes auto- and cross-spectra
 import gauss_pk_class as pkgauss
 import pk_multipoles_gauss as pkmg
@@ -69,56 +70,6 @@ Ncm.cfg_init ()
 small=1.e-8
 
 
-#####
-# OLD!!! Must be removed in next version
-#
-# Monopole including Doppler dipole and Gaussian photo-z
-# Returns an array for each value of k(physical)
-#def monophotogauss(b_,d_,f_,ks_):
-    # This is the monopole with a Gaussian PDF photo-z with variance sigma, ks == k*sigma_r
-    # The expression has a bad convergence for ks << 1, so we split this into ks <= 0.03 and ks > 0.03
-#    k1=ks_[ks_ <= 0.03]
-#    k2=ks_[ks_ > 0.03]
-#    d1=d_[ks_ <= 0.03]
-#    d2=d_[ks_ > 0.03]
-#    m1 = (b_**2 + d1**2/3.0 + (2.0*b_*f_)/3.0 + f_**2/5.0)*np.power(k1,0.0)
-#    t1 = -6.0*f_**2*k2 - 4.0*(d2**2 + f_*(2.0*b_+f_))*np.power(k2,3.0)
-#    t2 = 3.0*f_**2 + 2.0*(d2**2+2.0*b_*f_)*k2**2 + 4.0*b_**2*np.power(k2,4)
-#    m2 = (1./(8.0*np.power(k2,5)))*( np.exp(-k2**2)*t1 + np.sqrt(np.pi)*special.erf(k2)*t2 )
-#    m12 = np.concatenate((m1,m2))
-#    return m12
-
-# Quadrupole including Doppler dipole and Gaussian photo-z
-# Returns an array for each value of k(physical)
-#def quadphotogauss(b_,d_,f_,ks_):
-#    # This is the quadrupole with a Gaussian PDF photo-z with variance sigma, ks == k*sigma_r
-#    k1 = ks_[ks_ <= 0.03]
-#    k2 = ks_[ks_ > 0.03]
-#    d1=d_[ks_ <= 0.03]
-#    d2=d_[ks_ > 0.03]
-#    q1 = (2.0*d1**2/3.0 + 4.0*b_*f_/3.0 + 4.0*f_**2/7.0)*np.power(k1,0.0)
-#    # t1= 45 f^2 - 6 (-3 d^2 + f (-6 b + f)) ks^2 - 4 (-3 b^2 + d^2 + 2 b f) ks^4 - 8 b^2 ks^6
-#    t1= 45.0*f_**2 - 6.0*(-3.0*d2**2+f_*(-6.0*b_+f_))*k2**2 - 4.0*(-3.0*b_**2 + d2**2 + 2.0*b_*f_)*np.power(k2,4) - 8.0*b_**2*np.power(k2,6)
-#    # t2= -90 f^2 ks - 12 (3 d^2 + 6 b f + 4 f^2) ks^3 - 8 (3 b^2 + 4 b f + 2 (d^2 + f^2)) ks^5
-#    t2= - 90.0*f_**2*k2 - 12.0*(3.0*d2**2+6.0*b_*f_+4.0*f_**2)*np.power(k2,3) - 8.0*(3.0*b_**2+4.0*b_*f_+2.0*(d2**2+f_**2))*np.power(k2,5)
-#    q2 = 5./(32.0*np.power(k2,7))*( np.sqrt(np.pi)*special.erf(k2)*t1 + np.exp(-k2**2)*t2 )
-#    q12 = np.concatenate((q1,q2))
-#    return q12
-
-# Effective bias == SQRT[Monopole], including Doppler dipole and Gaussian photo-z.
-# Returnos a *single* value, corresponding to the "central" value of k(physical)
-#def effbiasgauss(b_,d_,f_,ks_):
-#    # This is the monopole with a Gaussian PDF photo-z with variance sigma, ks == k*sigma_r
-#    # The expression has a bad convergence for ks << 1, so we split this into ks <= 0.03 and ks > 0.03
-#    if ks_ <= 0.03:
-#        m = np.sqrt(b_**2 + d_**2/3.0 + (2.0*b_*f_)/3.0 + f_**2/5.0)
-#    else:
-#        m1 = (b_**2 + d_**2/3.0 + (2.0*b_*f_)/3.0 + f_**2/5.0)
-#        t1 = -6.0*f_**2*np.power(ks_,1.0) - 4.0*(d_**2 + f_*(2.0*b_+f_))*ks_**3
-#        t2 = 3.0*f_**2 + 2.0*(d_**2+2.0*b_*f_)*ks_**2 + 4.0*b_**2*ks_**4
-#        m = np.sqrt(np.abs((1./(8.0*ks_**5))*( np.exp(-ks_**2)*t1
-#                                              + np.sqrt(np.pi)*special.erf(ks_)*t2 )))
-#    return m
 
 # Bias computed given the monopole and quadrupole.
 # Returns a single value
@@ -136,9 +87,6 @@ def est_f(m,q):
     return 0.25*np.sqrt(7./3.)*np.sqrt(35*m+5*q-np.sqrt(35.)*delta)
 
 
-#####################################################
-#####################################################
-#####################################################
 
 
 #####################################################
@@ -148,13 +96,13 @@ from MTPK import *
 
 
 ###################
-print
-print
-print 'This is the Multi-tracer power spectrum estimator'
+print()
+print()
+print( 'This is the Multi-tracer power spectrum estimator')
 
-print
-print 'Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates
-print
+print()
+print('Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates)
+print()
 
 # Load those properties
 input_filename = glob.glob('inputs/*' + handle_estimates + '.py')
@@ -163,7 +111,7 @@ if (len(input_filename)==0) or (len(input_filename)>2) :
     print ('Check on /inputs.  Aborting now...')
     sys.exit(-1)
 
-exec "from " + handle_estimates + " import *"
+exec ("from " + handle_estimates + " import *")
 
 # Directory with data and simulated maps
 dir_maps = 'maps/sims/' + handle_sims
@@ -190,47 +138,46 @@ dir_figs  += '/k=' + strkph
 # If directories do not exist, create them now...
 if not os.path.exists(dir_specs):
     os.makedirs(dir_specs)
-elif len(os.listdir(dir_specs)) != 0:
-    print 'Directory ', dir_specs, 'exists!'
+else:
+    print ('Directory ', dir_specs, 'exists!')
     # print [name for name in os.listdir(dir_specs)]
-    answer = raw_input('Continue anyway? y/n  ')
+    answer = input('Continue anyway? y/n  ')
     if answer!='y':
-        print 'Aborting now...'
+        print ('Aborting now...')
         sys.exit(-1)
 
 if not os.path.exists(dir_figs):
     os.makedirs(dir_figs)
-if len(os.listdir(dir_figs)) != 0:
-    print 'Directory ', dir_figs , 'exists!'
+else:
+    print ('Directory ', dir_figs , 'exists!')
     # print [name for name in os.listdir(dir_figs)]
-    answer = raw_input('Continue anyway? y/n  ')
+    answer = input('Continue anyway? y/n  ')
     if answer!='y':
-        print 'Aborting now...'
+        print ('Aborting now...')
         sys.exit(-1)
 
 
-# load standard NumCosmo parameters
-#cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDEXcdm")
+# load NumCosmo models
 try:
     t = GObject.type_from_name ("NcHICosmoDEXcdm")
     cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDEXcdm")
-    print "Attention! NumCosmo method NcHICosmoDEXcdm does not allow dynamical dark energy!"
+    print ("Attention! NumCosmo method NcHICosmoDEXcdm does not allow dynamical dark energy!")
 except:
-    print "Did not find NumCosmo method NcHICosmoDEXcdm. Trying another..."
+    print ("Did not find NumCosmo method NcHICosmoDEXcdm. Trying another...")
 
 try:
     t = GObject.type_from_name ("NcHICosmoDELinder")
     cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDELinder")
-    print "Found NumCosmo method NcHICosmoDELinder."
+    print ("Found NumCosmo method NcHICosmoDELinder.")
 except:
-    print "Did not find NumCosmo method NcHICosmoDELinder."
+    print ("Did not find NumCosmo method NcHICosmoDELinder.")
 
 try:
     t = GObject.type_from_name ("NcHICosmoDECpl")
     cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDECpl")
-    print "Found NumCosmo method NcHICosmoDECpl."
+    print ("Found NumCosmo method NcHICosmoDECpl.")
 except:
-    print "Did not find NumCosmo method NcHICosmoDECpl."
+    print ("Did not find NumCosmo method NcHICosmoDECpl.")
 
 
 cosmo.omega_x2omega_k ()
@@ -249,10 +196,6 @@ cosmo.add_submodel (reion)
 cosmo.add_submodel (prim)
 
 
-# Distances from NumCosmo
-dist = Nc.Distance.new(1.0)
-dist.prepare(cosmo)
-
 # Growth rate and its derivative
 grow = Nc.GrowthFunc.new()
 grow.prepare(cosmo)
@@ -268,11 +211,8 @@ try:
 except:
     matgrowcentral = - (1.0 + zcentral)/G*dG
 else:
-    print 'ATTENTION: pre-defined (on input) matter growth rate =' , matgrowcentral
+    print ('ATTENTION: pre-defined (on input) matter growth rate =' , matgrowcentral)
 
-# Inverse Hubble function, c/H(z), in units of h^-1 Mpc
-#def hubrad(z):
-#    return 2998.7*cosmo.H0()/cosmo.H(z)
 
 # NumCosmo: power spectrum from CLASS backend
 k_min = 1.0e-5
@@ -350,7 +290,7 @@ pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
 #
 # The main difference is that, when using halos directly, we do not re-sample the original halo maps
 if do_galaxies:
-    print "Attention: forming galaxy mocks from a mass function, HOD & halo bias."
+    print ("Attention: forming galaxy mocks from a mass function, HOD & halo bias.")
     try:
         hod = np.loadtxt("inputs/" + hod_file)
         if len(hod.shape) < 2:
@@ -379,19 +319,19 @@ if do_galaxies:
         bias = np.dot(hod,halo_bias*mass_fun)/np.dot(hod,mass_fun)
 
     except:
-        print "Something's wrong... did not find HOD and/or mass function!"
-        print "Check in the /inputs directory. Aborting now..."
+        print ("Something's wrong... did not find HOD and/or mass function!")
+        print ("Check in the /inputs directory. Aborting now...")
         sys.exit(-1)
 else:
-    print "Using fiducial biases for the tracers directly from the input file:"
+    print ("Using fiducial biases for the tracers directly from the input file:")
     try:
         mass_fun = mult_sel_fun * np.loadtxt("inputs/" + mass_fun_file)
         halo_bias = np.loadtxt("inputs/" + halo_bias_file)
         bias = np.asarray(halo_bias)
     except:
-	print
-        print "Could not find halo mass function or/and halo bias values from input files!"
-        print "Aborting now..."
+        print()
+        print ("Could not find halo mass function or/and halo bias values from input files!")
+        print ("Aborting now...")
         sys.exit(-1)
 
 
@@ -409,14 +349,14 @@ grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)
 if sel_fun_data:
     try:
         h5map = h5py.File(dir_data + '/' + sel_fun_file,'r')
-        h5data = h5map.get(h5map.keys()[0])
+        h5data = h5map.get(list(h5map.keys())[0])
         n_bar_matrix_fid = np.asarray(h5data,dtype='float32')
         n_bar_matrix_fid = np.asarray(mult_sel_fun*(n_bar_matrix_fid + shift_sel_fun),dtype='float32')
         h5map.close
     except:
-        print 'Could not find file with data selection function!'
-        print 'Check your directory ', dir_data
-        print 'Aborting now...'
+        print ('Could not find file with data selection function!')
+        print ('Check your directory ', dir_data)
+        print ('Aborting now...')
         sys.exit(-1)
     if (np.shape(n_bar_matrix_fid)[1] != n_x) or (np.shape(n_bar_matrix_fid)[2] != n_y) or (np.shape(n_bar_matrix_fid)[3] != n_z):
         print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
@@ -437,7 +377,7 @@ else:
     if do_galaxies:
         # Use analytical fit for selection function, from selection_function.py
         from selection_function_multitracer import *
-        print "Att.: using analytical selection function for galaxies (check parameters in input file)."
+        print ("Att.: using analytical selection function for galaxies (check parameters in input file).")
         nbar = mult_sel_fun*gal_densities_cell
         if (len(bias) != ngals) or (len(nbar) != ngals) or (len(ncentral) != ngals) or (len(nsigma) != ngals) or (len(bias) != ngals) or (len(adip) != ngals):
             print ('Inputs (bias, sel. function parameters, etc.) must all have lengths equal to the number of tracers = ' , ngals, ' !')
@@ -454,16 +394,16 @@ else:
             mass_fun = mult_sel_fun*np.asarray(np.loadtxt("inputs/" + mass_fun_file))
             halo_bias = np.asarray(np.loadtxt("inputs/" + halo_bias_file))
             bias = halo_bias
-            print "Using halo mass function and halo bias from input files"
+            print ("Using halo mass function and halo bias from input files")
         except:
-            print "Could not find either halo mass function or/and halo bias files on inputs/ !"
-            print "Please check. Aborting now..."
-	    sys.exit(-1)
+            print ("Could not find either halo mass function or/and halo bias files on inputs/ !")
+            print ("Please check. Aborting now...")
+        sys.exit(-1)
         # N.B.: the mass function is given in units of h^3 Mpc^-3 !
         # nbar below is in cell units
         halo_densities_cell = np.asarray(mass_fun)*(cell_size)**3
         nbar = mult_sel_fun*np.asarray(mass_fun)*(cell_size)**3
-        print "Att.: using constant selection function for halos, with n_bar(halos) =", nbar
+        print ("Att.: using constant selection function for halos, with n_bar(halos) =", nbar)
         n_bar_matrix_fid = np.zeros((nhalos,n_x,n_y,n_z),dtype='float32')
         for nh in range(nhalos):
             n_bar_matrix_fid[nh] = nbar[nh]*np.ones((n_x,n_y,n_z))
@@ -473,45 +413,45 @@ else:
 if sims_only:
     mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
     if len(mapnames_sims)==0 :
-        print
-        print 'Simulated map files not found! Check input simulation files.'
-        print 'Exiting program...'
-        print
+        print()
+        print ('Simulated map files not found! Check input simulation files.')
+        print ('Exiting program...')
+        print ()
         sys.exit(-1)
     if len(mapnames_sims) != n_maps :
-        print 'You are using', n_maps, ' mocks out of the existing', len(mapnames_sims)
-	answer = raw_input('Continue anyway? y/n  ')
-	if answer!='y':
-            print 'Aborting now...'
-            sys.exit(-1)
-    print 'Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps
+        print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
+    answer = input('Continue anyway? y/n  ')
+    if answer!='y':
+        print ('Aborting now...')
+        sys.exit(-1)
+    print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
 else:
     mapnames_data = glob.glob(dir_data + '/*DATA.hdf5')
     if len(mapnames_data) > 1 :
-        print
-        print 'Only one DATA map file supported. Check /inputs and /maps.'
-        print 'Exiting program...'
-        print
+        print()
+        print( 'Only one DATA map file supported. Check /inputs and /maps.')
+        print( 'Exiting program...')
+        print ()
         sys.exit(-1)
     mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
     if (len(mapnames_sims)==0) or (len(mapnames_data)==0) :
-        print
-        print 'SIMS or DATA map files not found! Check MTPK.py, /inputs and /maps.'
-        print 'Exiting program...'
-        print
+        print()
+        print ('SIMS or DATA map files not found! Check MTPK.py, /inputs and /maps.')
+        print ('Exiting program...')
+        print()
         sys.exit(-1)
 
     mapnames_data = mapnames_data[0]
-    print 'Will use the data maps contained in the file:'
-    print '     ' + mapnames_data
-    print 'and the N =', n_maps , ' simulated maps contained contained in directory', dir_maps
+    print ('Will use the data maps contained in the file:')
+    print ('     ' + mapnames_data)
+    print ('and the N =', n_maps , ' simulated maps contained contained in directory', dir_maps)
     # read data box (all galaxy types)
     h5map = h5py.File(mapnames_data,'r')
-    data_maps = np.asarray(h5map.get(h5map.keys()[0]))
+    data_maps = np.asarray(h5map.get(list(h5map.keys())[0]))
     h5map.close
     if not data_maps.shape == (ngals,n_x,n_y,n_z):
-        print 'Unexpected shape of data maps:', data_maps.shape
-        print 'Please check again. Aborting now...'
+        print ('Unexpected shape of data maps:', data_maps.shape)
+        print ('Please check again. Aborting now...')
         sys.exit(-1)
 
 
@@ -526,21 +466,21 @@ except:
     pass
 
 
-print
-print 'Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc'
+print ()
+print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
 
 
-print
+print()
 if whichspec == 0:
-    print 'Using LINEAR power spectrum from CLASS'
+    print ('Using LINEAR power spectrum from CLASS')
 elif whichspec == 1:
-    print 'Using power spectrum from CLASS + HaloFit'
+    print ('Using power spectrum from CLASS + HaloFit')
 else:
-    print 'Using power spectrum from CLASS + HaloFit with PkEqual'
+    print ('Using power spectrum from CLASS + HaloFit with PkEqual')
 
-print
-print '----------------------------------'
-print
+print()
+print ('----------------------------------')
+print()
 
 #####################################################
 # Import the map (s), and if necessary reshape it
@@ -598,13 +538,13 @@ try:
     k_corr = halo_spec_corr[:,0]
     nks = len(k_corr)
 except:
-    print
-    print "Did not find spectral corrections and theory spectra on directory:"
-    print dir_spec_corr_sims
-    print "[Sometimes these files are created by the lognormal map-creating tool.]"
-    print "Will assume spectral corrections are all unity, in the interval k_phys: [0,1],"
-    print "and that monopoles and quadrupoles are from linear bias + RSD model, with CAMB spectrum."
-    print
+    print()
+    print ("Did not find spectral corrections and theory spectra on directory:")
+    print (dir_spec_corr_sims)
+    print ("[Sometimes these files are created by the lognormal map-creating tool.]")
+    print ("Will assume spectral corrections are all unity, in the interval k_phys: [0,1],")
+    print ("and that monopoles and quadrupoles are from linear bias + RSD model, with CAMB spectrum.")
+    print()
     k_corr = k_camb
     nks = len(k_camb)
     halo_spec_corr = np.ones((nks,nhalos+1))
@@ -616,10 +556,10 @@ except:
     halo_quad_model[:,0]=k_camb
     halo_mono_theory[:,0]=k_camb
     halo_mono_theory[:,0]=k_camb
-    halo_crossmono_model = np.ones((nks,nhalos*(nhalos-1)/2))
-    halo_crossquad_model = np.ones((nks,nhalos*(nhalos-1)/2))
-    halo_crossmono_theory = np.ones((nks,nhalos*(nhalos-1)/2))
-    halo_crossquad_theory = np.ones((nks,nhalos*(nhalos-1)/2))
+    halo_crossmono_model = np.ones((nks,nhalos*(nhalos-1)//2))
+    halo_crossquad_model = np.ones((nks,nhalos*(nhalos-1)//2))
+    halo_crossmono_theory = np.ones((nks,nhalos*(nhalos-1)//2))
+    halo_crossquad_theory = np.ones((nks,nhalos*(nhalos-1)//2))
 
     index=0
     for nt in range(nhalos):
@@ -632,6 +572,7 @@ except:
             halo_crossmono_theory[:,index] = cross_monopoles[index]*Pk_camb
             halo_crossquad_model[:,index] = cross_quadrupoles[index]*Pk_camb
             halo_crossquad_theory[:,index] = cross_quadrupoles[index]*Pk_camb
+            index += 1
 
     #sys.exit(-1)
 
@@ -643,26 +584,26 @@ halo_mono_theory = halo_mono_theory[:,1:]
 halo_quad_theory = halo_quad_theory[:,1:]
 
 # NOW INCLUDING CROSS-CORRELATIONS
-all_halo_monopoles_model = np.zeros((ntracers,ntracers,nks))
-all_halo_quadrupoles_model = np.zeros((ntracers,ntracers,nks))
-all_halo_monopoles_theory = np.zeros((ntracers,ntracers,nks))
-all_halo_quadrupoles_theory = np.zeros((ntracers,ntracers,nks))
+all_halo_monopoles_model = np.zeros((nks,nhalos,nhalos))
+all_halo_quadrupoles_model = np.zeros((nks,nhalos,nhalos))
+all_halo_monopoles_theory = np.zeros((nks,nhalos,nhalos))
+all_halo_quadrupoles_theory = np.zeros((nks,nhalos,nhalos))
 
 index=0
-for i in range(ntracers):
-	all_halo_monopoles_model[i,i] = halo_mono_model[:,i]
-	all_halo_monopoles_theory[i,i] = halo_mono_theory[:,i]
-	all_halo_quadrupoles_model[i,i] = halo_quad_model[:,i]
-	all_halo_quadrupoles_theory[i,i] = halo_quad_theory[:,i]
-	for j in range(i+1,ntracers):
-		all_halo_monopoles_model[i,j] = halo_crossmono_model[:,index]
-		all_halo_monopoles_theory[i,j] = halo_crossmono_theory[:,index]
-		all_halo_quadrupoles_model[i,j] = halo_crossquad_model[:,index]
-		all_halo_quadrupoles_theory[i,j] = halo_crossquad_theory[:,index]
-		all_halo_monopoles_model[j,i] = all_halo_monopoles_model[i,j] 
-		all_halo_monopoles_theory[j,i] = all_halo_monopoles_theory[i,j] 
-		all_halo_quadrupoles_model[j,i] = all_halo_quadrupoles_model[i,j] 
-		all_halo_quadrupoles_theory[j,i] = all_halo_quadrupoles_theory[i,j] 
+for i in range(nhalos):
+	all_halo_monopoles_model[:,i,i] = halo_mono_model[:,i]
+	all_halo_monopoles_theory[:,i,i] = halo_mono_theory[:,i]
+	all_halo_quadrupoles_model[:,i,i] = halo_quad_model[:,i]
+	all_halo_quadrupoles_theory[:,i,i] = halo_quad_theory[:,i]
+	for j in range(i+1,nhalos):
+		all_halo_monopoles_model[:,i,j] = halo_crossmono_model[:,index]
+		all_halo_monopoles_theory[:,i,j] = halo_crossmono_theory[:,index]
+		all_halo_quadrupoles_model[:,i,j] = halo_crossquad_model[:,index]
+		all_halo_quadrupoles_theory[:,i,j] = halo_crossquad_theory[:,index]
+		all_halo_monopoles_model[:,j,i] = all_halo_monopoles_model[:,i,j] 
+		all_halo_monopoles_theory[:,j,i] = all_halo_monopoles_theory[:,i,j] 
+		all_halo_quadrupoles_model[:,j,i] = all_halo_quadrupoles_model[:,i,j] 
+		all_halo_quadrupoles_theory[:,j,i] = all_halo_quadrupoles_theory[:,i,j] 
 
 
 if do_galaxies:
@@ -673,76 +614,76 @@ if do_galaxies:
     mono_theory = np.zeros((nks,ngals))
     quad_theory = np.zeros((nks,ngals))
 
-    cross_mono_model = np.zeros((nks,ngals*(ngals-1)/2))
-    cross_quad_model = np.zeros((nks,ngals*(ngals-1)/2))
-    cross_mono_theory = np.zeros((nks,ngals*(ngals-1)/2))
-    cross_quad_theory = np.zeros((nks,ngals*(ngals-1)/2))
+    cross_mono_model = np.zeros((nks,ngals*(ngals-1)//2))
+    cross_quad_model = np.zeros((nks,ngals*(ngals-1)//2))
+    cross_mono_theory = np.zeros((nks,ngals*(ngals-1)//2))
+    cross_quad_theory = np.zeros((nks,ngals*(ngals-1)//2))
 
-    # REDO THIS!!!!
-    x=np.sum(halo_bias*hod_delta,axis=1)
-    x2=np.sum(halo_bias**2*hod_delta,axis=1)
-    xdiff = x2 - x**2
     mat_pspec = np.interp(k_corr,k_camb,Pk_camb)
-    for ng in range(ngals):
-        spec_corr[:,ng+1] = np.dot(hod_delta[ng],halo_spec_corr.T)
-        mono_model[:,ng+1] = np.dot(hod_delta[ng],halo_mono_model.T) - 4*xdiff[ng]*mat_pspec
-        quad_model[:,ng+1] = np.dot(hod_delta[ng],halo_quad_model.T)
-        mono_theory[:,ng+1] = np.dot(hod_delta[ng],halo_mono_theory.T) - 4*xdiff[ng]*mat_pspec
-        quad_theory[:,ng+1] = np.dot(hod_delta[ng],halo_quad_theory.T)
+
+    spec_corr = np.dot( np.dot(hod_delta,halo_spec_corr), hod_delta.T)
+    all_mono_model = np.dot( np.dot(hod_delta,all_halo_monopoles_model), hod_delta.T)
+    all_mono_theory = np.dot( np.dot(hod_delta,all_halo_monopoles_theory), hod_delta.T)
+    all_quad_model = np.dot( np.dot(hod_delta,all_halo_quadrupoles_model), hod_delta.T)
+    all_quad_theory = np.dot( np.dot(hod_delta,all_halo_quadrupoles_theory), hod_delta.T)
+
+    index = 0
+    for i in range(ngals):
+        for j in range(i+1,ngals):
+            cross_mono_model[:,index] = all_mono_model[:,i,j]
+            cross_mono_theory[:,index] = all_mono_theory[:,i,j]
+            cross_quad_model[:,index] = all_quad_model[:,i,j]
+            cross_quad_theory[:,index] = all_quad_theory[:,i,j]
+            index += 1
+
+
 else:
+    spec_corr = np.zeros((nks,nhalos))
+
+    mono_model = np.zeros((nks,nhalos))
+    quad_model = np.zeros((nks,nhalos))
+    mono_theory = np.zeros((nks,nhalos))
+    quad_theory = np.zeros((nks,nhalos))
+
+    cross_mono_model = halo_crossmono_model
+    cross_quad_model = halo_crossquad_model
+    cross_mono_theory = halo_crossmono_theory
+    cross_quad_theory = halo_crossquad_theory
+
     spec_corr = halo_spec_corr
-    mono_model = halo_mono_model
-    quad_model = halo_quad_model
-    mono_theory = halo_mono_theory
-    quad_theory = halo_quad_theory
-
-
-
-#####################
-##
-##
-#
-#		OLD!!!
-# Now we compute the lognormal spectral corrections to the ***galaxy*** maps
-# from the halo spectral corrections, with the help of hod_delta.
-#
-# if do_galaxies:
-#     spec_corr = np.zeros((nks,ngals+1))
-#     mono_model = np.zeros((nks,ngals+1))
-#     quad_model = np.zeros((nks,ngals+1))
-#     mono_theory = np.zeros((nks,ngals+1))
-#     quad_theory = np.zeros((nks,ngals+1))
-#     x=np.sum(halo_bias*hod_delta,axis=1)
-#     x2=np.sum(halo_bias**2*hod_delta,axis=1)
-#     xdiff = x2 - x**2
-#     mat_pspec = np.interp(k_corr,k_camb,Pk_camb)
-#     for ng in range(ngals):
-#         spec_corr[:,ng+1] = np.dot(hod_delta[ng],halo_spec_corr[:,1:].T)
-#         mono_model[:,ng+1] = np.dot(hod_delta[ng],halo_mono_model[:,1:].T) - 4*xdiff[ng]*mat_pspec
-#         quad_model[:,ng+1] = np.dot(hod_delta[ng],halo_quad_model[:,1:].T)
-#         mono_theory[:,ng+1] = np.dot(hod_delta[ng],halo_mono_theory[:,1:].T) - 4*xdiff[ng]*mat_pspec
-#         quad_theory[:,ng+1] = np.dot(hod_delta[ng],halo_quad_theory[:,1:].T)
-# else:
-#     spec_corr = halo_spec_corr
-#     mono_model = halo_mono_model
-#     quad_model = halo_quad_model
-#     mono_theory = halo_mono_theory
-#     quad_theory = halo_quad_theory
-
-
-k_spec_corr = np.append(np.append(0.,k_corr),k_corr[-1] + dkph_bin )
-pk_ln_spec_corr = np.vstack((np.vstack((np.asarray(spec_corr[0]),np.asarray(spec_corr))),spec_corr[-1]))
-pk_ln_mono_model = np.vstack((np.vstack((np.asarray(mono_model[0]),np.asarray(mono_model))),mono_model[-1]))
-pk_ln_quad_model = np.vstack((np.vstack((np.asarray(quad_model[0]),np.asarray(quad_model))),quad_model[-1]))
-pk_ln_mono_theory = np.vstack((np.vstack((np.asarray(mono_theory[0]),np.asarray(mono_theory))),mono_theory[-1]))
-pk_ln_quad_theory = np.vstack((np.vstack((np.asarray(quad_theory[0]),np.asarray(quad_theory))),quad_theory[-1]))
-
+    all_mono_model = all_halo_monopoles_model
+    all_mono_theory = all_halo_monopoles_theory
+    all_quad_model = all_halo_quadrupoles_theory
+    all_quad_theory = all_halo_quadrupoles_theory
 
 # Now define which "tracers" we will use: galaxies, or halos
 if do_galaxies:
 	ntracers = ngals
 else:
 	ntracers = nhalos
+
+for ng in range(ntracers):
+    mono_model[:,ng] = all_mono_model[:,ng,ng]
+    quad_model[:,ng] = all_quad_model[:,ng,ng]
+    mono_theory[:,ng] = all_mono_theory[:,ng,ng]
+    quad_theory[:,ng] = all_quad_theory[:,ng,ng]
+
+
+
+k_spec_corr = np.append(np.append(0.,k_corr),k_corr[-1] + dkph_bin )
+pk_ln_spec_corr = np.vstack((np.vstack((np.asarray(spec_corr[0]),np.asarray(spec_corr))),spec_corr[-1]))
+
+pk_ln_mono_model = np.vstack((np.vstack((np.asarray(mono_model[0]),np.asarray(mono_model))),mono_model[-1]))
+pk_ln_quad_model = np.vstack((np.vstack((np.asarray(quad_model[0]),np.asarray(quad_model))),quad_model[-1]))
+
+pk_ln_mono_theory = np.vstack((np.vstack((np.asarray(mono_theory[0]),np.asarray(mono_theory))),mono_theory[-1]))
+pk_ln_quad_theory = np.vstack((np.vstack((np.asarray(quad_theory[0]),np.asarray(quad_theory))),quad_theory[-1]))
+
+cross_mono_model = np.vstack((np.vstack((np.asarray(cross_mono_model[0]),np.asarray(cross_mono_model))),cross_mono_model[-1]))
+cross_mono_theory = np.vstack((np.vstack((np.asarray(cross_mono_theory[0]),np.asarray(cross_mono_theory))),cross_mono_theory[-1]))
+
+cross_quad_model = np.vstack((np.vstack((np.asarray(cross_quad_model[0]),np.asarray(cross_quad_model))),cross_quad_model[-1]))
+cross_quad_theory = np.vstack((np.vstack((np.asarray(cross_quad_theory[0]),np.asarray(cross_quad_theory))),cross_quad_theory[-1]))
 
 
 
@@ -805,14 +746,12 @@ dk0 = dk_phys*cell_size/2.0/np.pi
 #  Physically, the maximal useful k is perhaps k =~ 0.3 h/Mpc (non-linear scale)
 np.set_printoptions(precision=3)
 
-print 'Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys
+print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
 
-print
-print '----------------------------------'
-print
+print()
+print ('----------------------------------')
+print()
 
-# We can limit the calculations to this maximal non-linear scale:
-# kmaxbar=np.min((kmaxbar,0.3/np.pi/2.0*cell_size))
 
 
 #R This line makes some np variables be printed with less digits
@@ -858,11 +797,11 @@ quad = 2*beta/(3.0 + beta)
 #R  (Remembering that 1/2 of the grid is redundant, since the maps are real-valued)
 #RR kflat=np.ndarray.flatten(grid.grid_k[:,:,:n_z/2-1])
 
-kflat=(np.ndarray.flatten(kgrid[:,:,:n_z/2+1]))
+kflat=(np.ndarray.flatten(kgrid[:,:,:n_z//2+1]))
 lenkf=len(kflat)
 
 
-print 'Central physical k values where spectra will be estimated:', kph_central
+print ('Central physical k values where spectra will be estimated:', kph_central)
 
 # Some nomenclature about outputs:
 # k in physical units
@@ -916,7 +855,7 @@ except:
 #R   1 when the value of (k,mu)/(k) belongs to the bin
 #R   0 if it does not
 
-print 'Initializing the k-binning matrix...'
+print ('Initializing the k-binning matrix...')
 tempor = time()
 
 #R Initialize first row of the M-matrices (vector of zeros)
@@ -965,20 +904,20 @@ del Mknew
 # Counts in each bin
 kkbar_counts = MRk.dot(np.ones(lenkf))
 
-print 'Done with k-binning matrices. Time cost: ', np.int((time()-tempor)*1000)/1000., 's'
-print 'Memory occupied by the binning matrix: ', MRk.nnz
+print ('Done with k-binning matrices. Time cost: ', np.int((time()-tempor)*1000)/1000., 's')
+print ('Memory occupied by the binning matrix: ', MRk.nnz)
 
 #print('Bin counts in k, using M(k):')
 #print(kkbar_counts[10:15])
 
 #R We defined "target" k's , but <k> on bins may be slightly different
 kkav=(((MRk*kflat))/(kkbar_counts+0.00001))
-print 'Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ]
-print 'The true mean of k for each bin is:', [ "{:1.4f}".format(x) for x in kkav[10:16:2] ]
-print
-print '----------------------------------'
-print
-print 'Now estimating the power spectra...'
+print ('Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ])
+print ('The true mean of k for each bin is:', [ "{:1.4f}".format(x) for x in kkav[10:16:2] ])
+print()
+print ('----------------------------------')
+print()
+print ('Now estimating the power spectra...')
 
 ######################################################################
 #R	FKP of the data to get the P_data(k) -- using MR and MRk
@@ -996,12 +935,33 @@ P0_theory=np.zeros((ntracers,pow_bins))
 P2_theory=np.zeros((ntracers,pow_bins))
 P0_model=np.zeros((ntracers,pow_bins))
 P2_model=np.zeros((ntracers,pow_bins))
+
+Cross_P0_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P2_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P0_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P2_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+
+index=0
 for i in range(ntracers):
     pk_ln_spec_corr_kbar[i] = np.interp(kph,k_spec_corr,pk_ln_spec_corr[:,i])
     P0_model[i] = np.interp(kph,k_spec_corr,pk_ln_mono_model[:,i])
     P2_model[i] = np.interp(kph,k_spec_corr,pk_ln_quad_model[:,i])
     P0_theory[i] = np.interp(kph,k_spec_corr,pk_ln_mono_theory[:,i])
     P2_theory[i] = np.interp(kph,k_spec_corr,pk_ln_quad_theory[:,i])
+    for j in range(i+1,ntracers):
+        Cross_P0_model[index] = np.interp(kph,k_spec_corr,cross_mono_model[:,index])
+        Cross_P2_model[index] = np.interp(kph,k_spec_corr,cross_quad_model[:,index])
+        Cross_P0_theory[index] = np.interp(kph,k_spec_corr,cross_mono_theory[:,index])
+        Cross_P2_theory[index] = np.interp(kph,k_spec_corr,cross_quad_theory[:,index])
+        index += 1
+
+# Corrections for cross-spectra
+cross_pk_ln_spec_corr_kbar=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+index = 0
+for i in range(ntracers):
+	for j in range(i+1,ntracers):
+		cross_pk_ln_spec_corr_kbar[index] = np.sqrt(pk_ln_spec_corr_kbar[i]*pk_ln_spec_corr_kbar[j])
+		index +=1
 
 # These are the theory values for the total effective power spectrum
 nbarbar = np.mean(n_bar_matrix_fid,axis=(1,2,3))/(cell_size)**3
@@ -1080,10 +1040,6 @@ if (jing_dec_sims) or (not sims_only):
         winmass_data[i_k] = sum_data/Nangles/powtrue[i_k]
 
     print ('... OK, computed Jing deconvolution functions')
-    # TESTING
-    #pl.xscale('log')
-    #pl.loglog(kph,1./winmass)
-    #pl.savefig("figures/Jing_deconv.png")
 
 #############################################################################
 # BEGIN ESTIMATION
@@ -1091,9 +1047,6 @@ print ('Starting power spectra estimation')
 
 
 # Initialize outputs
-# Quadratic forms (pre-estimators)
-#Q0_data = np.zeros((n_maps,ntracers,num_binsk))
-#Q2_data = np.zeros((n_maps,ntracers,num_binsk))
 
 # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
 # Original (convolved) spectra:
@@ -1107,13 +1060,13 @@ P2_data_dec = np.zeros((n_maps,ntracers,num_binsk))
 # Traditional (FKP) method
 P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
 P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
-Cross0_fkp = np.zeros((n_maps,ntracers**2,num_binsk))
-Cross2_fkp = np.zeros((n_maps,ntracers**2,num_binsk))
+Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
 
 P0_fkp_dec = np.zeros((n_maps,ntracers,num_binsk))
 P2_fkp_dec = np.zeros((n_maps,ntracers,num_binsk))
-Cross0_fkp_dec = np.zeros((n_maps,ntracers**2,num_binsk))
-Cross2_fkp_dec = np.zeros((n_maps,ntracers**2,num_binsk))
+Cross0_dec = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+Cross2_dec = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
 
 # Covariance
 ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
@@ -1146,7 +1099,7 @@ effbias_mt = np.copy(effbias)
 effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
 
-print "Initializing multi-tracer estimation toolbox..."
+print( "Initializing multi-tracer estimation toolbox...")
 fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
 
 # If data bias is different from mocks
@@ -1160,7 +1113,7 @@ except:
 
 ##
 # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-print "Initializing traditional (FKP) estimation toolbox..."
+print( "Initializing traditional (FKP) estimation toolbox...")
 fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
 
 
@@ -1171,8 +1124,8 @@ try:
 except:
     pass
 
-print "... done. Starting computations for each map (box) now."
-print
+print ("... done. Starting computations for each map (box) now.")
+print()
 
 #################################
 
@@ -1182,81 +1135,65 @@ est_bias_mt = np.zeros(ntracers)
 for nm in range(n_maps):
     time_start=time()
     if sims_only:
-        print 'Loading simulated box #', nm
+        print ('Loading simulated box #', nm)
         h5map = h5py.File(mapnames_sims[nm],'r')
-        maps_halos = np.asarray(h5map.get(h5map.keys()[0]))
+        maps_halos = np.asarray(h5map.get(list(h5map.keys())[0]))
         if not maps_halos.shape == (nhalos,n_x,n_y,n_z):
-            print
-            print 'Unexpected shape of simulated halo maps! Found', maps_halos.shape
-            print 'Check inputs and sims.  Aborting now...'
-            print
+            print()
+            print ('Unexpected shape of simulated halo maps! Found', maps_halos.shape)
+            print ('Check inputs and sims.  Aborting now...')
+            print()
             sys.exit(-1)
         h5map.close
-        #print 'Numbers of halos in this map compared to the mass function:'
-        #fracs = mass_fun*cell_size**3./np.mean(maps_halos,axis=(1,2,3))
-        #print np.around(fracs,4)
     elif nm == 0:
-        print 'Loading data box...'
+        print ('Loading data box...')
         h5map_data = h5py.File(mapnames_data,'r')
-        h5data_data = h5map_data.get(h5map_data.keys()[0])
+        h5data_data = h5map_data.get(list(h5map_data.keys())[0])
         maps = np.asarray(h5data_data)
         if not maps.shape == (ngals,n_x,n_y,n_z):
-            print
-            print 'Incorrect shape of data (galaxy) maps! Found', maps.shape
-            print 'Aborting now...'
-            print
+            print()
+            print ('Incorrect shape of data (galaxy) maps! Found', maps.shape)
+            print ('Aborting now...')
+            print()
             sys.exit(-1)
         h5map_data.close
 
         # read and store sims maps
     elif nm > 0:
-        print 'Loading simulated box #', nm
+        print ('Loading simulated box #', nm)
         h5map = h5py.File(mapnames_sims[nm-1],'r')
-        maps_halos = np.asarray(h5map.get(h5map.keys()[0]))
+        maps_halos = np.asarray(h5map.get(list(h5map.keys())[0]))
         if not maps_halos.shape == (nhalos,n_x,n_y,n_z):
-            print
-            print 'Unexpected shape of simulated halo maps! Found', maps_halos.shape
-            print 'Check inputs and sims.  Aborting now...'
-            print
+            print()
+            print( 'Unexpected shape of simulated halo maps! Found', maps_halos.shape)
+            print ('Check inputs and sims.  Aborting now...')
+            print()
             sys.exit(-1)
         h5map.close
 
-        #print 'Numbers of halos in this map compared to the mass function:'
-        #fracs = mass_fun*cell_size**3./np.mean(maps_halos,axis=(1,2,3))
-        #print np.around(fracs,4)
-        #print
-    # Now that we have loaded the halo maps, we can create the galaxy maps by combining the halos with the HOD
-    # (If we analyze the halos themselves, then this is unnecessary.)
-    # N.B.: the number of galaxies will reflect the selection function definitions (theory or data).
     if do_galaxies:
         # If simulations only, all maps will be recast in the new form
         if (sims_only) or (nm>0):
-            print 'Creating galaxy maps from halo maps now...'
+            print ('Creating galaxy maps from halo maps now...')
             maps = np.zeros((ngals,n_x,n_y,n_z))
             for ng in range(ngals):
                 for nh in range(nhalos):
                     maps[ng] += hod_3D[ng,nh]*maps_halos[nh]
                 # Poisson sampling
                 maps[ng] = np.random.poisson(maps[ng])
-#        else:
-#            for ng in range(ngals):
-#                for nh in range(nhalos):
-#                    maps[ng] += hod_3D[ng,nh]*maps_halos[nh]
-#                # Poisson sampling
-#                maps[ng] = np.random.poisson(maps[ng])
     else:
         maps = maps_halos
 
     if 'maps_halos' in globals():
         del maps_halos
 
-    print "Total number of objects in this map:", np.sum(maps,axis=(1,2,3))
+    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
 
     ## !! NEW !! Additional mask from low-cell-count threshold
     try:
         cell_low_count_thresh
         maps = thresh_mask*maps
-        print "Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3))
+        print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
     except:
         pass
 
@@ -1279,27 +1216,27 @@ for nm in range(n_maps):
             FKPmany = fkp_many_data.fkp((normsel*maps.T).T)
             P0_fkp[nm] = np.abs(fkp_many.P_ret)
             P2_fkp[nm] = fkp_many.P2a_ret
-            Cross0_fkp[nm] = fkp_many.cross_spec
-            Cross2_fkp[nm] = fkp_many.cross_spec2
+            Cross0[nm] = fkp_many.cross_spec
+            Cross2[nm] = fkp_many.cross_spec2
             ThCov_fkp[nm] = (fkp_many.sigma)**2
         except:
             FKPmany = fkp_many.fkp((normsel*maps.T).T)
             P0_fkp[nm] = np.abs(fkp_many.P_ret)
             P2_fkp[nm] = fkp_many.P2a_ret
-            Cross0_fkp[nm] = fkp_many.cross_spec
-            Cross2_fkp[nm] = fkp_many.cross_spec2
+            Cross0[nm] = fkp_many.cross_spec
+            Cross2[nm] = fkp_many.cross_spec2
             ThCov_fkp[nm] = (fkp_many.sigma)**2
     else:
         FKPmany = fkp_many.fkp((normsel*maps.T).T)
         P0_fkp[nm] = np.abs(fkp_many.P_ret)
         P2_fkp[nm] = fkp_many.P2a_ret
-        Cross0_fkp[nm] = fkp_many.cross_spec
-        Cross2_fkp[nm] = fkp_many.cross_spec2
+        Cross0[nm] = fkp_many.cross_spec
+        Cross2[nm] = fkp_many.cross_spec2
         ThCov_fkp[nm] = (fkp_many.sigma)**2
 
     #################################
     # Now, the multi-tracer method
-    print '  Now estimating multi-tracer spectra...'
+    print ('  Now estimating multi-tracer spectra...')
     normsel = np.mean(n_bar_matrix_fid,axis=(1,2,3))/np.mean(maps,axis=(1,2,3))
     normsel[normsel > 1.5] = 1.5
     normsel[normsel < 0.5] = 0.5
@@ -1326,45 +1263,41 @@ for nm in range(n_maps):
             data_bias
             est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
             est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-            print "Biases of these maps:"
-            print "   Fiducial=", ["%.3f"%b for b in effbias]
-            print "        FKP=", ["%.3f"%b for b in est_bias_fkp]
-            print "         MT=", ["%.3f"%b for b in est_bias_mt]
+            print ("Biases of these maps:")
+            print ("   Fiducial=", ["%.3f"%b for b in effbias])
+            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
             dt = time() - time_start
-            print
-            print "Elapsed time for computation of spectra for this map:", dt
-            print "TIME NOW:", strftime("%a, %d %b %Y %H:%M:%S")
-            print
+            print()
+            print ("Elapsed time for computation of spectra for this map:", dt)
+            print ("TIME NOW:", strftime("%a, %d %b %Y %H:%M:%S"))
+            print()
         except:
             est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
             est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-            print "Biases of these maps:"
-            print "   Fiducial=", ["%.3f"%b for b in effbias]
-            print "        FKP=", ["%.3f"%b for b in est_bias_fkp]
-            print "         MT=", ["%.3f"%b for b in est_bias_mt]
+            print ("Biases of these maps:")
+            print ("   Fiducial=", ["%.3f"%b for b in effbias])
+            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
             dt = time() - time_start
-            print
-            print "Elapsed time for computation of spectra for this map:", dt
-            print "TIME NOW:", strftime("%a, %d %b %Y %H:%M:%S")
-            print
+            print()
+            print ("Elapsed time for computation of spectra for this map:", dt)
+            print ("TIME NOW:", strftime("%a, %d %b %Y %H:%M:%S"))
+            print()
     else:
         est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
         est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-        print "Biases of these maps:"
-        print "   Fiducial=", ["%.3f"%b for b in effbias]
-        print "        FKP=", ["%.3f"%b for b in est_bias_fkp]
-        print "         MT=", ["%.3f"%b for b in est_bias_mt]
+        print( "Biases of these maps:")
+        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
         dt = time() - time_start
-        print
-        print "Elapsed time for computation of spectra for this map:", dt
-        print "TIME NOW:", strftime("%a, %d %b %Y %H:%M:%S")
-        print
+        print()
+        print ("Elapsed time for computation of spectra for this map:", dt)
+        print ("TIME NOW:", strftime("%a, %d %b %Y %H:%M:%S"))
+        print()
 
 
-### TESTING: SIZE OF VARIABLES
-#for var, obj in locals().items():
-#    if sys.getsizeof(obj) > 1000000:
-#        print var, sys.getsizeof(obj)
 
 # Correct missing factor of 2 in definition
 Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
@@ -1379,9 +1312,9 @@ maps = None
 
 
 time_end=time()
-print 'Total time cost for estimation of spectra: ', time_end - time_start
-print
-print 'Reducing extra shot noise...'
+print ('Total time cost for estimation of spectra: ', time_end - time_start)
+print()
+print ('Reducing extra shot noise...')
 
 ################################################################################
 ################################################################################
@@ -1391,7 +1324,7 @@ tempor=time()
 ################################################################################
 ################################################################################
 
-print 'Applying window function corrections...'
+print ('Applying window function corrections...')
 
 ################################################################################
 # 1) Jing (cells) corrections
@@ -1399,19 +1332,19 @@ print 'Applying window function corrections...'
 if sims_only:
     P0_fkp = (P0_fkp)/winmass_sims
     P2_fkp = (P2_fkp)/winmass_sims
-    Cross0_fkp = Cross0_fkp/winmass_sims
-    Cross2_fkp = Cross2_fkp/winmass_sims
+    Cross0 = Cross0/winmass_sims
+    Cross2 = Cross2/winmass_sims
 
 else:
     P0_fkp[0] = (P0_fkp[0])/winmass_data
     P2_fkp[0] = (P2_fkp[0])/winmass_data
-    Cross0_fkp[0] = Cross0_fkp[0]/winmass_data
-    Cross2_fkp[0] = Cross2_fkp[0]/winmass_data
+    Cross0[0] = Cross0[0]/winmass_data
+    Cross2[0] = Cross2[0]/winmass_data
 
     P0_fkp[1:] = (P0_fkp[1:])/winmass_sims
     P2_fkp[1:] = (P2_fkp[1:])/winmass_sims
-    Cross0_fkp[1:] = Cross0_fkp[1:]/winmass_sims
-    Cross2_fkp[1:] = Cross2_fkp[1:]/winmass_sims
+    Cross0[1:] = Cross0[1:]/winmass_sims
+    Cross2[1:] = Cross2[1:]/winmass_sims
 
 if sims_only:
     P0_data = (P0_data)/winmass_sims
@@ -1425,8 +1358,8 @@ else:
 # Means
 P0_fkp_mean = np.mean(P0_fkp[1:],axis=0)
 P2_fkp_mean = np.mean(P2_fkp[1:],axis=0)
-Cross0_mean = np.mean(Cross0_fkp[1:],axis=0)
-Cross2_mean = np.mean(Cross2_fkp[1:],axis=0)
+Cross0_mean = np.mean(Cross0[1:],axis=0)
+Cross2_mean = np.mean(Cross2[1:],axis=0)
 
 P0_mean = np.mean(P0_data[1:],axis=0)
 P2_mean = np.mean(P2_data[1:],axis=0)
@@ -1434,7 +1367,7 @@ P2_mean = np.mean(P2_data[1:],axis=0)
 
 ################################################################################
 # 2) Extra shot noise/1-halo-term subtraction
-ksn1 = (3*len(kph))/4
+ksn1 = (3*len(kph))//4
 ksn2 = -1
 spec_index = np.mean(np.diff(np.log(powtrue[ksn1:ksn2]))/np.diff(np.log(kph[ksn1:ksn2])))
 
@@ -1555,12 +1488,12 @@ for nt in range(ntracers):
 #    norm_monos[nt] = np.mean(np.sqrt(P0_data_dec[0,nt,kb_cut_min:kb_cut_max]/P0_mean_dec[nt,kb_cut_min:kb_cut_max]))
     chi2_red[nt] = np.sum(residuals(this_norm,data)**2)/(len(err)-1.)
 
-print
-print "Fiducial bias of the mocks, compared with data, before deconvolution:"
+print()
+print ("Fiducial bias of the mocks, compared with data, before deconvolution:")
 for nt in range(ntracers):
-    print 'Fiducial (mocks):', np.around(bias[nt],3), '; based on these mocks, data bias should be:', np.around(normmonos[nt]*bias[nt],3), ' (chi^2 = ', np.around(chi2_red[nt],3), ')'
+    print ('Fiducial (mocks):', np.around(bias[nt],3), '; based on these mocks, data bias should be:', np.around(normmonos[nt]*bias[nt],3), ' (chi^2 = ', np.around(chi2_red[nt],3), ')')
 
-print 
+print ()
 
 
 
@@ -1569,16 +1502,16 @@ print
 if sims_only:
     P0_fkp_dec = (P0_fkp_dec*pk_ln_spec_corr_kbar)
     P2_fkp_dec = (P2_fkp*pk_ln_spec_corr_kbar)
-    Cross0_fkp_dec = (Cross0_fkp_dec*pk_ln_spec_corr_kbar)
-    Cross2_fkp_dec = (Cross2_fkp_dec*pk_ln_spec_corr_kbar)
+    Cross0_dec = (Cross0*cross_pk_ln_spec_corr_kbar)
+    Cross2_dec = (Cross2*cross_pk_ln_spec_corr_kbar)
 
     P0_data_dec = (P0_data_dec*pk_ln_spec_corr_kbar)
     P2_data_dec = (P2_data*pk_ln_spec_corr_kbar)
 else:
     P0_fkp_dec[1:] = (P0_fkp_dec[1:]*pk_ln_spec_corr_kbar)
     P2_fkp_dec[1:] = (P2_fkp[1:]*pk_ln_spec_corr_kbar)
-    Cross0_fkp_dec[1:] = (Cross0_fkp_dec[1:]*pk_ln_spec_corr_kbar)
-    Cross2_fkp_dec[1:] = (Cross2_fkp_dec[1:]*pk_ln_spec_corr_kbar)
+    Cross0_dec[1:] = (Cross0[1:]*cross_pk_ln_spec_corr_kbar)
+    Cross2_dec[1:] = (Cross2[1:]*cross_pk_ln_spec_corr_kbar)
 
     P0_data_dec[1:] = (P0_data_dec[1:]*pk_ln_spec_corr_kbar)
     P2_data_dec[1:] = (P2_data[1:]*pk_ln_spec_corr_kbar)
@@ -1586,8 +1519,8 @@ else:
 
 P0_fkp_mean_dec = np.mean(P0_fkp_dec[1:],axis=0)
 P0_mean_dec = np.mean(P0_data_dec[1:],axis=0)
-Cross0_fkp_mean_dec = np.mean(Cross0_fkp_dec[1:],axis=0)
-Cross2_fkp_mean_dec = np.mean(Cross2_fkp_dec[1:],axis=0)
+Cross0_mean_dec = np.mean(Cross0_dec[1:],axis=0)
+Cross2_mean_dec = np.mean(Cross2_dec[1:],axis=0)
 
 P2_fkp_mean_dec = np.mean(P2_fkp_dec[1:],axis=0)
 P2_mean_dec = np.mean(P2_data_dec[1:],axis=0)
@@ -1599,21 +1532,21 @@ P2_mean_dec = np.mean(P2_data_dec[1:],axis=0)
 # 4) Window functions corrections (computed from simulations or from theory)
 
 winfun0 = np.ones((ntracers,len(kph)))
-winfun0_cross = np.ones((ntracers*(ntracers-1)/2,len(kph)))
+winfun0_cross = np.ones((ntracers*(ntracers-1)//2,len(kph)))
 
 winfun2 = np.ones((ntracers,len(kph)))
-winfun2_cross = np.ones((ntracers*(ntracers-1)/2,len(kph)))
+winfun2_cross = np.ones((ntracers*(ntracers-1)//2,len(kph)))
 
 if is_n_body_sims:
     win_fun_file=glob.glob("spectra/"+win_fun_dir+"*Win*")
     win_fun_file_cross0=glob.glob("spectra/"+win_fun_dir+"*WinCross0*")
     win_fun_file_cross2=glob.glob("spectra/"+win_fun_dir+"*WinCross2*")
     if (len(win_fun_file)!=1) | (len(win_fun_file_cross0)!=1) | (len(win_fun_file_cross2)!=1):
-        print "Could not find (or found more than one) specified window functions at", "spectra/", win_fun_dir
-        print "Using no window function"
+        print ("Could not find (or found more than one) specified window functions at", "spectra/", win_fun_dir)
+        print ("Using no window function")
         wf = np.ones((len(kph),2*ntracers))
-        wf_c0 = np.ones((len(kph),ntracers*(ntracers-1)/2))
-        wf_c2 = np.ones((len(kph),ntracers*(ntracers-1)/2))
+        wf_c0 = np.ones((len(kph),ntracers*(ntracers-1)//2))
+        wf_c2 = np.ones((len(kph),ntracers*(ntracers-1)//2))
     else:
         win_fun_file = win_fun_file[0]
         win_fun_file_cross0 = win_fun_file_cross0[0]
@@ -1624,18 +1557,18 @@ if is_n_body_sims:
         wf_c2 = np.loadtxt(win_fun_file_cross2)
 
         if (len(wf) != len(kph)) | (len(wf.T) != 2*ntracers):
-            print "Dimensions of window functions (P0 auto & P2 auto) do not match those of this estimation code!"
-            print "Please check that window function, or create a new one. Aborting now..."
+            print ("Dimensions of window functions (P0 auto & P2 auto) do not match those of this estimation code!")
+            print ("Please check that window function, or create a new one. Aborting now...")
             sys.exit(-1)
 
-        if (len(wf_c0) != len(kph)) | (len(wf_c0.T) != ntracers*(ntracers-1)/2):
-            print "Dimensions of window function of cross spectra for P0 do not match those of this estimation code!"
-            print "Please check that window function, or create a new one. Aborting now..."
+        if (len(wf_c0) != len(kph)) | (len(wf_c0.T) != ntracers*(ntracers-1)//2):
+            print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
+            print ("Please check that window function, or create a new one. Aborting now...")
             sys.exit(-1)
 
-        if (len(wf_c2) != len(kph)) | (len(wf_c2.T) != ntracers*(ntracers-1)/2):
-            print "Dimensions of window function of cross spectra for P2 do not match those of this estimation code!"
-            print "Please check that window function, or create a new one. Aborting now..."
+        if (len(wf_c2) != len(kph)) | (len(wf_c2.T) != ntracers*(ntracers-1)//2):
+            print ("Dimensions of window function of cross spectra for P2 do not match those of this estimation code!")
+            print ("Please check that window function, or create a new one. Aborting now...")
             sys.exit(-1)
 
     mean_win0 = wf[:,:ntracers]
@@ -1654,12 +1587,9 @@ if is_n_body_sims:
     index = 0
     for i in range(ntracers):
         for j in range(i+1,ntracers):
-            Cross0_fkp_dec[:,i*ntracers + j] = Cross0_fkp_dec[:,i*ntracers + j] / (small + wf_c0[index])
-            Cross0_fkp_dec[:,j*ntracers + i] = Cross0_fkp_dec[:,i*ntracers + j]
-            Cross2_fkp_dec[:,i*ntracers + j] = Cross2_fkp_dec[:,i*ntracers + j] / (small + wf_c2[index])
-            Cross2_fkp_dec[:,j*ntracers + i] = Cross2_fkp_dec[:,i*ntracers + j]
+            Cross0_dec[:,index] = Cross0_dec[:,index] / (small + wf_c0[:,index])
+            Cross2_dec[:,index] = Cross2_dec[:,index] / (small + wf_c2[:,index])
             index = index + 1
-
 else:
     for nt in range(ntracers):
         # FKP has its window function...
@@ -1682,10 +1612,8 @@ else:
         for j in range(i+1,ntracers):
             model0 = np.sqrt( P0_model[i]*P0_model[j] )
             model2 = np.sqrt( P2_model[i]*P0_model[j] )
-            Cross0_fkp_dec[:,i*ntracers + j] = Cross0_fkp_dec[:,i*ntracers + j] / (small + wf_c0[index])
-            Cross0_fkp_dec[:,j*ntracers + i] = Cross0_fkp_dec[:,i*ntracers + j]
-            Cross2_fkp_dec[:,i*ntracers + j] = Cross2_fkp_dec[:,i*ntracers + j] / (small + wf_c2[index])
-            Cross2_fkp_dec[:,j*ntracers + i] = Cross2_fkp_dec[:,i*ntracers + j]
+            Cross0_dec[:,index] = Cross0_dec[:,index] / (small + wf_c0[:,index])
+            Cross2_dec[:,index] = Cross2_dec[:,index] / (small + wf_c2[:,index])
             index = index + 1
 
 
@@ -1697,41 +1625,11 @@ else:
 # first, compute the Fisher matrix, then invert it.
 # Do this for for each k bin
 
-#print 'Computing theoretical variances...'
-
-#Theor_Cov_MT  = np.zeros((ntracers,ntracers,num_binsk),dtype="float16")
-#Theor_Cov_FKP = np.zeros((ntracers,num_binsk),dtype="float16")
-
-#Vk = kkbar_counts/(n_x*n_y*n_z/2.)
-
-#npflat=np.reshape(n_bar_matrix_fid,(ntracers,n_x*n_y*n_z))
 
 # free up memory
 n_bar_matrix_fid=None
 del n_bar_matrix_fid
 
-# for ki in range(num_binsk):
-#     sys.stdout.write(".")
-#     sys.stdout.flush()
-#     Pmu = P0_mean_dec[:,ki]
-#     cPmu = (((npflat/cell_size**3).T)*(P0_mean_dec[:,ki])).T
-#     cPtot = np.sum(cPmu,axis=0)
-#     cF = np.zeros((ntracers,ntracers))
-#     cF = np.eye(ntracers)*(0.25*Vk[ki]*np.sum(cPmu*cPtot/(1.0 + cPtot),axis=1)/(small+Pmu)**2)
-#     for imu in range(ntracers):
-#         cF[imu] = cF[imu] + 0.25*Vk[ki]*np.sum(cPmu*cPmu[imu]*(1.0 - cPtot)/np.power(1.0 + cPtot,2),axis=1)/(small+Pmu[imu])/(small+Pmu)
-#     Theor_Cov_MT[:,:,ki] = np.linalg.pinv(cF)
-
-# sys.stdout.write("\n")
-
-#print ('Done computing theoretical covariances. Time cost: ', np.int((time()-tempor)*1000)/1000., 's')
-#print ()
-#print ('----------------------------------')
-#print ()
-
-# free up memory
-#npflat=None
-#del npflat
 
 
 ################################################################################
@@ -1763,10 +1661,10 @@ relcov2_MT  = np.zeros((ntracers,ntracers,num_binsk,num_binsk),dtype="float16")
 relcov2_FKP = np.zeros((ntracers,ntracers,num_binsk,num_binsk),dtype="float16")
 
 # Covariance of the RATIOS between tracers -- there are n*(n-1)/2 of them -- like the cross-covariances
-fraccov0_MT  = np.zeros((ntracers*(ntracers-1)/2,num_binsk,num_binsk),dtype="float16")
-fraccov0_FKP = np.zeros((ntracers*(ntracers-1)/2,num_binsk,num_binsk),dtype="float16")
-fraccov2_MT  = np.zeros((ntracers*(ntracers-1)/2,num_binsk,num_binsk),dtype="float16")
-fraccov2_FKP = np.zeros((ntracers*(ntracers-1)/2,num_binsk,num_binsk),dtype="float16")
+fraccov0_MT  = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
+fraccov0_FKP = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
+fraccov2_MT  = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
+fraccov2_FKP = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
 
 
 # Covariance calculations
@@ -1810,10 +1708,6 @@ for nt in range(ntracers):
         relcov2_MT[ntp,nt] = relcov2_MT[nt,ntp]
         relcov0_FKP[ntp,nt] = relcov0_FKP[nt,ntp]
         relcov2_FKP[ntp,nt] = relcov2_FKP[nt,ntp]
-        #ppmt = small + np.abs(P0_mean_dec[nt]/(small+P0_mean_dec[ntp]))
-        #ppmt2 = small + np.abs(P2_mean_dec[nt]/(small+P2_mean_dec[ntp]))
-        #ppfkp = small + np.abs(P0_fkp_mean_dec[nt]/(small+P0_fkp_mean_dec[ntp]))
-        #ppfkp2 = small + np.abs(P2_fkp_mean_dec[nt]/(small+P2_fkp_mean_dec[ntp]))
         rat0_MT = P0_data_dec[1:,nt].T/(small+P0_data_dec[1:,ntp].T)
         rat2_MT = P2_data_dec[1:,nt].T/(small+P2_data_dec[1:,ntp].T)
         fraccov0_MT[ntcount] = np.cov(rat0_MT)
@@ -1910,9 +1804,9 @@ print('Plotting results to /figures...')
 
 if plot_all_cov:
 	# Plot 2D correlation of Ptot and ratios
-	nblocks=1+ntracers*(ntracers-1)/2
-	indexcov = np.arange(0,nblocks*num_binsk,np.int(num_binsk/4))
-	nameindex = nblocks*[str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk/4)]]
+	nblocks=1+ntracers*(ntracers-1)//2
+	indexcov = np.arange(0,nblocks*num_binsk,np.int(num_binsk//4))
+	nameindex = nblocks*[str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//4)]]
 	onesk=np.diag(np.ones((nblocks*num_binsk)))
 	dF=np.sqrt(np.abs(np.diag(cov_Pt_ratios_FKP)))
 	dM=np.sqrt(np.abs(np.diag(cov_Pt_ratios_MT)))
@@ -1932,8 +1826,8 @@ if plot_all_cov:
 	pl.close('all')
 
 	# Plot 2D correlation coefficients
-	indexcov = np.arange(0,num_binsk,np.int(num_binsk/5))
-	nameindex = [str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk/5)]]
+	indexcov = np.arange(0,num_binsk,np.int(num_binsk//5))
+	nameindex = [str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//5)]]
 	onesk=np.diag(np.ones(num_binsk))
 	for nt in range(ntracers):
 	    for ntp in range(nt,ntracers):
@@ -1950,8 +1844,8 @@ if plot_all_cov:
 	        pl.title(thistitle)
 	        pl.xticks(indexcov,nameindex,size=20,name='monospace')
 	        pl.yticks(indexcov,nameindex,size=20,name='monospace')
-	        pl.annotate('FKP',(np.int(len(kph)/10),np.int(len(kph)/2.5)),fontsize=20)
-	        pl.annotate('Multi-tracer',(np.int(len(kph)/2),np.int(len(kph)/10)),fontsize=20)
+	        pl.annotate('FKP',(np.int(len(kph)//10),np.int(len(kph)/2.5)),fontsize=20)
+	        pl.annotate('Multi-tracer',(np.int(len(kph)//2),np.int(len(kph)//10)),fontsize=20)
 	        pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
 	        pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
 	        pl.colorbar()
@@ -2316,13 +2210,12 @@ pl.close('all')
 if not os.path.exists(dir_figs + '/selected'):
     os.makedirs(dir_figs + '/selected')
 
-#new plot!!!!!!        
         
 if plot_all_cov:
 	# Plot 2D correlation of Ptot and ratios
-	nblocks=1+ntracers*(ntracers-1)/2
-	indexcov = np.arange(0,nblocks*num_binsk,np.int(num_binsk/4))
-	nameindex = nblocks*[str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk/4)]]
+	nblocks=1+ntracers*(ntracers-1)//2
+	indexcov = np.arange(0,nblocks*num_binsk,np.int(num_binsk//4))
+	nameindex = nblocks*[str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//4)]]
 	onesk=np.diag(np.ones((nblocks*num_binsk)))
 	dF=np.sqrt(np.abs(np.diag(cov_Pt_ratios_FKP)))
 	dM=np.sqrt(np.abs(np.diag(cov_Pt_ratios_MT)))
@@ -2344,7 +2237,7 @@ if plot_all_cov:
 	# Plot 2D correlation coefficients
 	num_binsk0 = 26
 	kph0=kph[:num_binsk0]
-	indexcov = np.arange(0,num_binsk0+1,np.int(num_binsk0/5))
+	indexcov = np.arange(0,num_binsk0+1,np.int(num_binsk0//5))
 	#nameindex = [str(0.001*np.round(1000*kin)) for kin in kph0[0:-1:np.int(num_binsk0/6)]]
 	nameindex = [str(0.001*np.round(1000*kin))[0:5] for kin in kph0[0:num_binsk0:np.int(num_binsk0/5)]]
 	onesk=np.diag(np.ones(num_binsk))
@@ -2365,8 +2258,8 @@ if plot_all_cov:
 	        #print(indexcov,nameindex)   
 	        pl.xticks(indexcov,nameindex,size=12,name='monospace')
 	        pl.yticks(indexcov,nameindex,size=12,name='monospace')
-	        pl.annotate(r'$\bf{FKP}$',(np.int(len(kph0)/10),np.int(len(kph0)/2.5)),fontsize=28, color='white')
-	        pl.annotate(r'$\bf{MTOE}$',(np.int(len(kph0)/2),np.int(len(kph0)/10)),fontsize=28,color='white')
+	        pl.annotate(r'$\bf{FKP}$',(np.int(len(kph0)//10),np.int(len(kph0)/2.5)),fontsize=28, color='white')
+	        pl.annotate(r'$\bf{MTOE}$',(np.int(len(kph0)//2),np.int(len(kph0)//10)),fontsize=28,color='white')
 	        pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=12)
 	        pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=12)
 	        #pl.xlim([0.,0.4])
@@ -2435,9 +2328,6 @@ pl.close('all')
     
 
 
-                
-##new figure!! Same but ratios between MT and FKP
-
 ##color_code = ['blue','cyan','lime','orange','red','maroon','pink','green','black','grey','navy','salmon','purple']
 
 if plot_all_cov:
@@ -2467,12 +2357,6 @@ pl.close('all')
                
 
   
-
-
-
-
-
-#NEW-------------------------------------------------------
 # Plot estimates along with theory -- deconvolved spectra
 # Monopole only
 pl.xscale('log')
@@ -2557,6 +2441,18 @@ for nt in range(ntracers):
     p_data[:,2*nt] = P0_data_dec[0,nt]
     p_data[:,2*nt+1] = P2_data_dec[0,nt]
 
+
+# Return bias to the computed cross-spectra (done in FKP) as well:
+index=0
+for i in range(ntracers):
+	for j in range(i+1,ntracers):
+		Cross0[:,index] = effbias[i]*effbias[j]*Cross0[:,index]
+		Cross0_dec[:,index] = effbias[i]*effbias[j]*Cross0_dec[:,index]
+		Cross2[:,index] = effbias[i]*effbias[j]*Cross2[:,index]
+		Cross2_dec[:,index] = effbias[i]*effbias[j]*Cross2_dec[:,index]
+		index += 1
+
+
 # Export data
 np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
 np.savetxt(dir_specs + '/' + handle_estimates + '_P0_P2_theory.dat',p_theory,fmt="%6.4f")
@@ -2568,6 +2464,20 @@ np.savetxt(dir_specs + '/' + handle_estimates + '_decP_k_data_FKP.dat',p_stack_F
 np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
 np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',bias,fmt="%2.3f")
 np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+
+
+# Saving cross spectra
+np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P0_theory.dat',Cross_P0_theory.T,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P0_model.dat',Cross_P0_model.T,fmt="%6.4f")
+
+np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P2_theory.dat',Cross_P2_theory.T,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P2_model.dat',Cross_P2_model.T,fmt="%6.4f")
+
+np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P0_data.dat',Cross0.T,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_dec_P0_data.dat',Cross0_dec.T,fmt="%6.4f")
+
+np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_P2_data.dat',Cross2.T,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_Cross_dec_P2_data.dat',Cross2_dec.T,fmt="%6.4f")
 
 
 ########################################
@@ -2582,26 +2492,6 @@ wf[np.isnan(wf)]=1.0
 np.savetxt(dir_specs + '/' + handle_estimates + '_WinFun02_k_data.dat',wf.T,fmt="%3.4f")
 
 
-
-####################################
-# P_1h estimation
-#print "Extra shot noise in data (convolved spectra):"
-#print
-#for nt in range(ntracers):
-#    pshot = np.mean(P0_data[0,nt,-10:]-P0_model[nt,-10:])
-#    print "Tracer ", nt, "  MT : ", "%3.2f"% pshot
-#    pshot = np.mean(effbias[nt]**2*P0_fkp[0,nt,-10:]-P0_model[nt,-10:])
-#    print "Tracer ", nt, "  FKP: ", "%3.2f"% pshot
-#    print
-
-#print "Add. shot noise in data (deconvolved spectra):"
-#print
-#for nt in range(ntracers):
-#    pshot = np.mean(P0_data_dec[0,nt,-10:]-P0_model[nt,-10:])
-#    print "Tracer ", nt, "  MT : ", "%3.2f"% pshot
-#    pshot = np.mean(effbias[nt]**2*P0_fkp_dec[0,nt,-10:]-P0_model[nt,-10:])
-#    print "Tracer ", nt, "  FKP: ", "%3.2f"% pshot
-#    print
 
 
 
@@ -2630,58 +2520,26 @@ for nt in range(ntracers):
 #    norm_monos[nt] = np.mean(np.sqrt(P0_data_dec[0,nt,kb_cut_min:kb_cut_max]/P0_mean_dec[nt,kb_cut_min:kb_cut_max]))
     chi2_red_mocks[nt] = np.sum(residuals(this_norm,mock_data)**2)/(len(err)-1.)
 
-print
-print "Fiducial biases of the mocks, and best-fit values from theory (for updating values in the input file, or HOD)"
+print()
+print ("Fiducial biases of the mocks, and best-fit values from theory (for updating values in the input file, or HOD)")
 for nt in range(ntracers):
-    print 'Tracer ', nt, ': fiducial bias = ', np.around(bias[nt],3), ' ; best fit:', np.around(normmonos_mocks[nt]*bias[nt],3), ' (chi^2 = ', np.around(chi2_red_mocks[nt],3), ')'
-print
+    print ('Tracer ', nt, ': fiducial bias = ', np.around(bias[nt],3), ' ; best fit:', np.around(normmonos_mocks[nt]*bias[nt],3), ' (chi^2 = ', np.around(chi2_red_mocks[nt],3), ')')
+print()
 
 try:
     data_bias
-    print "Fiducial biases of the data, and best-fit values from theory (for updating values in the input file, or HOD)"
+    print ("Fiducial biases of the data, and best-fit values from theory (for updating values in the input file, or HOD)")
     for nt in range(ntracers):
-        print 'Tracer ', nt, ' -- data: fiducial bias = ', np.around(data_bias[nt],3), ' ; update this to:', np.around(normmonos_data[nt]*data_bias[nt],3), ' (chi^2 = ', np.around(chi2_red_data[nt],3), ')'
+        print ('Tracer ', nt, ' -- data: fiducial bias = ', np.around(data_bias[nt],3), ' ; update this to:', np.around(normmonos_data[nt]*data_bias[nt],3), ' (chi^2 = ', np.around(chi2_red_data[nt],3), ')')
 except:
-    print "Fiducial biases of the data, and best-fit values from theory (for updating values in the input file, or HOD)"
+    print ("Fiducial biases of the data, and best-fit values from theory (for updating values in the input file, or HOD)")
     for nt in range(ntracers):
-        print 'Tracer ', nt, ' -- data: fiducial bias = ', np.around(bias[nt],3), ' ; update this to:', np.around(normmonos_data[nt]*bias[nt],3), ' (chi^2 = ', np.around(chi2_red_data[nt],3), ')'
+        print ('Tracer ', nt, ' -- data: fiducial bias = ', np.around(bias[nt],3), ' ; update this to:', np.around(normmonos_data[nt]*bias[nt],3), ' (chi^2 = ', np.around(chi2_red_data[nt],3), ')')
 
-print
-print "Quick update bias (from MT estimator):"
+print()
+print ("Quick update bias (from MT estimator):")
 for nt in range(ntracers):
-    print np.around(normmonos_mocks[nt]*bias[nt],3)
-
-
-sys.exit(-1)
-
-
-################
-# HAB / Antonio  stuff
-blq=np.zeros(8)
-buq=np.zeros(8)
-slq=np.zeros(8)
-suq=np.zeros(8)
-
-mbins=np.loadtxt("HAB_1Gpc_mass_bins.txt") 
-
-print
-print "Bias ratios (for HAB only!):"
-for ntm in range(ntracers/4):
-    pmean = np.mean(P0_mean_dec[4*ntm:4*(ntm+1),kb_cut_min:kb_cut_max],axis=0)
-    blq[ntm] = np.sqrt(np.mean(P0_mean_dec[4*ntm,kb_cut_min:kb_cut_max]/pmean))
-    buq[ntm] = np.sqrt(np.mean(P0_mean_dec[4*ntm+3,kb_cut_min:kb_cut_max]/pmean))
-    slq[ntm] = np.sqrt(np.sqrt(np.var(P0_mean_dec[4*ntm,kb_cut_min:kb_cut_max]/pmean)))
-    suq[ntm] = np.sqrt(np.sqrt(np.var(P0_mean_dec[4*ntm+3,kb_cut_min:kb_cut_max]/pmean)))
-    print blq[ntm], slq[ntm]
-    print buq[ntm], suq[ntm]
-
-pl.errorbar(mbins-0.005,blq,slq,color='r')
-pl.errorbar(mbins+0.005,buq,suq,color='b')
-pl.savefig('HAB_1Gpc_z05_S.png')
-pl.close()
-
-data=np.vstack((mbins,blq,slq,buq,suq))
-np.savetxt("HAB_1Gpc_z05_S_M_Blow_Siglow_Bhigh_Sighigh.dat",data.T,fmt='%.4f')
+    print (np.around(normmonos_mocks[nt]*bias[nt],3))
 
 sys.exit(-1)
 

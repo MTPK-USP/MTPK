@@ -70,6 +70,7 @@ class pkmg_cross(object):
                 self.Q1 = -1.0 * self.Exp_KZ / self.KZ * ( 3*b1*b2*self.KZ**4 + (b1+b2)*f*(9+2*self.KZ**2)*self.KZ**2 + f**2 *(45 + 2*(6+self.KZ**2)*self.KZ**2) )
                 self.Q2 = -0.5 * self.ERF_KZ * ( 3.0*f**2 * (-15 + self.KZ**2) + (b1+b2)*f*(-9+self.KZ**2)*self.KZ**2 + b1*b2*(-3+self.KZ**2)*self.KZ**4 ) / self.KZ**2
                 self.quads[index] = 2.5*(self.Q1 + self.Q2)
+                index += 1
 
 
 
