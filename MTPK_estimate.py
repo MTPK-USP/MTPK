@@ -50,22 +50,12 @@ import fkp_class as fkp  # This is the new class, which computes auto- and cross
 import gauss_pk_class as pkgauss
 import pk_multipoles_gauss as pkmg
 import pk_crossmultipoles_gauss as pkmg_cross
+from camb_spec import camb_spectrum
+from cosmo_funcs import matgrow, H
 
 import h5py
 import glob
 import grid3D as gr
-
-
-# Load NumCosmo library
-import gi
-gi.require_version('NumCosmo', '1.0')
-gi.require_version('NumCosmoMath', '1.0')
-from gi.repository import NumCosmo as Nc
-from gi.repository import NumCosmoMath as Ncm
-from gi.repository import GObject
-#  Initializing the library objects.
-#  This must be called before any other library function.
-Ncm.cfg_init ()
 
 small=1.e-8
 
@@ -157,114 +147,43 @@ else:
         sys.exit(-1)
 
 
-# load NumCosmo models
-try:
-    t = GObject.type_from_name ("NcHICosmoDEXcdm")
-    cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDEXcdm")
-    print ("Attention! NumCosmo method NcHICosmoDEXcdm does not allow dynamical dark energy!")
-except:
-    print ("Did not find NumCosmo method NcHICosmoDEXcdm. Trying another...")
+########################## Some other cosmological quantities ######################################
+Omegam = Omegac + Omegab
+OmegaDE = 1. - Omegam - Omegak
+h = H0/100.
+
+cH = 299792.458*h/H(H0, Omegam, OmegaDE, w0, w1, zcentral)  # c/H(z) , in units of h^-1 Mpc
 
 try:
-    t = GObject.type_from_name ("NcHICosmoDELinder")
-    cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDELinder")
-    print ("Found NumCosmo method NcHICosmoDELinder.")
+    gamma
 except:
-    print ("Did not find NumCosmo method NcHICosmoDELinder.")
-
-try:
-    t = GObject.type_from_name ("NcHICosmoDECpl")
-    cosmo = Nc.HICosmo.new_from_name (Nc.HICosmo, "NcHICosmoDECpl")
-    print ("Found NumCosmo method NcHICosmoDECpl.")
-except:
-    print ("Did not find NumCosmo method NcHICosmoDECpl.")
-
-
-cosmo.omega_x2omega_k ()
-cosmo.param_set_by_name ("Omegak", Omegak)
-cosmo.param_set_by_name ("w0", w0)
-cosmo.param_set_by_name ("w1", w1)
-cosmo.param_set_by_name ("Omegab", Omegab)
-cosmo.param_set_by_name ("Omegac", Omegac)
-reion = Nc.HIReionCamb.new ()
-prim  = Nc.HIPrimPowerLaw.new ()
-cosmo.param_set_by_name ("H0", H0)
-prim.param_set_by_name ("n_SA", n_SA)
-prim.param_set_by_name ("ln10e10ASA", ln10e10ASA)
-reion.param_set_by_name ("z_re", z_re)
-cosmo.add_submodel (reion)
-cosmo.add_submodel (prim)
-
-
-# Growth rate and its derivative
-grow = Nc.GrowthFunc.new()
-grow.prepare(cosmo)
-
-# matter growth rate
-(G,dG) = grow.eval_both(cosmo,zcentral)
-growcentral = G
-
-cH = 2997.9*cosmo.H0()/cosmo.H(zcentral)  # c/H(z) , in units of h^-1 Mpc
+    gamma = 0.56
 
 try:
     matgrowcentral
 except:
-    matgrowcentral = - (1.0 + zcentral)/G*dG
+    matgrowcentral = matgrow(Omegam,OmegaDE,w0,w1,zcentral,gamma)
 else:
-    print ('ATTENTION: pre-defined (on input) matter growth rate =' , matgrowcentral)
+    print('ATTENTION: pre-defined (on input) matter growth rate =' , matgrowcentral)
+###################################################################################################
 
+#############Calling CAMB for calculations of the spectra#################
+print('Beggining CAMB calculations\n')
 
-# NumCosmo: power spectrum from CLASS backend
-k_min = 1.0e-5
-k_max = 1.0e3
+# It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
+try:
+    k_min_camb
+    k_max_camb
+except:
+    k_min_camb = 1.0e-4
+    k_max_camb = 1.0e1
 
-# Linear power spectrum
-ps_cbe  = Nc.PowspecMLCBE.new ()
-ps_cbe.set_kmin (k_min)
-ps_cbe.set_kmax (k_max)
-ps_cbe.require_zi (zcentral-zbinwidth)
-ps_cbe.require_zf (zcentral+zbinwidth)
-
-# Non-linear power spectrum from Halo Fit
-pshf   = Nc.PowspecMNLHaloFit.new (ps_cbe, zcentral, 1.0e-5)
-pshf.pkequal(False)
-pshf.set_kmin (k_min)
-pshf.set_kmax (k_max)
-pshf.require_zi (zcentral-zbinwidth)
-pshf.require_zf (zcentral+zbinwidth)
-pshf.prepare (cosmo)
-
-# Non-linear power spectrum from Halo Fit + PkEqual
-pshf_pkeq   = Nc.PowspecMNLHaloFit.new (ps_cbe, zcentral, 1.0e-5)
-pshf_pkeq.pkequal(True)
-pshf_pkeq.set_kmin (k_min)
-pshf_pkeq.set_kmax (k_max)
-pshf_pkeq.require_zi (zcentral-zbinwidth)
-pshf_pkeq.require_zf (zcentral+zbinwidth)
-pshf_pkeq.prepare (cosmo)
-
-# Where to evalue these spectra
 nklist = 1000
-k_camb = np.logspace(-4.,1,nklist)
+k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
 
-spec_lin = np.vectorize(ps_cbe.eval)
-spec = np.vectorize(pshf.eval)
-spec_pkeq = np.vectorize(pshf_pkeq.eval)
-
-
-
-Pk_camb_lin = spec_lin(cosmo,zcentral, k_camb * cosmo.h()) * (np.power(cosmo.h(),3))
-Pk_camb = spec(cosmo,zcentral, k_camb * cosmo.h()) * (np.power(cosmo.h(),3))
-Pk_camb_pkeq = spec_pkeq(cosmo,zcentral, k_camb * cosmo.h()) * (np.power(cosmo.h(),3))
-
-# Define which spectrum to use here
-k_camb=np.asarray(k_camb)
-if whichspec == 0:
-    Pk_camb=np.asarray(Pk_camb_lin)
-elif whichspec == 1:
-    Pk_camb=np.asarray(Pk_camb)
-else:
-    Pk_camb=np.asarray(Pk_camb_pkeq)
+kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, n_SA, k_min_camb, k_max_camb, whichspec)
+Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
+############# Ended CAMB calculation #####################################
 
 try:
 	power_low
@@ -604,6 +523,7 @@ for i in range(nhalos):
 		all_halo_monopoles_theory[:,j,i] = all_halo_monopoles_theory[:,i,j] 
 		all_halo_quadrupoles_model[:,j,i] = all_halo_quadrupoles_model[:,i,j] 
 		all_halo_quadrupoles_theory[:,j,i] = all_halo_quadrupoles_theory[:,i,j] 
+        index += 1
 
 
 if do_galaxies:
@@ -1589,7 +1509,7 @@ if is_n_body_sims:
         for j in range(i+1,ntracers):
             Cross0_dec[:,index] = Cross0_dec[:,index] / (small + wf_c0[:,index])
             Cross2_dec[:,index] = Cross2_dec[:,index] / (small + wf_c2[:,index])
-            index = index + 1
+            index += 1
 else:
     for nt in range(ntracers):
         # FKP has its window function...
@@ -1614,7 +1534,7 @@ else:
             model2 = np.sqrt( P2_model[i]*P0_model[j] )
             Cross0_dec[:,index] = Cross0_dec[:,index] / (small + wf_c0[:,index])
             Cross2_dec[:,index] = Cross2_dec[:,index] / (small + wf_c2[:,index])
-            index = index + 1
+            index += 1
 
 
 

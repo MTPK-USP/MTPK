@@ -86,7 +86,7 @@ elif len(os.listdir(dir_maps)) != 0:
     print ('Simulated maps were already created with this handle/name, on:')
     print( dir_maps)
     print()
-    answer = raw_input('Continuing will overwrite those files. Proceed? y/n  ')
+    answer = input('Continuing will overwrite those files. Proceed? y/n  ')
     if answer != 'y':
         print( 'Aborting now...')
         print()
@@ -97,7 +97,7 @@ if not os.path.exists(dir_specs):
     os.makedirs(dir_specs)
 elif len(os.listdir(dir_specs)) != 0:
     print( 'WARNING: another run with the same handle/name was already performed!')
-    answer = raw_input('Check specs/ . Continue anyway? y/n  ')
+    answer = input('Check specs/ . Continue anyway? y/n  ')
     if answer!='y':
         print ('Aborting now...')
         sys.exit(-1)
@@ -107,14 +107,14 @@ if not os.path.exists(dir_figs):
     os.makedirs(dir_figs)
 if len(os.listdir(dir_figs)) != 0:
     print( 'WARNING: another run with the same handle/name was already performed!')
-    answer = raw_input('Check figures/ . Continue anyway? y/n  ')
+    answer = input('Check figures/ . Continue anyway? y/n  ')
     if answer!='y':
         print ('Aborting now...')
         sys.exit(-1)
 
 # Import inputs
 # (the path to /inputs was added in the beginning of the code)
-exec "from " + handle_sims + " import *"
+exec("from " + handle_sims + " import *")
 
 
 
@@ -616,8 +616,8 @@ Cross_Pk_ln_norm = np.zeros((ntracers*(ntracers-1)//2,n_x,n_y,n_z//2+1))
 index=0
 for i in range(ntracers):
 	for j in range(i+1,ntracers):
-		Cross_Pk_ln_norm[index] = Fnorm * np.average( lnmaps_fourier[i]*np.conjugate(lnmaps_fourier[j]) , axis=1 )
-		Cross_Pk_ln_norm[index] = 0.5*( Cross_Pk_ln_norm[index] + np.conjugate(Cross_Pk_ln_norm[index]) )
+		tmp = Fnorm * np.average( lnmaps_fourier[i]*np.conjugate(lnmaps_fourier[j]) , axis=0 )
+		Cross_Pk_ln_norm[index] = 0.5*np.real( tmp + np.conjugate(tmp) )
 		index += 1
 
 lnmaps_fourier = None
@@ -632,7 +632,7 @@ Cross_Pk_ln_Mono_norm = np.zeros((ntracers*(ntracers-1)//2,n_x,n_y,n_z//2+1))
 index=0
 for i in range(ntracers):
 	for j in range(i+1,ntracers):
-		Cross_Pk_ln_Mono_norm[index] = 0.5 * Fnorm * np.average( lnmaps_fourier_rsds[i]*np.conjugate(lnmaps_fourier_rsds[j]) + lnmaps_fourier_rsds[j]*np.conjugate(lnmaps_fourier_rsds[i]) , axis=1 )
+		Cross_Pk_ln_Mono_norm[index] = 0.5 * Fnorm * np.real( np.average( lnmaps_fourier_rsds[i]*np.conjugate(lnmaps_fourier_rsds[j]) + lnmaps_fourier_rsds[j]*np.conjugate(lnmaps_fourier_rsds[i]) , axis=0 ) )
 		index += 1
 
 # Quadrupole:
@@ -644,7 +644,7 @@ Cross_Pk_ln_Quad_norm = np.zeros((ntracers*(ntracers-1)//2,n_x,n_y,n_z//2+1))
 index=0
 for i in range(ntracers):
 	for j in range(i+1,ntracers):
-		Cross_Pk_ln_Quad_norm[index] = 0.5 * Fnorm * np.average( lnmaps_fourier_rsds[i]*np.conjugate(lnmaps_Bterm_fourier[j]) + lnmaps_fourier_rsds[j]*np.conjugate(lnmaps_Bterm_fourier[i]) , axis=1 )
+		Cross_Pk_ln_Quad_norm[index] = 0.5 * Fnorm * np.real( np.average( lnmaps_fourier_rsds[i]*np.conjugate(lnmaps_Bterm_fourier[j]) + lnmaps_fourier_rsds[j]*np.conjugate(lnmaps_Bterm_fourier[i]) , axis=0 ) )
 		index += 1
 
 lnmaps_fourier_rsds = None
@@ -839,9 +839,17 @@ for nt in range(ntracers):
     quad_box_theory[nt+1] = quad_box_interp[nt] * Pk_camb_interp
 
     # Theory values for the cross spectra
-    for ntp in range(nt,ntracers):
+    for ntp in range(nt+1,ntracers):        
         crossmono_box_theory[index] = crossmono_box_interp[index] * Pk_camb_interp
         crossquad_box_theory[index] = crossquad_box_interp[index] * Pk_camb_interp
+        Cross_Mono_ln_flat = ((Cross_Pk_ln_Mono_norm[index].flatten())[k_order])
+        Cross_Quad_ln_flat = ((Cross_Pk_ln_Quad_norm[index].flatten())[k_order])
+        Cross_Mono_ln_interp = np.asarray( [ Cross_Mono_ln_flat[k_sort_bins == i].mean() for i in range(1,k_max_index+1) ] )
+        Cross_Quad_ln_interp = np.asarray( [ Cross_Quad_ln_flat[k_sort_bins == i].mean() for i in range(1,k_max_index+1) ] )
+        crossmono_box_model[index] = Cross_Mono_ln_interp * np.sqrt(spec_corrections[nt+1]*spec_corrections[ntp+1])
+        crossquad_box_model[index] = Cross_Quad_ln_interp * np.sqrt(spec_corrections[nt+1]*spec_corrections[ntp+1])
+        index += 1
+        
     # Plot
     pl.loglog(k_interp, spec_corrections[nt+1]*Pk_camb_interp, color=mycolor[nt], linestyle=':')
     pl.loglog(k_interp,mono_box_model[nt+1],color=mycolor[nt],linestyle='-')
