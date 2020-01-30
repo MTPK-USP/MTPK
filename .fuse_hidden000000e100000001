@@ -212,9 +212,8 @@ if do_galaxies:
     print ("Attention: forming galaxy mocks from a mass function, HOD & halo bias.")
     try:
         hod = np.loadtxt("inputs/" + hod_file)
-        hod = np.reshape(hod,(ngals,nhalos))
-        #if len(hod.shape) < 2:
-        #    hod = np.eye(nhalos)
+        if len(hod.shape) < 2:
+            hod = np.eye(nhalos)
         mass_fun = mult_sel_fun*np.loadtxt("inputs/" + mass_fun_file)
         halo_bias = np.loadtxt("inputs/" + halo_bias_file)
         # N.B.: the mass function is given in units of h^3 Mpc^-3 !
@@ -414,102 +413,6 @@ print()
 print ('----------------------------------')
 print()
 
-
-
-
-#####################################################
-# Start computing physical sizes of boxes
-#####################################################
-L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size     # size of the box
-box_vol = L_x*L_y*L_z            # Box's volume
-L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)    
-
-#####################################################
-# Generate real- and Fourier-space grids for FFTs
-#####################################################
-# print 'Generating the k-space Grid...'
-grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)        # generates the grid
-
-##########################################
-#  Generating the Bins Matrix M^a_{ijl}
-#  The matrix MR maps the \vec{k}'s into bins (k,mu)
-#  The matrix MRk maps the \vec{k}'s into bins (k)
-##########################################
-
-#  Fundamental frequencies (NOT ANGULAR FREQUENCIES) of the grid
-#  Here nn, kk_bar, etc., are in units of the grid, for which cell size == 1
-
-#R NOTE ON CONVERSION OF k's (which here are FREQUENCIES) to PHYSICAL k:
-#R
-#R   k_phys = 2*pi/cell_size * frequency
-#R
-nn = int(np.sqrt(n_x**2 + n_y**2 + n_z**2))
-kk_bar = np.fft.fftfreq(nn)
-
-
-### K_MAX_MIN
-#  Maximum ***frequency*** allowed
-#  Nyquist frequency is 0.5 (in units of 1/cell)
-try:
-    kmax_phys
-    kmaxbar = min(0.5,kmax_phys*cell_size/2.0/np.pi)
-    kmax_phys = kmaxbar*2*np.pi/cell_size
-except:
-    kmax_phys = 0.5 # in h/Mpc
-    kmaxbar = min(0.4,kmax_phys*cell_size/2.0/np.pi)
-    kmax_phys = kmaxbar*2*np.pi/cell_size
-
-# The number of bins should be set by the maximum k to be computed,
-# together with the minimum separation based on the physical volume.
-#
-# Typically, dk_phys =~ 1.4/L , where L is the typical physical size
-# of the survey (Abramo 2012)
-# For some particular applications (esp. large scales) we can use larger bins
-#dk0=1.4/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
-dk0 = 3.0/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
-dk_phys = 2.0*np.pi*dk0/cell_size
-
-# Ensure that the binning is at least a certain size
-dk_phys = max(dk_phys,dkph_bin)
-dk0 = dk_phys*cell_size/2.0/np.pi
-
-#  Physically, the maximal useful k is perhaps k =~ 0.3 h/Mpc (non-linear scale)
-np.set_printoptions(precision=3)
-
-print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
-
-print()
-print ('----------------------------------')
-print()
-
-#R This line makes some np variables be printed with less digits
-np.set_printoptions(precision=6)
-
-
-#R Here are the k's that will be estimated (in grid units):
-kgrid = grid.grid_k
-kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
-
-### K_MAX_MIN
-try:
-    kmin_phys
-    kminbar = kmin_phys*cell_size/2.0/np.pi
-except:
-    pass
-
-### K_MAX_MIN
-num_binsk=np.int((kmaxbar-kminbar)/dk0)
-dk_bar = dk0*np.ones(num_binsk)
-k_bar = kminbar + dk0*np.arange(num_binsk)
-r_bar = 1/2.0 + ((1.0*n_x)/num_binsk)*np.arange(num_binsk)
-
-
-# Some nomenclature about outputs:
-# k in physical units
-kph = k_bar*2*np.pi/cell_size
-
-
-
 #####################################################
 # Import the map (s), and if necessary reshape it
 #####################################################
@@ -529,14 +432,10 @@ pk_mg = pkmg.pkmg(halo_bias,dip,matgrowcentral,k_camb,vdisp,sigz_est,cH,zcentral
 monopoles = pk_mg.mono
 quadrupoles = pk_mg.quad
 
-try:
-    pk_mg_cross = pkmg_cross.pkmg_cross(halo_bias,dip,matgrowcentral,k_camb,vdisp,sigz_est,cH,zcentral)
-    cross_monopoles = pk_mg_cross.monos
-    cross_quadrupoles = pk_mg_cross.quads
-except:
-    cross_monopoles = np.zeros((len(k_camb),1))
-    cross_quadrupoles = np.zeros((len(k_camb),1))
+pk_mg_cross = pkmg_cross.pkmg_cross(halo_bias,dip,matgrowcentral,k_camb,vdisp,sigz_est,cH,zcentral)
 
+cross_monopoles = pk_mg_cross.monos
+cross_quadrupoles = pk_mg_cross.quads
 
 # Compute effective dipole and bias of tracers
 where_kph_central = np.argmin(np.abs(k_camb - kph_central))
@@ -571,12 +470,6 @@ try:
     halo_crossquad_theory = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_theory.dat')
     k_corr = halo_spec_corr[:,0]
     nks = len(k_corr)
-    if len(halo_crossmono_model.shape) == 1:
-        halo_crossmono_model = np.reshape(halo_crossmono_model, (nks, 1))
-        halo_crossquad_model = np.reshape(halo_crossquad_model, (nks, 1))
-        halo_crossmono_theory = np.reshape(halo_crossmono_theory, (nks, 1))
-        halo_crossquad_theory = np.reshape(halo_crossquad_theory, (nks, 1))
-
 except:
     print()
     print ("Did not find spectral corrections and theory spectra on directory:")
@@ -762,6 +655,93 @@ cross_quad_theory = np.vstack((np.vstack((np.asarray(cross_quad_theory[0]),np.as
 
 
 
+#####################################################
+# Start computing physical sizes of boxes
+#####################################################
+L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size     # size of the box
+box_vol = L_x*L_y*L_z            # Box's volume
+L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)    
+
+#####################################################
+# Generate real- and Fourier-space grids for FFTs
+#####################################################
+# print 'Generating the k-space Grid...'
+grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)        # generates the grid
+
+##########################################
+#  Generating the Bins Matrix M^a_{ijl}
+#  The matrix MR maps the \vec{k}'s into bins (k,mu)
+#  The matrix MRk maps the \vec{k}'s into bins (k)
+##########################################
+
+#  Fundamental frequencies (NOT ANGULAR FREQUENCIES) of the grid
+#  Here nn, kk_bar, etc., are in units of the grid, for which cell size == 1
+
+#R NOTE ON CONVERSION OF k's (which here are FREQUENCIES) to PHYSICAL k:
+#R
+#R   k_phys = 2*pi/cell_size * frequency
+#R
+nn = int(np.sqrt(n_x**2 + n_y**2 + n_z**2))
+kk_bar = np.fft.fftfreq(nn)
+
+
+### K_MAX_MIN
+#  Maximum ***frequency*** allowed
+#  Nyquist frequency is 0.5 (in units of 1/cell)
+try:
+    kmax_phys
+    kmaxbar = min(0.5,kmax_phys*cell_size/2.0/np.pi)
+    kmax_phys = kmaxbar*2*np.pi/cell_size
+except:
+    kmax_phys = 0.5 # in h/Mpc
+    kmaxbar = min(0.4,kmax_phys*cell_size/2.0/np.pi)
+    kmax_phys = kmaxbar*2*np.pi/cell_size
+
+# The number of bins should be set by the maximum k to be computed,
+# together with the minimum separation based on the physical volume.
+#
+# Typically, dk_phys =~ 1.4/L , where L is the typical physical size
+# of the survey (Abramo 2012)
+# For some particular applications (esp. large scales) we can use larger bins
+#dk0=1.4/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
+dk0 = 3.0/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
+dk_phys = 2.0*np.pi*dk0/cell_size
+
+# Ensure that the binning is at least a certain size
+dk_phys = max(dk_phys,dkph_bin)
+dk0 = dk_phys*cell_size/2.0/np.pi
+
+#  Physically, the maximal useful k is perhaps k =~ 0.3 h/Mpc (non-linear scale)
+np.set_printoptions(precision=3)
+
+print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
+
+print()
+print ('----------------------------------')
+print()
+
+
+
+#R This line makes some np variables be printed with less digits
+np.set_printoptions(precision=6)
+
+
+#R Here are the k's that will be estimated (in grid units):
+kgrid = grid.grid_k
+kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
+
+### K_MAX_MIN
+try:
+    kmin_phys
+    kminbar = kmin_phys*cell_size/2.0/np.pi
+except:
+    pass
+
+### K_MAX_MIN
+num_binsk=np.int((kmaxbar-kminbar)/dk0)
+dk_bar = dk0*np.ones(num_binsk)
+k_bar = kminbar + dk0*np.arange(num_binsk)
+r_bar = 1/2.0 + ((1.0*n_x)/num_binsk)*np.arange(num_binsk)
 
 
 
@@ -788,6 +768,9 @@ lenkf=len(kflat)
 
 print ('Central physical k values where spectra will be estimated:', kph_central)
 
+# Some nomenclature about outputs:
+# k in physical units
+kph = k_bar*2*np.pi/cell_size
 # Get G(z)^2*P(k_central) for the central value of k and central value of z
 kcmin = kph_central - 2.0*np.pi*( 4.0*dk0 )/cell_size
 kcmax = kph_central + 2.0*np.pi*( 4.0*dk0 )/cell_size
@@ -1143,7 +1126,6 @@ for nm in range(n_maps):
                     maps[ng] = np.random.poisson(maps[ng])
     else:
         maps = maps_halos
-    #sys.exit(-1)
 
     if 'maps_halos' in globals():
         del maps_halos

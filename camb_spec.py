@@ -129,6 +129,7 @@ def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, n_SA, k_min, k_max
 		pars.ombh2 = Omegab*h**2
 		pars.omch2 = Omegac*h**2
 		pars.H0 = H0
+		pars.InitPower.As = 2.1867
 		pars.InitPower.ns = n_SA
 		pars.Reion.redshift = z_re
 		pars.set_matter_power(redshifts = [zcentral], kmax = k_max)
