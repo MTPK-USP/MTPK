@@ -1646,7 +1646,7 @@ for nt in range(ntracers):
     relcov0_MT[nt,nt] = rc0_MT + dd_rc + dd_rc0
     relcov0_FKP[nt,nt] = rc0_FKP + dd_rc + dd_rc0
     dd_rc2 = np.diag(dd_P2_rel_kbar[nt])
-    rc2_MT = np.cov(P2_data_dec[1:,nt].T)/(small+np.abs(np.outer(P2_mean_dec[nt],P2_mean[nt])))
+    rc2_MT = np.cov(P2_data_dec[1:,nt].T)/(small+np.abs(np.outer(P2_mean_dec[nt],P2_mean_dec[nt])))
     rc2_FKP = np.cov(P2_fkp_dec[1:,nt].T)/(small+np.abs(np.outer(P2_fkp_mean_dec[nt],P2_fkp_mean_dec[nt])))
     norm_rc2_nt = np.var(dd_P2_rel_kbar[nt])
     dd_rc2 = norm_rc2_nt*np.diag(dd_P2_rel_kbar[nt]**2)
