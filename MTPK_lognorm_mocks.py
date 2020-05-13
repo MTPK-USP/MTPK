@@ -41,9 +41,11 @@ else:
 
 from camb_spec import camb_spectrum
 from cosmo_funcs import matgrow, H
+from multipoles import delta_r
 
 import grid3D as gr
 import gauss_pk_class as pkgauss
+
 
 small=1.e-8
 
@@ -126,13 +128,22 @@ except:
 else:
     print('ATTENTION: pre-defined (on input) matter growth rate =',matgrowcentral)
 
-
-#######################################################
-# Maybe we can change this later, with a growth function for each species?
 f_grow = np.ones(nhalos)*matgrowcentral
-#######################################################
 
-#############Calling CAMB for calculations of the spectra#################
+# Velocity dispersion. vdisp is defined on inputs with units of km/s
+vdisp = np.asarray(vdisp)
+sigma_v = vdisp/H(100, Omegam, OmegaDE, -1, 0.0, zcentral) #Mpc/h
+a_vdisp = vdisp/c  #Adimensional vdisp
+
+# Redshift errors. sigz_est is defined on inputs, and is adimensional
+sigz_est = np.asarray(sigz_est)
+sigma_z = sigz_est*c/H(100, Omegam, OmegaDE, -1, 0.0, zcentral) #Mpc/h
+
+# Joint factor considering v dispersion and z error
+sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
+a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
+
+############# Calling CAMB for calculations of the spectra #################
 print('Beggining CAMB calculations\n')
 
 # It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
@@ -158,12 +169,6 @@ else:
 # Make sure this spectrum decays sufficiently rapidly for very high k's:
 k_camb = np.append(k_camb,np.array([2*k_camb[-1],4*k_camb[-1],8*k_camb[-1],16*k_camb[-1]]))
 Pk_camb = np.append(Pk_camb,np.array([1./4.*Pk_camb[-1],1./16*k_camb[-1],1./64*k_camb[-1],1./256*k_camb[-1]]))
-
-# TESTING
-#Pk_camb = 0.01 * Pk_camb
-#Pk_camb = 10000.*(k_camb/0.01)/(1.0 + np.power(k_camb/0.01,3.0))
-
-
 
 
 # This tool generates only "halos", with densities and biases given by the
@@ -237,7 +242,7 @@ print('Assuming map centered at z='+str(zcentral))
 
 #################################
 # Calculating the P_Gauss(k) grid
-# I will add the RSDs later, at the level of the *Gaussian* spectrum
+# I will add the RSDs later, at the level of the *Gaussian* spectrum 
 #################################
 
 # This k is in physical units! Need this to interpolate from CAMB spectrum
@@ -296,7 +301,6 @@ for nt in range(ntracers):
         corr2 = p_mono[ntp,ntp]
         pkg = pkgauss.gauss_pk(k_camb,monocross*Pk_camb,grid.grid_k,cell_size,L_max)
         c12 = np.abs(pkg.Pk_gauss_interp(kspec))
-        #cross = 0.00001*(corr1 + corr2) + 0.99999*c12
         p_mono[nt,ntp] = c12
         p_mono[ntp,nt] = c12
 
@@ -331,17 +335,6 @@ for nt in range(ntracers):
 
 # These are the matrices such that Pch . Transpose(Pch) = P_ij (k_x,k_y,k_z)
 
-
-# Here introduce a couple of phenomenological fudge factors:
-# 1) fudge factor to correct bias (scale-dependence on small scales)
-# 2) fudge factor to correct RSD/quadrupole
-kphys_grid = 0.0001 + (2.*np.pi/cell_size)*grid.grid_k
-kphys_grid_flat = kphys_grid.flatten()
-kz_flat = (2.*np.pi*grid.KZ).flatten()
-
-
-
-
 ###########################################
 # Define lognormal mapping
 # This definition regularizes high-variance fields
@@ -373,6 +366,10 @@ delta_k_tracer = (0.+1j*0.0)*np.zeros((ntracers,n_maps,n_x,n_y,n_z))
 
 # Always remember that 'k' in grid_k are the frequencies, not physical k's
 # Notice that rL0 is given in units of cell
+
+# To correctly implement the FOGs we'll have to use physical k
+kgrid_phys = 2*np.pi*grid.grid_k/cell_size
+
 kr0 = 2.*np.pi*np.mean(grid.grid_k)*np.mean(rL0)
 
 # Create sets of Gaussian modes, and maps of tracers for those modes
@@ -411,8 +408,7 @@ for i in range(n_maps):
         # Log-Normal Density Field
         ###########################
         delta_xr = delta_x_ln(delta_xr_g, var_gr, 1.0)
-        # clip values < -1
-        # delta_xr [ delta_xr < -1.0 ] = -1.0
+
 
         # TESTING
         mxr = np.mean(delta_xr)
@@ -431,23 +427,10 @@ for i in range(n_maps):
         #Dy  = np.fft.irfftn( 1j*kyhat_half / (small + 2.*np.pi*k_half) * delta_ln_k, s=[n_x,n_y,n_z] )
         #Dz  = np.fft.irfftn( 1j*kzhat_half / (small + 2.*np.pi*k_half) * delta_ln_k, s=[n_x,n_y,n_z] )
         #Dterm = adip[nt]*( rxhat*Dx + ryhat*Dy + rzhat*Dz)/rL0
+    
+        # #Dterm = Dterm.real
 
-        # Quadrupole term
-        Bxx = np.fft.irfftn(kxhat_half*kxhat_half*delta_ln_k, s=[n_x,n_y,n_z])
-        Byy = np.fft.irfftn(kyhat_half*kyhat_half*delta_ln_k, s=[n_x,n_y,n_z])
-        Bzz = np.fft.irfftn(kzhat_half*kzhat_half*delta_ln_k, s=[n_x,n_y,n_z])
-        Bxy = np.fft.irfftn(kxhat_half*kyhat_half*delta_ln_k, s=[n_x,n_y,n_z])
-        Bxz = np.fft.irfftn(kxhat_half*kzhat_half*delta_ln_k, s=[n_x,n_y,n_z])
-        Byz = np.fft.irfftn(kyhat_half*kzhat_half*delta_ln_k, s=[n_x,n_y,n_z])
-        Bterm = rxhat**2*Bxx + ryhat**2*Byy + rzhat**2*Bzz + 2.0*rxhat*ryhat*Bxy + 2.0*rxhat*rzhat*Bxz + 2.0*ryhat*rzhat*Byz
-            
-        #Dterm = Dterm.real
-        Bterm = Bterm.real
-
-        B_tracer[nt] = Bterm
-        # Add RSDs
-        #delta_rsds = delta_xr + beta[nt]*(Bterm + Dterm)
-        delta_rsds = delta_xr + beta[nt]*Bterm
+        delta_rsds = delta_r(kgrid_phys,kxhat,kyhat,kzhat,rxhat,ryhat,rzhat,delta_ln_k,sig_tot[nt],bias[nt],matgrowcentral)
         # Real part only
         delta_rsds = delta_rsds.real
         # clip values < -1
@@ -455,7 +438,7 @@ for i in range(n_maps):
         
         lnmaps_fourier_rsds[nt,i] = np.fft.rfftn(delta_rsds)
 
-        compare_B_term[nt] = np.sqrt(np.mean(Bterm**2))/np.sqrt(np.mean(delta_xr**2))
+        # compare_B_term[nt] = np.sqrt(np.mean(Bterm**2))/np.sqrt(np.mean(delta_xr**2))
         # compare_D_term[nt] = np.sqrt(np.mean(Dterm.real**2))/np.sqrt(np.mean(delta_xr**2))
         
         
@@ -640,7 +623,7 @@ index=0
 for nt in range(ntracers):
 	for ntp in range(nt+1,ntracers):
 		crossmono_box_interp[index] = b[nt]*b[ntp] + (b[nt]+b[ntp])*f * mu2_interp + f**2 * mu4_interp
-		crossquad_box_interp[index] = b[nt]*b[ntp] * (3*mu2_interp - 1.0 + (beta[nt]+beta[ntp])*( 3*mu4_interp - mu2_interp ) + beta[nt]*beta[ntp]**(3*mu6_interp - mu4_interp))
+		crossquad_box_interp[index] = b[nt]*b[ntp] * (3*mu2_interp - 1.0 + (beta[nt]+beta[ntp])*( 3*mu4_interp - mu2_interp ) + beta[nt]*beta[ntp]*(3*mu6_interp - mu4_interp))
 		index += 1
 
 # Take means in an interval that is typically of interest

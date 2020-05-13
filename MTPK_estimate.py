@@ -165,6 +165,20 @@ except:
     matgrowcentral = matgrow(Omegam,OmegaDE,w0,w1,zcentral,gamma)
 else:
     print('ATTENTION: pre-defined (on input) matter growth rate =' , matgrowcentral)
+
+# Velocity dispersion. vdisp is defined on inputs with units of km/s
+vdisp = np.asarray(vdisp) #km/s
+sigma_v = vdisp/H(100,Omegam,OmegaDE,-1,0.0,zcentral) #Mpc/h
+a_vdisp = vdisp/c #Adimensional vdisp
+
+# Redshift errors. sigz_est is defined on inputs, and is adimensional
+sigz_est = np.asarray(sigz_est)
+sigma_z = sigz_est*c/H(100,Omegam,OmegaDE,-1,0.0,zcentral) # Mpc/h
+
+# Joint factor considering v dispersion and z error
+sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
+a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
+
 ###################################################################################################
 
 #############Calling CAMB for calculations of the spectra#################
@@ -244,6 +258,7 @@ if do_galaxies:
         gal_vdisp = np.asarray(vdisp)
         gal_vdisp = np.sqrt( np.dot(hod,gal_vdisp**2*mass_fun)/np.dot(hod,mass_fun) )
 
+        a_gal_sig_tot = np.sqrt((gal_vdisp/c)**2 + gal_sigz_est**2)
     except:
         print ("Something's wrong... did not find HOD and/or mass function!")
         print ("Check in the /inputs directory. Aborting now...")
@@ -258,6 +273,8 @@ else:
         gal_adip = np.asarray(adip)
         gal_sigz_est = np.asarray(sigz_est)
         gal_vdisp = np.asarray(vdisp)
+
+        a_gal_sig_tot = np.sqrt((gal_vdisp/c)**2 + gal_sigz_est**2)
     except:
         print()
         print ("Could not find halo mass function or/and halo bias values from input files!")
@@ -524,13 +541,13 @@ else:
     print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
 
 dip = np.asarray(adip) * kdip_phys
-pk_mg = pkmg.pkmg(halo_bias,dip,matgrowcentral,k_camb,vdisp,sigz_est,cH,zcentral)
+pk_mg = pkmg.pkmg(halo_bias,dip,matgrowcentral,k_camb,len(bias)*[0],a_sig_tot,cH,zcentral)
 
 monopoles = pk_mg.mono
 quadrupoles = pk_mg.quad
 
 try:
-    pk_mg_cross = pkmg_cross.pkmg_cross(halo_bias,dip,matgrowcentral,k_camb,vdisp,sigz_est,cH,zcentral)
+    pk_mg_cross = pkmg_cross.pkmg_cross(halo_bias,dip,matgrowcentral,k_camb,len(bias)*[0],a_sig_tot,cH,zcentral)
     cross_monopoles = pk_mg_cross.monos
     cross_quadrupoles = pk_mg_cross.quads
 except:
@@ -546,7 +563,7 @@ effbias = np.sqrt(monopoles[:,where_kph_central])
 
 try:
     data_bias
-    pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,vdisp,sigz_est,cH,zcentral)
+    pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,len(bias)*[0],a_sig_tot,cH,zcentral)
     monopoles_data = pk_mg_data.mono
     effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
 except:
@@ -724,7 +741,7 @@ for ng in range(ntracers):
 
 
 # Get effective bias (sqrt of monopoles) for final tracers
-pk_mg = pkmg.pkmg(gal_bias,gal_adip,matgrowcentral,k_camb,gal_vdisp,gal_sigz_est,cH,zcentral)
+pk_mg = pkmg.pkmg(gal_bias,gal_adip,matgrowcentral,k_camb,len(bias)*[0],a_gal_sig_tot,cH,zcentral)
 
 monopoles = pk_mg.mono
 quadrupoles = pk_mg.quad
@@ -737,7 +754,7 @@ effbias = np.sqrt(monopoles[:,where_kph_central])
 
 try:
     data_bias
-    pk_mg_data = pkmg.pkmg(data_bias,gal_adip,matgrowcentral,k_camb,gal_vdisp,gal_sigz_est,cH,zcentral)
+    pk_mg_data = pkmg.pkmg(data_bias,gal_adip,matgrowcentral,k_camb,len(bias)*[0],a_gal_sig_tot,cH,zcentral)
     monopoles_data = pk_mg_data.mono
     effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
 except:
@@ -1399,28 +1416,23 @@ mycolor = [ cm.jet(x) for x in cm_subsection ]
 
 pl.xscale('log')
 pl.yscale('log')
-ylow=np.mean(P0_mean_dec[:,-10:])*0.333
-yhigh=np.mean(np.abs(P0_mean_dec[:,2:10]))*3.0
 xlow=0.99*kph[2]
 xhigh=1.01*kph[-1]
 
 for nt in range(ntracers):
-    gp = 1.+0.01*(nt-ntracers/2.0+0.25)
     ddk = dkph_bin*0.1*(nt-ntracers/2.0+0.25)
     # Monopole
     color1=mycolor[nt]
-    p = gp*P0_data_dec[0,nt]
+    p = P0_data_dec[0,nt]
     errp = np.sqrt(np.diag(np.cov(P0_data_dec[1:,nt].T)))
-    pl.errorbar(kph+ddk,p,errp,color=color1,linestyle='None',linewidth=0.5)
-    p = gp*effbias[nt]**2*P0_fkp_dec[0,nt]
+    pl.errorbar(kph+ddk,p,errp,color=color1,linestyle='None',linewidth=0.5, marker='s', capsize=3, markersize=3)
+    p = effbias[nt]**2*P0_fkp_dec[0,nt]
     errp = np.sqrt(np.diag(np.cov(effbias[nt]**2*P0_fkp_dec[1:,nt].T)))
-    pl.errorbar(kph+2*ddk,p,errp,color=color1,linestyle='None',linewidth=0.1)
+    pl.errorbar(kph+2*ddk,p,errp,color=color1,linestyle='None',linewidth=0.1, marker='^', capsize=3, markersize=3)
     #pl.plot(kph,gp*P0_model[nt],color=color1,linewidth=1.2)
-    pl.plot(kph,gp*P0_mean[nt],color=color1,linewidth=1.0)
+    pl.plot(kph,P0_mean[nt],color=color1,linewidth=1.0)
 
-
-pl.ylim([ylow,yhigh])
-pl.xlim([xlow,xhigh])
+pl.legend()
 pl.xlabel(r'$k \, [h \, $Mpc$^{-1}]$',fontsize=14)
 pl.ylabel(r'$P^{(\ell)}(k) \, [h^{-3} \, $Mpc$^3]$',fontsize=14)
 pl.title(r'Convolved spectra - $P_i^{(0)} (k)$',fontsize=16)
@@ -1497,10 +1509,10 @@ winfun0_cross = np.ones((ntracers*(ntracers-1)//2,pow_bins))
 winfun2 = np.ones((ntracers,pow_bins))
 winfun2_cross = np.ones((ntracers*(ntracers-1)//2,pow_bins))
 
-if is_n_body_sims:
-    win_fun_file=glob.glob("spectra/"+win_fun_dir+"*Win*")
-    win_fun_file_cross0=glob.glob("spectra/"+win_fun_dir+"*WinCross0*")
-    win_fun_file_cross2=glob.glob("spectra/"+win_fun_dir+"*WinCross2*")
+if use_window_function:
+    win_fun_file=glob.glob("spectra/"+win_fun_dir+"*WinFun0*")
+    win_fun_file_cross0=glob.glob("spectra/"+win_fun_dir+"*WinFun_Cross0*")
+    win_fun_file_cross2=glob.glob("spectra/"+win_fun_dir+"*WinFun_Cross2*")
     if (len(win_fun_file)!=1) | (len(win_fun_file_cross0)!=1) | (len(win_fun_file_cross2)!=1):
         print ("Could not find (or found more than one) specified window functions at", "spectra/", win_fun_dir)
         print ("Using no window function")
@@ -1513,23 +1525,37 @@ if is_n_body_sims:
         win_fun_file_cross2 = win_fun_file_cross2[0]
 
         wf = np.loadtxt(win_fun_file)
-        wf_c0 = np.loadtxt(win_fun_file_cross0)
-        wf_c2 = np.loadtxt(win_fun_file_cross2)
 
         if (len(wf) != pow_bins) | (len(wf.T) != 2*ntracers):
             print ("Dimensions of window functions (P0 auto & P2 auto) do not match those of this estimation code!")
             print ("Please check that window function, or create a new one. Aborting now...")
             sys.exit(-1)
 
-        if (len(wf_c0) != pow_bins) | (len(wf_c0.T) != ntracers*(ntracers-1)//2):
-            print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
-            print ("Please check that window function, or create a new one. Aborting now...")
-            sys.exit(-1)
+        if(ntracers>1):
+            wf_c0 = np.loadtxt(win_fun_file_cross0)
+            wf_c2 = np.loadtxt(win_fun_file_cross2)
 
-        if (len(wf_c2) != pow_bins) | (len(wf_c2.T) != ntracers*(ntracers-1)//2):
-            print ("Dimensions of window function of cross spectra for P2 do not match those of this estimation code!")
-            print ("Please check that window function, or create a new one. Aborting now...")
-            sys.exit(-1)
+            if ( (ntracers>2) and (len(wf_c0) != pow_bins) | (len(wf_c0.T) != ntracers*(ntracers-1)//2) ):
+                print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
+                print ("Please check that window function, or create a new one. Aborting now...")
+                sys.exit(-1)
+            if (len(wf_c0.T)!=pow_bins):
+                print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
+                print ("Please check that window function, or create a new one. Aborting now...")
+                sys.exit(-1)
+            wf_c0 = np.reshape(wf_c0, (pow_bins,1))
+
+            if ((ntracers>2) and (len(wf_c2) != pow_bins) | (len(wf_c2.T) != ntracers*(ntracers-1)//2)):
+                print ("Dimensions of window function of cross spectra for P2 do not match those of this estimation code!")
+                print ("Please check that window function, or create a new one. Aborting now...")
+                sys.exit(-1)
+
+            if (len(wf_c2.T)!=pow_bins):
+                print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
+                print ("Please check that window function, or create a new one. Aborting now...")
+                sys.exit(-1)
+            wf_c2 = np.reshape(wf_c2, (pow_bins,1))
+
 
     mean_win0 = wf[:,:ntracers]
     mean_win2 = wf[:,ntracers:]
@@ -1646,7 +1672,7 @@ for nt in range(ntracers):
     relcov0_MT[nt,nt] = rc0_MT + dd_rc + dd_rc0
     relcov0_FKP[nt,nt] = rc0_FKP + dd_rc + dd_rc0
     dd_rc2 = np.diag(dd_P2_rel_kbar[nt])
-    rc2_MT = np.cov(P2_data_dec[1:,nt].T)/(small+np.abs(np.outer(P2_mean_dec[nt],P2_mean_dec[nt])))
+    rc2_MT = np.cov(P2_data_dec[1:,nt].T)/(small+np.abs(np.outer(P2_mean_dec[nt],P2_mean[nt])))
     rc2_FKP = np.cov(P2_fkp_dec[1:,nt].T)/(small+np.abs(np.outer(P2_fkp_mean_dec[nt],P2_fkp_mean_dec[nt])))
     norm_rc2_nt = np.var(dd_P2_rel_kbar[nt])
     dd_rc2 = norm_rc2_nt*np.diag(dd_P2_rel_kbar[nt]**2)
@@ -1662,10 +1688,10 @@ for nt in range(ntracers):
         ppmt2 = small + np.abs(np.outer(P2_mean_dec[nt],P2_mean_dec[ntp]))
         ppfkp = small + np.abs(np.outer(P0_fkp_mean_dec[nt],P0_fkp_mean_dec[ntp]))
         ppfkp2 = small + np.abs(np.outer(P2_fkp_mean_dec[nt],P2_fkp_mean_dec[ntp]))
-        relcov0_MT[nt,ntp] = ((np.cov(P0_data_dec[1:,nt].T,P0_data_dec[1:,ntp].T))[num_binsk:,:num_binsk])/ppmt + dd_rc + dd_rc0
-        relcov2_MT[nt,ntp] = ((np.cov(P2_data_dec[1:,nt].T,P2_data_dec[1:,ntp].T))[num_binsk:,:num_binsk])/ppmt2 + dd_rc + dd_rc2
-        relcov0_FKP[nt,ntp] = ((np.cov(P0_fkp_dec[1:,nt].T,P0_fkp_dec[1:,ntp].T))[num_binsk:,:num_binsk])/ppfkp + dd_rc + dd_rc0
-        relcov2_FKP[nt,ntp] = ((np.cov(P2_fkp_dec[1:,nt].T,P2_fkp_dec[1:,ntp].T))[num_binsk:,:num_binsk])/ppfkp2 + dd_rc + dd_rc2
+        relcov0_MT[nt,ntp] = ((np.cov(P0_data_dec[1:,nt].T,P0_data_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppmt) + dd_rc + dd_rc0
+        relcov2_MT[nt,ntp] = ((np.cov(P2_data_dec[1:,nt].T,P2_data_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppmt2) + dd_rc + dd_rc2
+        relcov0_FKP[nt,ntp] = ((np.cov(P0_fkp_dec[1:,nt].T,P0_fkp_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppfkp) + dd_rc + dd_rc0
+        relcov2_FKP[nt,ntp] = ((np.cov(P2_fkp_dec[1:,nt].T,P2_fkp_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppfkp2) + dd_rc + dd_rc2
         relcov0_MT[ntp,nt] = relcov0_MT[nt,ntp]
         relcov2_MT[ntp,nt] = relcov2_MT[nt,ntp]
         relcov0_FKP[ntp,nt] = relcov0_FKP[nt,ntp]
@@ -1828,17 +1854,16 @@ for nt in range(ntracers):
     pl.plot(kphsmooth,np.sqrt(np.abs(tcfkp)),'r-',linewidth=0.5)
     fkpcov= np.sqrt(np.abs(np.diagonal(relcov0_FKP[nt,nt])))
     fkpcov2= np.sqrt(np.abs(np.diagonal(relcov2_FKP[nt,nt])))
-    pl.semilogy(kph,fkpcov,marker='x',color='r',linestyle='')
-    pl.semilogy(kph,fkpcov2,marker='+',color='g',linestyle='')
+    label = str(nt)
+    pl.semilogy(kph,fkpcov,marker='x',color='r',linestyle='', label = 'FKP Mono Tracer ' + label)
+    pl.semilogy(kph,fkpcov2,marker='+',color='g',linestyle='', label = 'FKP Quad Tracer' + label)
     #tcmt = np.convolve(Theor_Cov_MT[nt,nt]/(small+P0_mean[nt]**2),smoothfilt,mode='valid')
     #pl.semilogy(kphsmooth,np.abs(tcmt),'k-',linewidth=2.5)
     mtcov = np.sqrt(np.abs(np.diagonal(relcov0_MT[nt,nt])))
     mtcov2 = np.sqrt(np.abs(np.diagonal(relcov2_MT[nt,nt])))
-    pl.semilogy(kph,mtcov,marker='o',color='k',linestyle='')
-    pl.semilogy(kph,mtcov2,marker='.',color='b',linestyle='')
-    ymin, ymax = np.min(mtcov)*0.5, 10.
-    pl.xlim([kph[2],kph[-2]])
-    pl.ylim([ymin,ymax])
+    pl.semilogy(kph,mtcov,marker='o',color='k',linestyle='', label = 'MT Mono Tracer ' + label)
+    pl.semilogy(kph,mtcov2,marker='.',color='b',linestyle='', label = 'MT Quad Tracer ' + label)
+    pl.legend()
     pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=14)
     pl.ylabel(r'$\sigma [P^{(0)}]/[P^{(0)}]$ , $\sigma [P^{(2)}]/[P^{(2)}] $',fontsize=14)
     thistitle = 'Variance of tracer ' + str(nt)
@@ -2051,25 +2076,23 @@ ylow=np.median(P0_mean_dec[0,-10:])*0.1
 yhigh=np.mean(np.abs(P0_mean_dec[:,2:10]))*3.0
 
 for nt in range(ntracers):
-    gp = 1.+0.02*(nt-1.5)
     gk = 1.+0.01*(nt-1.5)
     # Monopole
     color1=mycolor[nt]
-    p = gp*P0_data[0,nt]
+    p = P0_data[0,nt]
     errp = np.sqrt(np.diag(np.cov(P0_data[1:,nt].T)))
-    pl.errorbar(gk*kph,p,errp,color=color1,linestyle='None',linewidth=0.1)
+    label = str(nt)
+    pl.errorbar(gk*kph,p,errp,color=color1,linestyle='None', marker='s', markersize=3,capsize=3, label = 'Monopole Tracer ' + label)
     #pl.plot(kph,gp*P0_model[nt],color=color1,linewidth=1.2)
-    pl.plot(kph,gp*P0_mean[nt],color=color1,linewidth=0.6)
+    pl.plot(kph,P0_mean[nt],color=color1,linewidth=0.6)
     # Quadrupole
-    p = gp*P2_data[0,nt]
+    p = P2_data[0,nt]
     errp = np.sqrt(np.diag(np.cov(P2_data[1:,nt].T)))
-    pl.errorbar(gk*kph,p,errp,color=color1,linestyle='None',linewidth=0.1)
+    pl.errorbar(gk*kph,p,errp,color=color1,linestyle='None',marker = '^',markersize=3,capsize=3, label = 'Quadrupole Tracer ' + label)
     #pl.plot(kph,gp*P2_model[nt],color=color1,linewidth=1.2)
-    pl.plot(kph,gp*P2_mean[nt],color=color1,linewidth=0.6)
+    pl.plot(kph,P2_mean[nt],color=color1,linewidth=0.6)
 
-
-pl.ylim([ylow,yhigh])
-pl.xlim([xlow,xhigh])
+pl.legend()
 pl.xlabel(r'$k \, [h \, $Mpc$^{-1}]$',fontsize=14)
 pl.ylabel(r'$P^{(\ell)}(k) \, [h^{-3} \, $Mpc$^3]$',fontsize=14)
 pl.title(r'Convolved spectra - $P_i^{(0)} (k)$ , $P_i^{(2)} (k)$',fontsize=16)
@@ -2089,16 +2112,15 @@ for nt in range(ntracers):
     color1=mycolor[nt]
     p = gp*P0_data_dec[0,nt]
     errp = np.sqrt(np.diag(np.cov(P0_data_dec[1:,nt].T)))
-    pl.errorbar(gk*kph,p,errp,color=color1,linestyle='None',linewidth=0.6)
+    pl.errorbar(gk*kph,p,errp,color=color1,linestyle='None',linewidth=0.6, marker = 's', markersize = 3, capsize=3,label='MT - Monopole')
     pl.plot(kph,gp*P0_model[nt],color=color1,linewidth=0.4)
     # Quadrupole
     p = gp*P2_data_dec[0,nt]
     errp = np.sqrt(np.diag(np.cov(P2_data[1:,nt].T)))
-    pl.errorbar(gk*kph,p,errp,color=color1,linestyle='None',linewidth=0.6)
+    pl.errorbar(gk*kph,p,errp,color=color1,linestyle='None',linewidth=0.6, marker = '^', markersize=3,capsize=3,label='MT - Quadrupole')
     pl.plot(kph,gp*P2_model[nt],color=color1,linewidth=0.4)
 
-pl.ylim([ylow,yhigh])
-pl.xlim([xlow,xhigh])
+pl.legend()
 pl.xlabel(r'$k \, [h \, $Mpc$^{-1}]$',fontsize=14)
 pl.ylabel(r'$P^{(\ell)}(k) \, [h^{-3} \, $Mpc$^3]$',fontsize=14)
 pl.title(r'Deconvolved spectra - $P_i^{(0)} (k)$ , $P_i^{(2)} (k)$',fontsize=16)
@@ -2110,20 +2132,16 @@ pl.close('all')
 # Monopole only
 pl.xscale('log')
 pl.yscale('log')
-ylow=np.median(P0_mean_dec[0,-10:])*0.1
-yhigh=np.mean(np.abs(P0_mean_dec[:,2:10]))*3.0
 for nt in range(ntracers):
-    gp = 1.+0.02*(nt-1.5)
     gk = 1.+0.01*(nt-1.5)
     # Monopole
     color1=mycolor[nt]
-    p = np.abs(gp*P0_data_dec[0,nt])
+    p = np.abs(P0_data_dec[0,nt])
     errp = np.sqrt(np.diag(np.cov(P0_data_dec[1:,nt].T)))
-    pl.errorbar(gk*kph,p,errp,color=color1,linestyle='None',linewidth=0.6)
-    pl.plot(kph,gp*P0_model[nt],color=color1,linewidth=0.4)
+    pl.errorbar(gk*kph,p,errp,color=color1,linestyle='None',linewidth=0.6, marker = 's', markersize = 3, capsize=3, label = 'MT Tracer ' + str(nt))
+    pl.plot(kph,P0_model[nt],color=color1,linewidth=0.4, label = 'Model Tracer ' + str(nt))
 
-pl.ylim([ylow,yhigh])
-pl.xlim([xlow,xhigh])
+pl.legend()
 pl.xlabel(r'$k \, [h \, $Mpc$^{-1}]$',fontsize=14)
 pl.ylabel(r'$P^{(0)}(k) \, [h^{-3} \, $Mpc$^3]$',fontsize=14)
 pl.title(r'Deconvolved spectra - $P_i^{(0)} (k)$',fontsize=16)
@@ -2346,24 +2364,21 @@ for nt in range(ntracers):
     errp = np.sqrt(np.diag(np.cov(P0_data_dec[1:,nt].T)))
     errp2 = np.sqrt(np.diag(np.cov(effbias[nt]**2*P0_fkp_dec[1:,nt].T)))
     if nt==0:
-        pl.errorbar(gk*kph,p_mean,errp,color=color1,linestyle ='None', marker='o',ms=3.,elinewidth=1.2, label='MT (mean of mocks)')
+        pl.errorbar(gk*kph,p_mean,errp,color=color1,linestyle ='None', marker='^', capsize = 3, markersize = 3,elinewidth=1.2, label='MT (mean of mocks)')
         #pl.errorbar(gk2*kph,p2,errp2,color=color1,linestyle ='None', marker='x',ms=3.,elinewidth=1.2, label = 'FKP')
-        pl.errorbar(gk2*kph,p2_mean,errp2,color=color1,linestyle ='None', marker='x',ms=3.,elinewidth=1.2, label = 'FKP (mean of mocks)')
+        pl.errorbar(gk2*kph,p2_mean,errp2,color=color1,linestyle ='None', marker='x',capsize=3, markersize = 4,elinewidth=1.2, label = 'FKP (mean of mocks)')
         pl.plot(kph,gp*P0_model[nt],color=color1,linewidth=1.,label='Theoretical model')
         ##pl.plot(kph,p_mean,color=color1,linewidth=2.,linestyle='--',label='Mean of mocks')
     else:
-        pl.errorbar(gk*kph,p_mean,errp,color=color1,linestyle ='None', marker='o',ms=3.,elinewidth=1.2)
+        pl.errorbar(gk*kph,p_mean,errp,color=color1,linestyle ='None', marker='^', capsize=3, markersize=3,elinewidth=1.2)
         #pl.errorbar(gk2*kph,p2,errp2,color=color1,linestyle ='None', marker='x',ms=3.,elinewidth=1.2)
-        pl.errorbar(gk2*kph,p2_mean,errp2,color=color1,linestyle ='None', marker='x',ms=3.,elinewidth=1.2)
+        pl.errorbar(gk2*kph,p2_mean,errp2,color=color1,linestyle ='None', marker='x',capsize=3,markersize=3,elinewidth=1.2)
         pl.plot(kph,gp*P0_model[nt],color=color1,linewidth=1.)
         ##pl.plot(kph,p_mean,color=color1,linewidth=2.,linestyle='--')
         
 #pl.text(0.3,20000,r"$0.6<z<0.75$", fontsize = 12)
 #pl.text(0.18,20000,"W4 field", fontsize = 12)
 pl.legend(loc="lower left",fontsize=12.,frameon=False)
-#print(pl.legend(loc="lower left",fontsize=13.))
-pl.ylim([ylow,yhigh])
-pl.xlim([kph[0],xhigh])
 pl.xlabel(r'$k \, [h \, $Mpc$^{-1}]$',fontsize=14)
 pl.ylabel(r'$P^{(0)}(k) \, [h^{-3} \, $Mpc$^3]$',fontsize=14)
 #pl.title(r'Deconvolved spectra - $P_i^{(0)} (k)$',fontsize=16)
