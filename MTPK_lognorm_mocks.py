@@ -623,7 +623,7 @@ index=0
 for nt in range(ntracers):
 	for ntp in range(nt+1,ntracers):
 		crossmono_box_interp[index] = b[nt]*b[ntp] + (b[nt]+b[ntp])*f * mu2_interp + f**2 * mu4_interp
-		crossquad_box_interp[index] = b[nt]*b[ntp] * (3*mu2_interp - 1.0 + (beta[nt]+beta[ntp])*( 3*mu4_interp - mu2_interp ) + beta[nt]*beta[ntp]*(3*mu6_interp - mu4_interp))
+		crossquad_box_interp[index] = b[nt]*b[ntp] * (3*mu2_interp - 1.0 + (beta[nt]+beta[ntp])*( 3*mu4_interp - mu2_interp ) + beta[nt]*beta[ntp]**(3*mu6_interp - mu4_interp))
 		index += 1
 
 # Take means in an interval that is typically of interest
