@@ -215,11 +215,13 @@ zbinwidth = 0.1
 #
 # Gaussian redshift errors of galaxy maps
 # Units of the cell size!
-sigz_est = ngals*[0.00001]
+sigz_est = ngals*[0.00001] #Adimensional: (1+\beta*mu**2) --> (1+\beta*mu**2)*exp(-k**2*mu**2*(sigz_est*c/H)/2)
 # Alpha-type dipoles
 adip = sigz_est
-# Velocity dispersions for RSDs: f*mu^2 --> f*mu^2/(1+v^2*k^2*mu**2)
-vdisp = sigz_est
+# Velocity dispersions for RSDs: f*mu^2 --> f*mu^2*exp(-k^2*mu^2*(vdisp/H)**2/2)
+vdisp = sigz_est #km/s -- This is usually of the order 150km/s
+# Speed of light
+c = 299792.458 #km/s
 ################################
 
 
