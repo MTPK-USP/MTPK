@@ -1509,6 +1509,15 @@ winfun0_cross = np.ones((ntracers*(ntracers-1)//2,pow_bins))
 winfun2 = np.ones((ntracers,pow_bins))
 winfun2_cross = np.ones((ntracers*(ntracers-1)//2,pow_bins))
 
+
+# In order to be consistent with older versions:
+try:
+	use_window_function
+	is_n_body_sims = use_window_function
+except:
+	use_window_function = is_n_body_sims
+
+
 if use_window_function:
     win_fun_file=glob.glob("spectra/"+win_fun_dir+"*WinFun0*")
     win_fun_file_cross0=glob.glob("spectra/"+win_fun_dir+"*WinFun_Cross0*")
