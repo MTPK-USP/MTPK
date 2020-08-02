@@ -1159,7 +1159,8 @@ for nm in range(n_maps):
                 if do_poisson:
                     maps[ng] = np.random.poisson(maps[ng])
     else:
-        maps = maps_halos
+        if (sims_only) or (nm>0):
+            maps = maps_halos
     #sys.exit(-1)
 
     if 'maps_halos' in globals():
