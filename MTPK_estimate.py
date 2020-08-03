@@ -437,15 +437,8 @@ print()
 #####################################################
 # Start computing physical sizes of boxes
 #####################################################
-L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size     # size of the box
 box_vol = L_x*L_y*L_z            # Box's volume
 L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)    
-
-#####################################################
-# Generate real- and Fourier-space grids for FFTs
-#####################################################
-# print 'Generating the k-space Grid...'
-grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)        # generates the grid
 
 ##########################################
 #  Generating the Bins Matrix M^a_{ijl}
