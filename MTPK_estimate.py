@@ -421,11 +421,11 @@ print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_
 
 print()
 if whichspec == 0:
-    print ('Using LINEAR power spectrum from CLASS')
+    print ('Using LINEAR power spectrum from CAMB')
 elif whichspec == 1:
-    print ('Using power spectrum from CLASS + HaloFit')
+    print ('Using power spectrum from CAMB + HaloFit')
 else:
-    print ('Using power spectrum from CLASS + HaloFit with PkEqual')
+    print ('Using power spectrum from CAMB + HaloFit with PkEqual')
 
 print()
 print ('----------------------------------')
@@ -533,6 +533,8 @@ except:
 else:
     print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
 
+if(nhalos==1):
+    bias=np.asarray([bias])
 dip = np.asarray(adip) * kdip_phys
 pk_mg = pkmg.pkmg(halo_bias,dip,matgrowcentral,k_camb,len(bias)*[0],a_sig_tot,cH,zcentral)
 
@@ -575,18 +577,18 @@ try:
     halo_quad_model = np.loadtxt(dir_spec_corr_sims + '/quadrupole_model.dat')
     halo_mono_theory = np.loadtxt(dir_spec_corr_sims + '/monopole_theory.dat')
     halo_quad_theory = np.loadtxt(dir_spec_corr_sims + '/quadrupole_theory.dat')
-    halo_crossmono_model = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_model.dat')
-    halo_crossquad_model = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_model.dat')
-    halo_crossmono_theory = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_theory.dat')
-    halo_crossquad_theory = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_theory.dat')
     k_corr = halo_spec_corr[:,0]
     nks = len(k_corr)
-    if len(halo_crossmono_model.shape) == 1:
-        halo_crossmono_model = np.reshape(halo_crossmono_model, (nks, 1))
-        halo_crossquad_model = np.reshape(halo_crossquad_model, (nks, 1))
-        halo_crossmono_theory = np.reshape(halo_crossmono_theory, (nks, 1))
-        halo_crossquad_theory = np.reshape(halo_crossquad_theory, (nks, 1))
-
+    if(nhalos>1):
+        halo_crossmono_model = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_model.dat')
+        halo_crossquad_model = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_model.dat')
+        halo_crossmono_theory = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_theory.dat')
+        halo_crossquad_theory = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_theory.dat')
+        if len(halo_crossmono_model.shape) == 1:
+            halo_crossmono_model = np.reshape(halo_crossmono_model, (nks, 1))
+            halo_crossquad_model = np.reshape(halo_crossquad_model, (nks, 1))
+            halo_crossmono_theory = np.reshape(halo_crossmono_theory, (nks, 1))
+            halo_crossquad_theory = np.reshape(halo_crossquad_theory, (nks, 1))
 except:
     print()
     print ("Did not find spectral corrections and theory spectra on directory:")
@@ -606,10 +608,11 @@ except:
     halo_quad_model[:,0]=k_camb
     halo_mono_theory[:,0]=k_camb
     halo_mono_theory[:,0]=k_camb
-    halo_crossmono_model = np.ones((nks,nhalos*(nhalos-1)//2))
-    halo_crossquad_model = np.ones((nks,nhalos*(nhalos-1)//2))
-    halo_crossmono_theory = np.ones((nks,nhalos*(nhalos-1)//2))
-    halo_crossquad_theory = np.ones((nks,nhalos*(nhalos-1)//2))
+    if(nhalos>1):
+        halo_crossmono_model = np.ones((nks,nhalos*(nhalos-1)//2))
+        halo_crossquad_model = np.ones((nks,nhalos*(nhalos-1)//2))
+        halo_crossmono_theory = np.ones((nks,nhalos*(nhalos-1)//2))
+        halo_crossquad_theory = np.ones((nks,nhalos*(nhalos-1)//2))
 
     index=0
     for nt in range(nhalos):
@@ -664,10 +667,11 @@ if do_galaxies:
     mono_theory = np.zeros((nks,ngals))
     quad_theory = np.zeros((nks,ngals))
 
-    cross_mono_model = np.zeros((nks,ngals*(ngals-1)//2))
-    cross_quad_model = np.zeros((nks,ngals*(ngals-1)//2))
-    cross_mono_theory = np.zeros((nks,ngals*(ngals-1)//2))
-    cross_quad_theory = np.zeros((nks,ngals*(ngals-1)//2))
+    if(nhalos>1):
+        cross_mono_model = np.zeros((nks,ngals*(ngals-1)//2))
+        cross_quad_model = np.zeros((nks,ngals*(ngals-1)//2))
+        cross_mono_theory = np.zeros((nks,ngals*(ngals-1)//2))
+        cross_quad_theory = np.zeros((nks,ngals*(ngals-1)//2))
 
     mat_pspec = np.interp(k_corr,k_camb,Pk_camb)
 
@@ -709,10 +713,11 @@ else:
     mono_theory = np.zeros((nks,nhalos))
     quad_theory = np.zeros((nks,nhalos))
 
-    cross_mono_model = halo_crossmono_model
-    cross_quad_model = halo_crossquad_model
-    cross_mono_theory = halo_crossmono_theory
-    cross_quad_theory = halo_crossquad_theory
+    if(nhalos>1):
+        cross_mono_model = halo_crossmono_model
+        cross_quad_model = halo_crossquad_model
+        cross_mono_theory = halo_crossmono_theory
+        cross_quad_theory = halo_crossquad_theory
 
     spec_corr = halo_spec_corr
     all_mono_model = all_halo_monopoles_model
@@ -764,11 +769,12 @@ pk_ln_quad_model = np.vstack((np.vstack((np.asarray(quad_model[0]),np.asarray(qu
 pk_ln_mono_theory = np.vstack((np.vstack((np.asarray(mono_theory[0]),np.asarray(mono_theory))),mono_theory[-1]))
 pk_ln_quad_theory = np.vstack((np.vstack((np.asarray(quad_theory[0]),np.asarray(quad_theory))),quad_theory[-1]))
 
-cross_mono_model = np.vstack((np.vstack((np.asarray(cross_mono_model[0]),np.asarray(cross_mono_model))),cross_mono_model[-1]))
-cross_mono_theory = np.vstack((np.vstack((np.asarray(cross_mono_theory[0]),np.asarray(cross_mono_theory))),cross_mono_theory[-1]))
+if(nhalos>1):
+    cross_mono_model = np.vstack((np.vstack((np.asarray(cross_mono_model[0]),np.asarray(cross_mono_model))),cross_mono_model[-1]))
+    cross_mono_theory = np.vstack((np.vstack((np.asarray(cross_mono_theory[0]),np.asarray(cross_mono_theory))),cross_mono_theory[-1]))
 
-cross_quad_model = np.vstack((np.vstack((np.asarray(cross_quad_model[0]),np.asarray(cross_quad_model))),cross_quad_model[-1]))
-cross_quad_theory = np.vstack((np.vstack((np.asarray(cross_quad_theory[0]),np.asarray(cross_quad_theory))),cross_quad_theory[-1]))
+    cross_quad_model = np.vstack((np.vstack((np.asarray(cross_quad_model[0]),np.asarray(cross_quad_model))),cross_quad_model[-1]))
+    cross_quad_theory = np.vstack((np.vstack((np.asarray(cross_quad_theory[0]),np.asarray(cross_quad_theory))),cross_quad_theory[-1]))
 
 
 
