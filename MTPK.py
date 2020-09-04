@@ -26,11 +26,17 @@
 # This is the directory where the data files and data selection function are stored
 # This is only called if either sims_only=False, or if sel_fun_data=True
 
-#handle_data = "VIPERS_z1_W1_mocks_luminosity_color_maxsel"
-#handle_data = "VIPERS_z1_W1_LNmocks_luminosity_color_maxsel"
-#handle_data = "Test_combine_4x4"
-#handle_data = "Test_combine"
-handle_data = "Renan_2tracers_JPAS_z035_v11"
+#handle_data = "Highz_z16"
+#handle_data = "Highz_z16_gals"
+handle_data = "SHUFFLE_Highz_z16_gals"
+
+#handle_data = "Highz_z20"
+#handle_data = "Highz_z20_gals"
+#handle_data = "SHUFFLE_Highz_z20_gals"
+
+#handle_data = "Highz_z24"
+#handle_data = "Highz_z24_gals"
+#handle_data = "SHUFFLE_Highz_z24_gals"
 
 # ATTENTION: data files should be stored in hdf5 (N_tracers,nx,ny,nz) tables,
 # with names ending in ..._DATA.hdf5

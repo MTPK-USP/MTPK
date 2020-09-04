@@ -1,0 +1,89 @@
+MASK, WEIGHTS AND SELECTION FUNCTION TOOLS
+
+
+-------------
+Codes ready for use now:
+
+
+(i)  parameters_mask_footprint.py
+     -- parameter file defining boundaries of footprint. 
+       Used by code angular_mask_selection_function.py
+
+(ii) parameters_mask_exclusion_zones.py
+     -- parameter file defining zones (circles and squares) that should be excluded from footprint
+        Used by code angular_mask_selection_function.py
+
+(iii) parameters_angular_weight.py
+      -- parameters defining quadratic fits for the weights (selection functions) of the tracers
+
+(iv) create_random_angular_mask_weights.py
+     -- main code that (a) rotates the footprint to make center align with z axis (center of the 
+        footprint is saved to file mean_RA_dec.dat, and can be used to rotate data);
+        (b) produces random catalogs as list of 3 columns: 
+        theta, phi, weights (selection functions, one weight for each tracer)
+     -- takes parameters from (i), (ii) and (iii)
+     -- saves center (or "mean") of footprint to file in selection_functions/
+     -- saves mask and weights to hdf5 file in directory selection_functions/
+
+
+(v)  create_randoms_redshifts_mask_weights.py
+     -- code that generates random catalog with theta phi z(n) weights(n) , using as
+        input file a table with redshifts and numbers of tracers. This table does not 
+        have to be normalized: the randoms will preserve the relative distributions of
+        the number of tracers depending on redshift.
+     -- takes parameters from the table with radial sel. function (e.g., 
+        "radial_selection_function.dat"), and from mask & weights (i.e., the output of (iv))
+     -- saves random to hdf5 file in dir selection_functions/ . The filename is defined at 
+        the start of the code. E.g.: mask_weights_redshifts.hdf5  
+
+
+(vi) create_grid_randoms_weights.py
+     -- code that generates a grid in real space, using a cosmological model, redshift interval,
+        as well as the selection function obtained by (v) . 
+     -- takes inputs from generic MTPK input file, and from output of (v)
+     -- saves two outputs (hdf5 files, saved in selection_functions/), format (Ntracers,nx,ny,nz): 
+        (a) the counts in cells of the randoms for each tracer
+        (b) the mean weights in cells of the randoms, for each tracer
+
+
+(vii) rotate_catalog.py
+     -- code that rotates a dataset to match the z axis defined by the center of the footprint
+     -- takes as input the center of the footprint or the output of the code (iv)
+
+
+(viii) impose_mask_and_weights.py
+     -- Code that imposes a mask and the angular weights (i.e., angular selection function) 
+        on an *existing* catalog (typically, a mock) containing angular positions of "galaxies" 
+        (as well as other info such as redshifts, etc.).
+     -- takes as input the catalog of an individual tracer, as well as the parameters for the 
+        mask footprint (i), exclusion zones (ii) and weights (iii).
+     -- saves a new catalog where some objects are masked, and those that stay in the mask 
+        are assigned the angular weights associated with those positions.
+
+
+(ix)   redshift_shuffle.py
+     -- code that takes redshifts of given tracers, and shuffles them according to tables 
+        of z_spec and z_photo
+     -- takes as input the tables of photo-zs for the tracers, and an existing catalog 
+        (typically, a mock) containing the angular positions, redshifts and any other 
+        information from those objects; and changes *only* their redshifts, by assigning a 
+        randomly picked photo-z based on the distributions given by the tables.
+     -- saves new catalog to an identical file with file_name --> "Shuffled_" + file_name
+
+
+(x)   create_cats_from_grids.py
+     -- takes a grid ("map") of tracers N(tracer,x,y,z) and create catalogs for each tracer, with redshifts and positions
+     -- takes as input one (or many) grids of tracers, N(tracer,x,y,z), as well as the regular MTPK input file
+     -- saves, for each grid, catalog for each tracer with (theta, phi, redshift, [weight])
+
+
+(xi)  create_grids_from_cats.py
+     -- takes a catalog (or catalogs) of (theta, phi, redshift , [weight]) and creates grids N(tracer,x,y,z) 
+     -- takes as input one (or many) catalogs of tracers, as well as the regular MTPK input file
+     -- saves, for each set of catalogs for the same tracers, grid with counts as lines (theta, phi, redshift), 
+        and, if needed, also a grid with the weights for each cell.
+
+--------
+Future
+
+-- ??

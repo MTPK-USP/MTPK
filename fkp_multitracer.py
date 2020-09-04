@@ -267,6 +267,7 @@ class fkp_init(object):
         # Here I actually compute Q_mu / Vk , since that is easier to compare with calculations
         Q0_mu_flat = np.zeros((number_tracers,nbinsout))
         Q2_mu_flat = np.zeros((number_tracers,nbinsout))
+        Pshot_mu_flat = np.zeros((number_tracers,nbinsout))
         # Notice that DeltaQ_mu is already in physical units, so Q0 must also be.
         # Here I compute the <Q>_k , which is easier to compare with other stuff
         for nt in range(number_tracers):
@@ -274,11 +275,17 @@ class fkp_init(object):
             Q0_mu_flat[nt] = ((0.25/((self.bias[nt])**2))*F0k2 - 1.0*(self.DeltaQ_mu)[nt]*self.counts)/(self.counts + small)/Vfft_to_Vk
             F2k2 = ((self.bin_matrix).dot(FF2_mu_k_flat[nt]))
             Q2_mu_flat[nt] = (0.25/((self.bias[nt])**2))*F2k2/(self.counts + small)/Vfft_to_Vk
+            Pshot_mu_flat[nt] = 1.0*(self.DeltaQ_mu)[nt]*self.counts/(self.counts + small)/Vfft_to_Vk
 
         # Now, FINALLY, obtain the true multi-tracer estimator for the spectra...
         # Correcting for units of physical volume
         P0_mu_ret = np.sum(Cov_ret*Q0_mu_flat,axis=1)*Vfft_to_Vk
-        P2_mu_ret = np.sum(Cov_ret*Q2_mu_flat,axis=1)*Vfft_to_Vk
+        # Quadrupole with factor of 5/2
+        P2_mu_ret = 2.5*np.sum(Cov_ret*Q2_mu_flat,axis=1)*Vfft_to_Vk
+        Pshot_mu_ret = np.sum(Cov_ret*Pshot_mu_flat,axis=1)*Vfft_to_Vk
+
+        # Testing: print shot noise
+        print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
 
         ###############################################################
         # Now calculate the theoretical covariances

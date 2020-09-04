@@ -21,7 +21,7 @@ def multipoles_1(kphys, kxhat, kyhat, kzhat, rxhat, ryhat, rzhat, delta_k_half, 
 
     # mu = 0
     if(n_mu==0):
-        return np.fft.irfftn(delta_k_half*k_half**n_k/(1.+gamma*(k_half*s)**2))
+        return np.fft.irfftn(delta_k_half*k_half**n_k/(1.+gamma*(k_half*s)**2), s=[n_x,n_y,n_z])
     
     if(n_mu==2):
         Bxx = np.fft.irfftn(delta_k_half*k_half**n_k*kxhat_half**2/(1.+gamma*(k_half*s)**2), s=[n_x,n_y,n_z])
@@ -80,7 +80,7 @@ def multipoles_2(kphys, kxhat, kyhat, kzhat, rxhat, ryhat, rzhat, delta_k_half, 
 
     # mu = 0
     if(n_mu==0):
-        return np.fft.irfftn(delta_k_half*k_half**n_k/(1.-(gamma*(k_half*s)**2)**2))
+        return np.fft.irfftn(delta_k_half*k_half**n_k/(1.-(gamma*(k_half*s)**2)**2), s=[n_x,n_y,n_z])
     
     if(n_mu==2):
         Bxx = np.fft.irfftn(delta_k_half*k_half**n_k*kxhat_half**2/(1.-(gamma*(k_half*s)**2)**2), s=[n_x,n_y,n_z])

@@ -25,13 +25,14 @@ class pkmg_cross(object):
     '''
     Only one generic class needed for both objects
     '''
-    def __init__(self,biases,dipoles,matgrowrate,kphys,vel_disp,sigma_z,cH,z):
+    #def __init__(self,biases,dipoles,matgrowrate,kphys,vel_disp,sigma_z,cH,z):
+    def __init__(self,biases,dipoles,matgrowrate,kphys,sigma_z,cH,z):
 
         self.biases = biases
         self.dipoles = dipoles
         self.matgrowrate = matgrowrate
         self.kphys = kphys
-        self.vel_disp = vel_disp
+        #self.vel_disp = vel_disp
         self.sigma_z = sigma_z
         self.cH = cH
         self.z = z
@@ -66,7 +67,7 @@ class pkmg_cross(object):
                 self.M2 = self.ERF_KZ * ( 3.0*f**2 + (b1+b2)*f*self.KZ**2 + b1*b2*self.KZ**4 )
                 self.monos[index] = 0.5*(self.M1 + self.M2)
 
-                # Monopoles
+                # Quadrupoles
                 self.Q1 = -1.0 * self.Exp_KZ / self.KZ * ( 3*b1*b2*self.KZ**4 + (b1+b2)*f*(9+2*self.KZ**2)*self.KZ**2 + f**2 *(45 + 2*(6+self.KZ**2)*self.KZ**2) )
                 self.Q2 = -0.5 * self.ERF_KZ * ( 3.0*f**2 * (-15 + self.KZ**2) + (b1+b2)*f*(-9+self.KZ**2)*self.KZ**2 + b1*b2*(-3+self.KZ**2)*self.KZ**4 ) / self.KZ**2
                 self.quads[index] = 2.5*(self.Q1 + self.Q2)

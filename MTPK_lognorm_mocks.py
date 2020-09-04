@@ -69,6 +69,10 @@ if len(input_filename)==0 :
 # Check if the handles defined in the input have already been used in a another run
 dir_maps = 'maps/sims/' + handle_sims
 
+# Import inputs
+# (the path to /inputs was added in the beginning of the code)
+exec("from " + handle_sims + " import *")
+
 ## Check if data directory exists
 #dir_data = 'maps/data/' + handle_data
 
@@ -77,37 +81,40 @@ if not os.path.exists(dir_maps):
 elif len(os.listdir(dir_maps)) != 0:
     print()
     print ('Simulated maps were already created with this handle/name, on:')
-    print( dir_maps)
-    print()
-    answer = input('Continuing will overwrite those files. Proceed? y/n  ')
-    if answer != 'y':
-        print( 'Aborting now...')
+    print(dir_maps)
+    try:
+        print("New maps will start from",n_maps_init)
         print()
-        sys.exit(-1)
+    except:
+        answer = input('By proceeding you will overwrite those files. Proceed? y/n  ')
+        if answer != 'y':
+            print( 'Aborting now...')
+            print()
+            sys.exit(-1)
+
+print()
 
 dir_specs = 'spectra/' + handle_sims
 if not os.path.exists(dir_specs):
     os.makedirs(dir_specs)
 elif len(os.listdir(dir_specs)) != 0:
-    print( 'WARNING: another run with the same handle/name was already performed!')
+    print( 'WARNING: another run with the same handle/name was already performed.')
     answer = input('Check specs/ . Continue anyway? y/n  ')
     if answer!='y':
         print ('Aborting now...')
         sys.exit(-1)
 
+print()
 dir_figs = 'figures/' + handle_sims
 if not os.path.exists(dir_figs):
     os.makedirs(dir_figs)
 if len(os.listdir(dir_figs)) != 0:
-    print( 'WARNING: another run with the same handle/name was already performed!')
+    print( 'WARNING: another run with the same handle/name was already performed.')
     answer = input('Check figures/ . Continue anyway? y/n  ')
     if answer!='y':
         print ('Aborting now...')
         sys.exit(-1)
 
-# Import inputs
-# (the path to /inputs was added in the beginning of the code)
-exec("from " + handle_sims + " import *")
 
 
 # Growth rate and its derivative
@@ -133,11 +140,12 @@ f_grow = np.ones(nhalos)*matgrowcentral
 # Velocity dispersion. vdisp is defined on inputs with units of km/s
 vdisp = np.asarray(vdisp)
 sigma_v = vdisp/H(100, Omegam, OmegaDE, -1, 0.0, zcentral) #Mpc/h
-a_vdisp = vdisp/c  #Adimensional vdisp
+clight = 299792.46
+a_vdisp = vdisp/clight  #Adimensional vdisp
 
 # Redshift errors. sigz_est is defined on inputs, and is adimensional
 sigz_est = np.asarray(sigz_est)
-sigma_z = sigz_est*c/H(100, Omegam, OmegaDE, -1, 0.0, zcentral) #Mpc/h
+sigma_z = sigz_est*clight/H(100, Omegam, OmegaDE, -1, 0.0, zcentral) #Mpc/h
 
 # Joint factor considering v dispersion and z error
 sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
@@ -176,9 +184,9 @@ Pk_camb = np.append(Pk_camb,np.array([1./4.*Pk_camb[-1],1./16*k_camb[-1],1./64*k
 # Import tables with HOD and halo model props
 # Attention: mass function in units of h^3 Mpc^-3!
 try:
-    hod = np.loadtxt("inputs/" + hod_file)
-    mass_fun = np.loadtxt("inputs/" + mass_fun_file)
-    halo_bias = np.loadtxt("inputs/" + halo_bias_file)
+    hod = np.loadtxt(input_dir + "/" + hod_file)
+    mass_fun = np.loadtxt(input_dir + "/" + mass_fun_file)
+    halo_bias = np.loadtxt(input_dir + "/"  + halo_bias_file)
 except:
     print( "Something's wrong... did not find HOD, mass function and/or halo bias files!")
     print( "Check in the /inputs directory. Aborting now...")
@@ -374,6 +382,7 @@ kr0 = 2.*np.pi*np.mean(grid.grid_k)*np.mean(rL0)
 
 # Create sets of Gaussian modes, and maps of tracers for those modes
 for i in range(n_maps):
+    tempor = time()
     print( 'Map #', i) 
     phases = np.exp(1j*2.0*np.pi*np.random.rand(n_x,n_y,n_z) )
     # Testing
@@ -472,6 +481,9 @@ for i in range(n_maps):
 
     frac = halodensity/nbar*cell_size**3
     print( '    densities true/fiducial = ', [ "{:1.4f}".format(x) for x in frac ])
+    tempof = time()
+    dt=tempof-tempor
+    print("Time elapsed for computation of this map:", np.around(dt,3))
     print()
 
 pch = None
@@ -584,6 +596,12 @@ kzhat6_half_flat = kzhat2_half_flat**3
 kxhat2_interp = np.asarray( [ kxhat2_half_flat[k_sort_bins == i].mean() for i in range(1,k_max_index+1) ] )
 kyhat2_interp = np.asarray( [ kyhat2_half_flat[k_sort_bins == i].mean() for i in range(1,k_max_index+1) ] )
 kzhat2_interp = np.asarray( [ kzhat2_half_flat[k_sort_bins == i].mean() for i in range(1,k_max_index+1) ] )
+
+# Flag if k binning is too small, and we end up with empty slices for particular bins
+if (np.isnan(kxhat2_interp).any() | np.isnan(kyhat2_interp).any() | np.isnan(kzhat2_interp).any()):
+    print("Your k binning is too fine: some bandpowers are empty. Please increase dkph_bin on input file.")
+    print("Aborting now...")
+    sys.exit(-1)
 
 kxhat4_interp = np.asarray( [ kxhat4_half_flat[k_sort_bins == i].mean() for i in range(1,k_max_index+1) ] )
 kyhat4_interp = np.asarray( [ kyhat4_half_flat[k_sort_bins == i].mean() for i in range(1,k_max_index+1) ] )
@@ -733,7 +751,7 @@ pl.xlim([2.0*k_min,0.75*k_max])
 ylow=np.mean(np.abs(mono_box_model[1:,-10:-5]))*0.1*(0.1+matgrowcentral)
 yhigh=np.mean(mono_box_model[1:,5:10])*10.0
 pl.ylim([ylow,yhigh])
-pl.savefig(dir_figs + '/spec_corrs_P0_P2_theory.png')
+pl.savefig(this_dir + "/" + dir_figs + '/spec_corrs_P0_P2_theory.png')
 pl.close()
 
 
@@ -761,20 +779,20 @@ for nt in range(ntracers):
         index += 1
 
 
-np.savetxt(dir_specs + '/spec_corrections.dat',spec_corrections.T,fmt="%2.3f")
-np.savetxt(dir_specs + '/monopole_model.dat',mono_box_model.T,fmt="%4.3f")
-np.savetxt(dir_specs + '/quadrupole_model.dat',quad_box_model.T,fmt="%4.3f")
-np.savetxt(dir_specs + '/monopole_theory.dat',mono_box_theory.T,fmt="%4.3f")
-np.savetxt(dir_specs + '/quadrupole_theory.dat',quad_box_theory.T,fmt="%4.3f")
+np.savetxt(this_dir + "/" + dir_specs + '/spec_corrections.dat',spec_corrections.T,fmt="%2.3f")
+np.savetxt(this_dir + "/" + dir_specs + '/monopole_model.dat',mono_box_model.T,fmt="%4.3f")
+np.savetxt(this_dir + "/" + dir_specs + '/quadrupole_model.dat',quad_box_model.T,fmt="%4.3f")
+np.savetxt(this_dir + "/" + dir_specs + '/monopole_theory.dat',mono_box_theory.T,fmt="%4.3f")
+np.savetxt(this_dir + "/" + dir_specs + '/quadrupole_theory.dat',quad_box_theory.T,fmt="%4.3f")
 
-np.savetxt(dir_specs + '/cross_monopole_model.dat',crossmono_box_model.T,fmt="%4.3f")
-np.savetxt(dir_specs + '/cross_quadrupole_model.dat',crossquad_box_model.T,fmt="%4.3f")
+np.savetxt(this_dir + "/" + dir_specs + '/cross_monopole_model.dat',crossmono_box_model.T,fmt="%4.3f")
+np.savetxt(this_dir + "/" + dir_specs + '/cross_quadrupole_model.dat',crossquad_box_model.T,fmt="%4.3f")
 
-np.savetxt(dir_specs + '/cross_monopole_theory.dat',crossmono_box_theory.T,fmt="%4.3f")
-np.savetxt(dir_specs + '/cross_quadrupole_theory.dat',crossquad_box_theory.T,fmt="%4.3f")
+np.savetxt(this_dir + "/" + dir_specs + '/cross_monopole_theory.dat',crossmono_box_theory.T,fmt="%4.3f")
+np.savetxt(this_dir + "/" + dir_specs + '/cross_quadrupole_theory.dat',crossquad_box_theory.T,fmt="%4.3f")
 
 camb_save = np.array([k_interp,Pk_camb_interp]).T
-np.savetxt(dir_specs + '/Pk_camb.dat',camb_save,fmt="%4.3f")
+np.savetxt(this_dir + "/" + dir_specs + '/Pk_camb.dat',camb_save,fmt="%4.3f")
 
 
 
@@ -786,13 +804,17 @@ np.set_printoptions(precision=4)
 maps_out = np.array(maps,dtype='int32')
 
 for nm in range(n_maps):
-    if len(str(nm))==1:
-        map_num = '00' + str(nm)
-    elif len(str(nm))==2:
-        map_num = '0' + str(nm)
+    try:
+        nm_write = n_maps_init + nm
+    except:
+        nm_write = nm
+    if len(str(nm_write))==1:
+        map_num = '00' + str(nm_write)
+    elif len(str(nm_write))==2:
+        map_num = '0' + str(nm_write)
     else:
-        map_num = str(nm)
-    hdf5_map_file = dir_maps + '/Box_' + map_num + '_' + str(n_x) + '_' + str(n_y) + '_' + str(n_z) + '.hdf5'
+        map_num = str(nm_write)
+    hdf5_map_file = this_dir + "/" + dir_maps + '/Box_' + map_num + '_' + str(n_x) + '_' + str(n_y) + '_' + str(n_z) + '.hdf5'
     print('Writing file ', hdf5_map_file)
     h5f = h5py.File(hdf5_map_file,'w')
     #h5f.create_dataset(hdf5_map_file, data=maps_out[nt], dtype='int64')
@@ -819,7 +841,7 @@ print('################')
 
 
 # Save input parameters for bookkeeping
-fileparams = dir_specs + '/sims_parameters.dat'
+fileparams = this_dir + "/" + dir_specs + '/sims_parameters.dat'
 
 # Save regular file for records
 params=np.array([ ['ntracers',str(ntracers)], ['tracerIDs',halos_ids], ['nbar',str(nbar)], ['bias',str(bias)] , ['zcentral',str(zcentral)], ['matgrow',str(matgrowcentral)] , ['adip',str(adip)] , ['cell_size',str(cell_size)] , ['nx,ny,nz',str(n_x),str(n_y),str(n_z)] ,['n_maps',str(n_maps)], ['Full sky, plane-parallel monopoles', str(theory_flatsky_mono)], ['Box volume monopoles', str(mono_box_mean)], ['Full sky, plane-parallel quadrupoles', str(theory_flatsky_quad)], ['Box volume quadrupoles', str(quad_box_mean)], ["Cosmological parameters"] , ["Omegak", str(Omegak)], ["w0", str(w0)] , ["w1", str(w1)] , ["Omegab", str(Omegab)] , ["Omegac", str(Omegac)] , ["H0", str(H0)] , ["n_SA", str(n_SA)] , ["ln10e10ASA", str(ln10e10ASA)] , ["z_re", str(z_re)] ] )
