@@ -4,11 +4,10 @@ import numpy as np
 import time
 import os, sys
 
-#this_dir = os.getcwd()
-camb_dir = '/Users/lrwa/Documents/bin/camb'
-MTPK_dir = '/Users/lrwa/trabalho/Multi-tracer estimators/New MTPK'
+this_dir = os.getcwd()
+camb_dir = 'CAMB'
 
-def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, n_SA, k_min, k_max, whicspec):
+def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min, k_max, whicspec):
 	if(k_min >= 1e-4):
 		t0 = time.time()
 		h = H0/100.
@@ -21,23 +20,24 @@ def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, n_SA, k_min, k_max
 		params = open('params.ini')
 		temp = params.readlines()
 
-		temp[9] = 'get_transfer = T \n'
-		temp[13] = 'do_lensing = F \n'
-		temp[34] = 'ombh2 = ' + str(Omegab*h**2) + '\n'
-		temp[35] = 'omch2 = ' + str(Omegac*h**2) + '\n'
-		temp[37] = 'omk = ' + str(0.0) + '\n'
-		temp[38] = 'hubble = ' + str(H0) + '\n'
+		temp[9] = 'get_transfer                 = T \n'
+		temp[13] = 'do_lensing                  = F \n'
+		temp[34] = 'ombh2                       = ' + str(Omegab*h**2) + '\n'
+		temp[35] = 'omch2                       = ' + str(Omegac*h**2) + '\n'
+		temp[37] = 'omk                         = ' + str(0.0) + '\n'
+		temp[38] = 'hubble                      = ' + str(H0) + '\n'
 		# Dark Energy Paramters
-		temp[41] = 'w = ' + str(w0) + '\n'
-		temp[49] = 'wa = ' + str(w1) + '\n'
+		temp[41] = 'w                           = ' + str(w0) + '\n'
+		temp[49] = 'wa                          = ' + str(w1) + '\n'
 		# Primordial Spectrum Parameters
-		temp[86] = 'scalar_spectral_index(1) = ' + str(n_SA) + '\n'
+                temp[85] = 'scalar_amp(1)               = ' + str(A_s*1e-9) + '\n'
+		temp[86] = 'scalar_spectral_index(1)    = ' + str(n_SA) + '\n'
 		# Reionization Parameters 
-		temp[107] = 're_use_optical_depth = F \n'
-		temp[110] = 're_redshift = ' + str(z_re) + '\n' 
-		temp[161] = 'transfer_kmax = ' + str(k_max) + '\n'
-		temp[165] = 'transfer_redshift(1) = ' + str(zcentral) + '\n'
-		temp[225] = 'accurate_polarization = F \n'
+		# temp[107] = 're_use_optical_depth       = F \n'
+		temp[110] = 're_redshift                = ' + str(z_re) + '\n' 
+		temp[161] = 'transfer_kmax              = ' + str(k_max) + '\n'
+		temp[165] = 'transfer_redshift(1)       = ' + str(zcentral) + '\n'
+		# temp[225] = 'accurate_polarization      = F \n'
 		out_name = 'params_tempz.ini'
 
 		out = open(out_name, 'w')
@@ -56,7 +56,7 @@ def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, n_SA, k_min, k_max
 			t1 = time.time()
 			print("Time elapsed:",t1-t0)
 
-			os.chdir(MTPK_dir)
+			os.chdir(this_dir)
 
 			return( np.asarray([kh,pk]) )
 
@@ -85,7 +85,7 @@ def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, n_SA, k_min, k_max
 			t1 = time.time()
 			print("Time elapsed:",t1-t0)
 
-			os.chdir(MTPK_dir)
+			os.chdir(this_dir)
 
 			return(np.asarray([kh_nl,pk_nl]))
 
@@ -114,7 +114,7 @@ def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, n_SA, k_min, k_max
 			t1 = time.time()
 			print("Time elapsed:",t1-t0)
 
-			os.chdir(MTPK_dir)
+			os.chdir(this_dir)
 
 			return(np.asarray([kh_eq, pk_eq]))
 	

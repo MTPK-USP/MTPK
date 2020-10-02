@@ -197,7 +197,7 @@ except:
 nklist = 1000
 k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
 
-kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, n_SA, k_min_camb, k_max_camb, whichspec)
+kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, ln10e10ASA, n_SA, k_min_camb, k_max_camb, whichspec)
 Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 ############# Ended CAMB calculation #####################################
 
