@@ -30,7 +30,7 @@ def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min, 
 		temp[41] = 'w                           = ' + str(w0) + '\n'
 		temp[49] = 'wa                          = ' + str(w1) + '\n'
 		# Primordial Spectrum Parameters
-                temp[85] = 'scalar_amp(1)               = ' + str(A_s*1e-9) + '\n'
+                temp[85] = 'scalar_amp(1)               = ' + str(A_s) + '\n'
 		temp[86] = 'scalar_spectral_index(1)    = ' + str(n_SA) + '\n'
 		# Reionization Parameters 
 		# temp[107] = 're_use_optical_depth       = F \n'
