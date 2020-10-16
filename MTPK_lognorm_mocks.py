@@ -162,7 +162,7 @@ k_max_camb = 1.5e1
 nklist = 2000
 k_camb = np.logspace(-4.0,1.5,nklist)
 
-kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, ln10e10ASA, n_SA, k_min_camb, k_max_camb, whichspec)
+kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, ln10e10ASA, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
 Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 
 
