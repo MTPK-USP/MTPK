@@ -35,7 +35,7 @@ def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min, 
 			kh         -> k vector (h/Mpc);
 			pk         -> matter power spectrum (Mpc/h)^3;
 			r_s_drag   -> (Mpc)	
-
+                        sigma_8 
 	'''
 
 	if(k_min >= 1e-4):
