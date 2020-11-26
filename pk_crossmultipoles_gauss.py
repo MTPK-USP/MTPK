@@ -25,7 +25,6 @@ class pkmg_cross(object):
     '''
     Only one generic class needed for both objects
     '''
-    #def __init__(self,biases,dipoles,matgrowrate,kphys,vel_disp,sigma_z,cH,z):
     def __init__(self,biases,dipoles,matgrowrate,kphys,sigma_z,cH,z):
 
         self.biases = biases
