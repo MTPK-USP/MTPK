@@ -67,21 +67,23 @@ do_poisson = False
 #halo_bias_file = "TEST_halo_bias_Tinker.dat"
 #hod_file = "TEST_hod_Tinker.dat"
 
-mass_fun_file = "renan_mass_function.dat"
-halo_bias_file = "renan_halo_bias.dat"
-hod_file = "renan_hod_comb.dat"
+mass_fun_file = "massfunc_test_carol.dat"
+halo_bias_file = "bias_test_carol.dat"
+#evolution_bias_file = "evolbias_test_carol.dat"
+hod_file = "hod_test_carol.dat"
 
 # Number of halo bins
-nhalos = 2
-halos_ids = ['M1', 'M2']
+nhalos = 3
+halos_ids = ['h1', 'h2', 'h3']
 # Number of galaxy types
-ngals = 1
-gal_ids = ['G']
+ngals = 3
+gal_ids = ['g1', 'g2', 'g3']
 
 
 ########################################################################
 #     Number of *lognormal simulations* of the maps for halo type
-n_maps = 50
+n_maps = 100
+#n_maps = 25
 ########################################
 
 
@@ -96,15 +98,15 @@ cell_size = 10.0
 
 # Number of cells in x,y and z directions.
 # Must be integer.
-n_x = 155
-n_y = 155
-n_z = 50
+n_x = 100
+n_y = 100
+n_z = 100
 
 # Displacement of the origin (0,0,0) of the box with respect to Earth
 # (in cell units; doesn't need to be integer)
 n_x_orig = -n_x/2.
 n_y_orig = -n_x/2.
-n_z_orig = 96.1
+n_z_orig = 1000
 ################################
 
 
@@ -112,13 +114,13 @@ n_z_orig = 96.1
 #   Selection function parameters.
 #
 #   If the galaxy selection function is given ("data" selection function):
-sel_fun_data = False
-#sel_fun_data = False
+#sel_fun_data = True
+sel_fun_data = False # Will be true only for MTPK_estimate.py. No need for the mocks!
 
 # If sel_fun_data = True, then specify file with data selection function
 # (must be a grid identical to the one defined in the previous section:
 # nx X ny X nz , one for each type of galaxy
-#sel_fun_file = "V0_completeness_selection_function_z1.hdf5"
+sel_fun_file = "selfun_z0_152_152_49.hdf5"
 
 ## !! NEW !!
 # If low-count cells must be masked out, then cells with counts 
@@ -128,12 +130,12 @@ cell_low_count_thresh = 0.0
 # One may add a shift and/or a multiplicative factor, for testing:
 #   n_bar --> factor * (n_bar + shift)
 # N.B.: shift in units of number/(cell size)^3 , NOT number/(h^-3 Mpc^3)
-mult_sel_fun, shift_sel_fun = 1.0 , 0.0
+mult_sel_fun, shift_sel_fun = 1000 , 0.0
 
 # If sel_fun_data=False, then an analytical fit for the selection function is used.
 #   ATTENTION: sel. f. fit parameters are in units of grid cells !!!
-ncentral = [10.0]
-nsigma   = [20000.0]
+ncentral = [4.8884e-04,1.6520e-04,4.3221e-05]
+nsigma   = [20000.0,20000.0,20000.0]
 ################################
 
 
@@ -147,10 +149,9 @@ nsigma   = [20000.0]
 #
 # You may also define a DATA bias that is different from the mocks
 
-
 # Here, define the interval in k that you want to use to estimate the bias
-kmin_bias = 0.1
-kmax_bias = 0.2
+kmin_bias = 0.05
+kmax_bias = 0.15
 
 ################################################################
 # Shot noise and 1-halo term
@@ -173,13 +174,22 @@ shot_fudge=0.1
 ################################################################
 #   Target value of k where the power estimation will be optimal
 # (units of h/Mpc)
+#kph_central = 0.1
+# Binning in k -- this should be ~ 1.4/(smallest side of box). In units of h^-1 Mpc
+#dkph_bin = 0.007
+# Max k -- this should be < 2 \pi * Nyquist frequency = \pi /cell_size. In units of h^-1 Mpc
+#kmax_phys = 0.2
+# Min k -- this should be > 1.0/box_size. In units of h^-1 Mpc
+#kmin_phys = 0.0075
+
 kph_central = 0.1
 # Binning in k -- this should be ~ 1.4/(smallest side of box). In units of h^-1 Mpc
 dkph_bin = 0.005
 # Max k -- this should be < 2 \pi * Nyquist frequency = \pi /cell_size. In units of h^-1 Mpc
-kmax_phys = 0.3
+kmax_phys = 0.25
 # Min k -- this should be > 1.0/box_size. In units of h^-1 Mpc
-kmin_phys = 0.006
+kmin_phys = 0.007
+
 
 #
 # Typically, for boxes of ~1 h^-1 Gpc side, a binning dkph_bin ~0.003 - 0.01 is OK.
@@ -204,8 +214,9 @@ kmin_phys = 0.006
 
 ################################################################
 # Central (mean, or median) redshift of the catalog or simulated data, and width of that bin
-zcentral = 0.35
-zbinwidth = 0.1
+
+zcentral = 1.9
+zbinwidth = 0.4
 ################################
 
 
@@ -215,13 +226,11 @@ zbinwidth = 0.1
 #
 # Gaussian redshift errors of galaxy maps
 # Units of the cell size!
-sigz_est = ngals*[0.00001] #Adimensional: (1+\beta*mu**2) --> (1+\beta*mu**2)*exp(-k**2*mu**2*(sigz_est*c/H)/2)
+sigz_est = nhalos*[0.00001]
 # Alpha-type dipoles
 adip = sigz_est
-# Velocity dispersions for RSDs: f*mu^2 --> f*mu^2*exp(-k^2*mu^2*(vdisp/H)**2/2)
-vdisp = sigz_est #km/s -- This is usually of the order 150km/s
-# Speed of light
-c = 299792.458 #km/s
+# Velocity dispersions for RSDs: f*mu^2 --> f*mu^2/(1+v^2*k^2*mu**2)
+vdisp = sigz_est
 ################################
 
 
@@ -252,16 +261,17 @@ whichspec = 1
 jing_dec_sims = False
 
 # Power used for deconvolution window function of sims:
-power_jing_sims = 1.65
-#power_jing_sims = 2.0
+#power_jing_sims = 1.65
+power_jing_sims = 2.0
 
 # Power used for data window function:
 power_jing_data = 2.0
 ################################
 
+
 ###############################################################################
 # Whether or not to plot the 2D covariances (FKP v. MT)
-plot_all_cov = True
+plot_all_cov = False
 ###############################################
 
 
@@ -279,16 +289,32 @@ fudge = 0.0000001
 
 ###############################################################################
 #   Cosmological model parameters (used by NumCosmo)
+
 Omegak=0.0
-w0= -0.999
+w0= -0.9999
 w1= 0.0
-Omegab=0.048206
-Omegac=0.259
-H0=67.7
-n_SA=0.96
-ln10e10ASA=3.085
+Omegab=0.0482754208891869
+Omegac=0.26377065934278865
+H0=67.556
+n_SA=0.9619
+ln10e10ASA=3.0978374964911444
 z_re=9.9999
 k_min_camb = 1.e-4
 k_max_camb = 1.e+0
 gamma = 0.5454
 
+###############################################################################
+#   Cosmological model parameters (used by CLASS)
+
+#h = 0.67556 
+#n_s = 0.9619
+#A_s = 2.215e-9
+#omega_cdm = 0.12038
+#omega_b = 0.022032
+#omega_k = 0.0
+#k_pivot = 0.05
+#N_ur = 3.046
+#N_ncdm = 0.0
+#T_cmb = 2.7255
+#w = -1.0
+#T_cmb = 2.7255

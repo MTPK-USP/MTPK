@@ -25,13 +25,14 @@ class pkmg(object):
     '''
     Only one generic class needed for both objects
     '''
-    def __init__(self,biases,dipoles,matgrowrate,kphys,vel_disp,sigma_z,cH,z):
+    #def __init__(self,biases,dipoles,matgrowrate,kphys,vel_disp,sigma_z,cH,z):
+    def __init__(self,biases,dipoles,matgrowrate,kphys,sigma_z,cH,z):
 
         self.biases = biases
         self.dipoles = dipoles
         self.matgrowrate = matgrowrate
         self.kphys = kphys
-        self.vel_disp = vel_disp
+        #self.vel_disp = vel_disp
         self.sigma_z = sigma_z
         self.cH = cH
         self.z = z
@@ -46,11 +47,13 @@ class pkmg(object):
         self.KZ = small + cH * np.outer( sigma_z , kphys )
 
         # k * vel_disp
-        self.KV = 1.5*small + cH * np.outer( vel_disp , kphys )
+        #self.KV = 1.5*small + cH * np.outer( vel_disp , kphys )
 
         # Auxiliary definitions
-        self.S1 = np.sqrt( self.KZ**2 + self.KV**2 )
-        self.S2 = np.sqrt( self.KZ**2 + 2.0 * self.KV**2 )
+        #self.S1 = np.sqrt( self.KZ**2 + self.KV**2 )
+        #self.S2 = np.sqrt( self.KZ**2 + 2.0 * self.KV**2 )
+        self.S1 = np.sqrt( self.KZ**2 )
+        self.S2 = np.sqrt( self.KZ**2 )
 
         self.EPS1_KZ = np.sqrt(np.pi)*special.erf(self.KZ)/(2.0*self.KZ)
         self.EPS1_S1 = np.sqrt(np.pi)*special.erf(self.S1)/(2.0*self.S1)
@@ -72,9 +75,13 @@ class pkmg(object):
         self.Q1b = self.adip**2 * ( - 5./8. * (6. * self.e_KZ) / (self.KZ**2) )
         self.Q1 = self.Q1a + self.Q1b
 
-        self.Q2a = (self.biases**2 * ( 5./4. * (3. - 2*self.KZ**2) * self.EPS1_KZ / (self.KZ**2) ).T).T
-        self.Q2b = (self.biases**2 * ( - 15./4. * (self.e_KZ) / (self.KZ**2) ).T).T
-        self.Q2 = self.Q2a + self.Q2b
+        #self.Q2a = (self.biases**2 * ( 5./4. * (3. - 2*self.KZ**2) * self.EPS1_KZ / (self.KZ**2) ).T).T
+        #self.Q2b = (self.biases**2 * ( - 15./4. * (self.e_KZ) / (self.KZ**2) ).T).T
+        #self.Q2 = self.Q2a + self.Q2b
+
+        self.Q2a = (self.biases**2 * ( 5./4. * (3. - 2*self.KZ**2) * self.EPS1_KZ ).T).T
+        self.Q2b = (self.biases**2 * ( - 15./4. * (self.e_KZ) ).T).T
+        self.Q2 = (self.Q2a + self.Q2b) / (self.KZ**2)
 
         self.Q3a = (self.matgrowrate * self.biases * ( 5./4. * (9. - 2*self.S1**2) * (self.EPS1_S1 - self.e_S1) / (self.S1**4) ).T).T
         self.Q3b = (self.matgrowrate * self.biases * ( - 5./4. * (6. * self.e_S1) / (self.S1**2) ).T).T

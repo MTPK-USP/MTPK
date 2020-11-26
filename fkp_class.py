@@ -183,9 +183,11 @@ class fkp_init(object):
             # This is <|F(k)|^2> on bins [a]
             # Changed to sparse matrix format
             P_ret[i] = ((self.bin_matrix).dot(Fkf2[i]))/(self.counts + small)
-            P2a_ret[i] = ((self.bin_matrix).dot(F2akf2[i]))/(self.counts + small)
+            # Quadrupole with factor of 5/2
+            P2a_ret[i] = 2.5*((self.bin_matrix).dot(F2akf2[i]))/(self.counts + small)
             
             P_ret[i] = np.abs(P_ret[i] - self.Pshot[i])
+
             ###############################################################
     
             pifactor=1./(self.N[i]**4 +small)
@@ -199,6 +201,10 @@ class fkp_init(object):
             P2a_ret[i]=P2a_ret[i]*self.cell_size**3
         
             self.Pshot_phys[i]=self.Pshot[i]*self.cell_size**3
+            # TESTING
+            pshotret = (self.Pshot_phys[i])*(self.bias[i])**2
+            print("   FKP shot noise for tracer",i," : ", pshotret)
+
             sigma[i] = sigma[i]*self.cell_size**3
             
         self.P_ret = P_ret
@@ -221,7 +227,7 @@ class fkp_init(object):
             for j in range(i+1,ntr):
                 # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
                 cross_temp = 0.5*( F2kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F2kflat[j].conj()) ).real
-                self.cross_spec2[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small)) 
+                self.cross_spec2[index] = 2.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small)) 
                 index += 1
 
 	
