@@ -100,9 +100,9 @@ class cosmo:
         self.z_re       = default_params['z_re']
         self.flat       = default_params['flat']
 
-        if(flat):
-            if(self.Omega0_m + Omega0_DE != 1):
-                raise ValueError(r"This is not a flat cosmology, Omega0_m + Omega0_DE = {}".format(Omega0_m+Omega0_DE) )
+        if(self.flat):
+            if(self.Omega0_m + self.Omega0_DE != 1):
+                raise ValueError(r"This is not a flat cosmology, Omega0_m + Omega0_DE = {}".format(self.Omega0_m + self.Omega0_DE) )
         
 
         self.default_params = default_params
@@ -117,8 +117,10 @@ class cosmo:
         '''
         for key, value in self.default_params.items():
             print('{} = {}'.format(key, vars(self)[key] ) )
-        return 0
+        return ''
 
+    #To print without calling cosmo_print to print
+    __repr__ = cosmo_print
 
     def f(self, gamma, z):
         Omega0_m = self.Omega0_m
