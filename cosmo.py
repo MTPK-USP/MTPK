@@ -102,7 +102,7 @@ class cosmo:
 
         if(flat):
             if(self.Omega0_m + Omega0_DE != 1):
-                raise ValueError(f"This is not a flat cosmology, Omega0_m + Omega0_DE = {}".format(Omega0_m+Omega0_DE) )
+                raise ValueError(r"This is not a flat cosmology, Omega0_m + Omega0_DE = {}".format(Omega0_m+Omega0_DE) )
         
 
         self.default_params = default_params
@@ -193,7 +193,3 @@ def comoving(self, z, h_units):
         d_c = scipy.integrate.simps(integrand, z_temp)
 
     return (d_c)
-
-        
-
-
