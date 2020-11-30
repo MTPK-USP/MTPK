@@ -1,6 +1,8 @@
 '''Class to contain cosmological parameters. This code also implements certain 
-   very common cosmological functions: matgrow, H, d_comoving, sigma_8
+   very common cosmological functions: matgrow (evolving with z or phenomenological), H, d_comoving, sigma_8
 '''
+
+import numpy as np
 
 class cosmo:
 
@@ -49,6 +51,9 @@ class cosmo:
             flat : Bool
                 Boolean variable controling whether the user wishes to enforce a flat
                 cosmology
+                
+            gamma : float
+            	Parameter used in the phenomenological matgrowth factor: f = Omega0_m^gamma
 
             Yields
             ------
@@ -77,7 +82,8 @@ class cosmo:
                 'w0'         : -1,
                 'w1'         : 0,
                 'z_re'       : 9.99999,
-                'flat'       : True
+                'flat'       : True,
+                'gamma'      : 0.5454
                 }
 
         for key, value in kwargs.items():
@@ -99,7 +105,8 @@ class cosmo:
         self.w1         = default_params['w1']
         self.z_re       = default_params['z_re']
         self.flat       = default_params['flat']
-
+        self.gamma       = default_params['gamma']
+        
         if(self.flat):
             if(self.Omega0_m + self.Omega0_DE != 1):
                 raise ValueError(r"This is not a flat cosmology, Omega0_m + Omega0_DE = {}".format(self.Omega0_m + self.Omega0_DE) )
@@ -122,17 +129,25 @@ class cosmo:
     #To print without calling cosmo_print to print
     __repr__ = cosmo_print
 
-    def f(self, gamma, z):
+    #Matgrowth function - evolving with z
+    def f_evolving(self, z): 
         Omega0_m = self.Omega0_m
         Omega0_DE = self.Omega0_DE
         w0 = self.w0
         w1 = self.w1
+        gamma = self.gamma
 
         a = 1/(1+z)
         w = w0 + (1-a)*w1
 
         return( ( Omega0_m*a**(-3.)/( Omega0_m*a**(-3.) + Omega0_DE*a**(-3.*(1.+w)) ) )**(gamma) )
 
+    #Matgrowth function - phenomenological
+    def f_phenomenological(self):
+        Omega0_m = self.Omega0_m
+        gamma = self.gamma
+
+        return Omega0_m**gamma
 
     def H(self, z, h_units):
         '''Method to compute the Hubble factor at the cosmology defined above
@@ -151,7 +166,6 @@ class cosmo:
             Value of H at the selected redshift and with selected units
 
         '''
-
         if(h_units):
             h = 1
         else:
@@ -168,30 +182,30 @@ class cosmo:
 
         return( H0*np.sqrt( Omega0_m*a**(-3) + Omega0_DE*a**(-3*(1+w)) ) )
 
-def comoving(self, z, h_units):
-    '''Method to compute comoving distance using the cosmology defined above, for a certain redshift
+    def comoving(self, z, h_units):
+        '''Method to compute comoving distance using the cosmology defined above, for a certain redshift
     
-    Parameters
-    ----------
+        Parameters
+        ----------
         z : float
             Redshit
         h_units : Bool
             Boolean variable controlling whether we want our output in units of Mpc or Mpc/h
 
-    Returns
-    -------
+        Returns
+        -------
         d_c : float
             Comoving distance up to redshift z
 
-    '''
+        '''
     
-    c_light = 299792.458 #km/s
+        c_light = 299792.458 #km/s
     
-    if(z==0):
-        return 0
-    else:
-        z_temp = np.linspace(0, z, 1000)
-        integrand = c / self.H(z, h_units)
-        d_c = scipy.integrate.simps(integrand, z_temp)
+        if(z==0):
+            return 0
+        else:
+            z_temp = np.linspace(0, z, 1000)
+            integrand = c / self.H(z, h_units)
+            d_c = scipy.integrate.simps(integrand, z_temp)
 
-    return (d_c)
+        return (d_c)
