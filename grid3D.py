@@ -19,7 +19,7 @@ import numpy as np
 # Uncomment the line above and the last three lines 
 # if you have matplotlib and want to see the grid
 ####################################################
-from time import clock
+from time import perf_counter
 import numpy as np
 
 class grid3d:
