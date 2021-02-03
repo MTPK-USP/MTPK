@@ -7,7 +7,7 @@
     Changed by R. Abramo - July-August/2015, Feb. 2016
     Multi-tracer stuff: RA, March 2016
 """
-from time import clock
+from time import perf_counter
 import numpy as np
 from scipy.sparse import csc_matrix
 import grid3D as gr
