@@ -153,6 +153,7 @@ OmegaDE = 1. - Omegam - Omegak
 h = H0/100.
 clight = 299792.46
 cH = 299792.458*h/H(H0, Omegam, OmegaDE, w0, w1, zcentral)  # c/H(z) , in units of h^-1 Mpc
+A_S = A_s#np.exp(ln10e10ASA)*1.e-10
 
 try:
     gamma
@@ -197,7 +198,7 @@ except:
 nklist = 1000
 k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
 
-kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, ln10e10ASA, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
+kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_S, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
 Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 ############# Ended CAMB calculation #####################################
 
