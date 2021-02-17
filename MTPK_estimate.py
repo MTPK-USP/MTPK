@@ -85,40 +85,26 @@ my_cosmology = cosmo()
 physical_options = my_cosmology.default_params
 my_code_options = code_parameters()
 parameters_code = my_code_options.default_params
-strkph = str(parameters_code['kph_central'])
 #Some other cosmological quantities
 h = physical_options['h']
 H0 = h*100.
 clight = physical_options['c_light']
 cH = clight*h/my_cosmology.H(physical_options['zcentral'], False) # c/H(z) , in units of h^-1 Mpc
 
-
-# Velocity dispersion. vdisp is defined on inputs with units of km/s
-vdisp = np.asarray(my_code_options.vdisp) #km/s
-sigma_v = my_code_options.vdisp/my_cosmology.H(physical_options['zcentral'], False) #Mpc/h
-a_vdisp = vdisp/physical_options['c_light'] #Adimensional vdisp
-
-# Redshift errors. sigz_est is defined on inputs, and is adimensional
-sigz_est = np.asarray(my_code_options.sigz_est)
-sigma_z = sigz_est*physical_options['c_light']/my_cosmology.H(physical_options['zcentral'], False) # Mpc/h
-
-whichspec = parameters_code['whichspec']
+#####################################################
+# Load specs for this run
+#####################################################
+from MTPK import *
 
 
-# #####################################################
-# # Load specs for this run
-# #####################################################
-# from MTPK import *
+###################
+print()
+print()
+print( 'This is the Multi-tracer power spectrum estimator')
 
-
-# ###################
-# print()
-# print()
-# print( 'This is the Multi-tracer power spectrum estimator')
-
-# print()
-# print('Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates)
-# print()
+print()
+print('Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates)
+print()
 
 # # Load those properties
 # input_filename = glob.glob('inputs/' + handle_estimates + '.py')
@@ -129,48 +115,51 @@ whichspec = parameters_code['whichspec']
 
 # exec ("from " + handle_estimates + " import *")
 
-# # Directory with data and simulated maps
-# dir_maps = this_dir + '/maps/sims/' + handle_sims
+# Directory with data and simulated maps
+dir_maps = this_dir + '/maps/sims/' + handle_sims
 
-# # Directory with data
-# dir_data = this_dir + '/maps/data/' + handle_data
+# Directory with data
+sims_only = parameters_code['sims_only']
+sel_fun_data = parameters_code['sel_fun_data']
+dir_data = this_dir + '/maps/data/' + handle_data
 
 
-# # Will save results of the estimations to these directories:
-# dir_specs = this_dir + '/spectra/' + handle_estimates
-# dir_figs = this_dir + '/figures/' + handle_estimates
-# if not os.path.exists(dir_specs):
-#     os.makedirs(dir_specs)
-# if not os.path.exists(dir_figs):
-#     os.makedirs(dir_figs)
+# Will save results of the estimations to these directories:
+dir_specs = this_dir + '/spectra/' + handle_estimates
+dir_figs = this_dir + '/figures/' + handle_estimates
+if not os.path.exists(dir_specs):
+    os.makedirs(dir_specs)
+if not os.path.exists(dir_figs):
+    os.makedirs(dir_figs)
 
 
 # # Save estimations for each assumed k_phys in subdirectories named after k_phys
 # strkph = str(kph_central)
+strkph = str(parameters_code['kph_central'])
 
-# dir_specs += '/k=' + strkph
-# dir_figs  += '/k=' + strkph
+dir_specs += '/k=' + strkph
+dir_figs  += '/k=' + strkph
 
-# # If directories do not exist, create them now...
-# if not os.path.exists(dir_specs):
-#     os.makedirs(dir_specs)
-# else:
-#     print ('Directory ', dir_specs, 'exists!')
-#     # print [name for name in os.listdir(dir_specs)]
-#     answer = input('Continue anyway? y/n  ')
-#     if answer!='y':
-#         print ('Aborting now...')
-#         sys.exit(-1)
+# If directories do not exist, create them now...
+if not os.path.exists(dir_specs):
+    os.makedirs(dir_specs)
+else:
+    print ('Directory ', dir_specs, 'exists!')
+    # print [name for name in os.listdir(dir_specs)]
+    answer = input('Continue anyway? y/n  ')
+    if answer!='y':
+        print ('Aborting now...')
+        sys.exit(-1)
 
-# if not os.path.exists(dir_figs):
-#     os.makedirs(dir_figs)
-# else:
-#     print ('Directory ', dir_figs , 'exists!')
-#     # print [name for name in os.listdir(dir_figs)]
-#     answer = input('Continue anyway? y/n  ')
-#     if answer!='y':
-#         print ('Aborting now...')
-#         sys.exit(-1)
+if not os.path.exists(dir_figs):
+    os.makedirs(dir_figs)
+else:
+    print ('Directory ', dir_figs , 'exists!')
+    # print [name for name in os.listdir(dir_figs)]
+    answer = input('Continue anyway? y/n  ')
+    if answer!='y':
+        print ('Aborting now...')
+        sys.exit(-1)
 
 
 # ########################## Some other cosmological quantities ######################################
@@ -213,9 +202,33 @@ whichspec = parameters_code['whichspec']
 # sigz_est = np.asarray(sigz_est)
 # sigma_z = sigz_est*clight/H(100,Omegam,OmegaDE,-1,0.0,zcentral) # Mpc/h
 
-# # Joint factor considering v dispersion and z error
-# sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
-# a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
+Omegam = physical_options['Omega0_m']
+OmegaDE = physical_options['Omega0_DE']
+Omegab = physical_options['Omega0_b']
+Omegac = physical_options['Omega0_cdm']
+A_S = physical_options['A_s']
+gamma = physical_options['gamma']
+matgrowcentral = physical_options['matgrowcentral']
+w0 = physical_options['w0']
+w1 = physical_options['w1']
+z_re = physical_options['z_re']
+zcentral = physical_options['zcentral']
+n_SA = physical_options['n_s']
+
+# Velocity dispersion. vdisp is defined on inputs with units of km/s
+vdisp = np.asarray(my_code_options.vdisp) #km/s
+sigma_v = my_code_options.vdisp/my_cosmology.H(physical_options['zcentral'], False) #Mpc/h
+a_vdisp = vdisp/physical_options['c_light'] #Adimensional vdisp
+
+# Redshift errors. sigz_est is defined on inputs, and is adimensional
+sigz_est = np.asarray(my_code_options.sigz_est)
+sigma_z = sigz_est*physical_options['c_light']/my_cosmology.H(physical_options['zcentral'], False) # Mpc/h
+
+whichspec = parameters_code['whichspec']
+
+# Joint factor considering v dispersion and z error
+sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
+a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
 
 # ###################################################################################################
 
