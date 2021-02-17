@@ -20,6 +20,9 @@
 # and added as the first map (in that case, the remaining n_maps are the training sims)
 import numpy as np
 
+use_mask = False
+#use_mask = True
+
 #sims_only = False
 sims_only = True
 
