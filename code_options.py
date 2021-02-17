@@ -15,16 +15,16 @@ class code_parameters:
     the code will simply use the default parameter defined below
 
     sims_only : bool
-	'''
-	Eliminate this! Keep only True Case
-	'''
+
+	=> Eliminate this! Keep only True Case
+
     True -> for test simulation
     False -> for real data
 
     use_window_function : True or False
-	'''
-	Eliminate this and 'dec' spectra!
-	'''
+       
+	=> Eliminate this and 'dec' spectra!
+	
     True -> will obtain window function for all tracers from file
     False -> will normalize data ("dec") to theoretical spectra ("model")
         
@@ -38,9 +38,9 @@ class code_parameters:
     Number of halo bins
             
     halo_ids : list of strings
-	'''
-	Eliminate this! See gal_ids eliminate too
-	'''
+	
+	=> Eliminate this! See gal_ids eliminate too
+	
     A list of strings to identify each halo bin
             
     n_maps : integer
@@ -60,15 +60,15 @@ class code_parameters:
     False -> Otherwise
 
     sel_fun_file : string
-    '''
-    Include right after sel_fun_data
-    '''
+   
+    => Include right after sel_fun_data
+   
     Name of the map of the selection function
         
     mf_to_nbar : string
-	'''
-	Remove it!
-	'''
+	
+	=> Remove it!
+	
     Path and name of the mass function file
                 
     cell_low_count_thresh : float
@@ -171,10 +171,11 @@ class code_parameters:
         default_params = {
             'sims_only'            : True,
             'use_window_function'  : False,
-#            'mass_fun_file'        : "inputs/ExSHalos_MF.dat",
-#            'halo_bias_file'       : "inputs/ExSHalos_bias.dat",
-            'mass_fun'             : [0.001, 0.002, 0.003],
-            'halo_bias'            : [3., 2.0, 1.5],
+           'mass_fun_file'        : "inputs/ExSHalos_MF.dat",
+           'halo_bias_file'       : "inputs/ExSHalos_bias.dat",
+            #Mudar para o caso abaixo
+            # 'mass_fun'             : [0.001, 0.002, 0.003],
+            # 'halo_bias'            : [3., 2.0, 1.5],
             'nhalos'               : 3,
             'halos_ids'            : ['h1', 'h2', 'h3'],
             'n_maps'               : 3,
@@ -186,19 +187,23 @@ class code_parameters:
             'n_y_orig'             : -64.,
             'n_z_orig'             : 10000.,
             'sel_fun_data'         : False,
-#            'mf_to_nbar'           : "inputs/ExSHalos_MF.dat",
+            # Tirar o mf_to_nbar
+            'mf_to_nbar'           : "inputs/ExSHalos_MF.dat",
             'kmin_bias'            : 0.05,
             'kmax_bias'            : 0.15,
             'kph_central'          : 0.1,
             'dkph_bin'             : 0.01,
-#            'dkph_phys'            : 0.6, => What is this?
+            #Verificar o que é o parâmetro 'dkph_phys'
+            'dkph_phys'            : 0.6, #=> What is this?
             'kmin_phys'            : 0.05,
             'kmax_phys'            : 0.6,
-#            'zbinwidth'            : 0.1, => Eliminate this!
+            #Tirar o 'zbinwidth'
+            'zbinwidth'            : 0.1, #=> Eliminate this!
             'whichspec'            : 1,
             'jing_dec_sims'        : True,
             'power_jing_sims'      : 2.0,
-#            'power_jing_data'      : 2.0, => Eliminate
+            #Tirar a o 'power_jing_data'
+            'power_jing_data'      : 2.0, #=> Eliminate
             'plot_all_cov'         : False,
             'cell_low_count_thresh': 0.0,
             'mult_sel_fun'         : 1.0,
