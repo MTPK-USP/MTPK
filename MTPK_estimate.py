@@ -234,10 +234,12 @@ a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
 
 
 
-# #############Calling CAMB for calculations of the spectra#################
-# print('Beggining CAMB calculations\n')
+#############Calling CAMB for calculations of the spectra#################
+print('Beggining CAMB calculations\n')
 
-# # It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
+# It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
+k_min_camb = parameters_code['k_min_CAMB']
+k_max_camb = parameters_code['k_max_CAMB']
 # try:
 #     k_min_camb
 #     k_max_camb
@@ -245,12 +247,12 @@ a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
 #     k_min_camb = 1.0e-4
 #     k_max_camb = 1.0e1
 
-# nklist = 1000
-# k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
+nklist = 1000
+k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
 
-# kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_S, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
-# Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
-# ############# Ended CAMB calculation #####################################
+kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_S, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
+Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
+############# Ended CAMB calculation ####################################
 
 # try:
 #     power_low
