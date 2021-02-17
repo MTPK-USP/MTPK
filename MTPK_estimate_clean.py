@@ -214,12 +214,12 @@ k_interp = np.append(k_camb,np.array([2*k_camb[-1],4*k_camb[-1],8*k_camb[-1],16*
 P_interp = np.append(Pk_camb,np.array([1./4.*Pk_camb[-1],1./16*Pk_camb[-1],1./64*Pk_camb[-1],1./256*Pk_camb[-1]]))
 pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
 
-# try:
-#     gal_bias = np.loadtxt(input_dir + "/" + bias_file)
-# except:
-#     print("Could not find bias file:", bias_file,". Please check your /inputs directory.")
-#     print("Aborting now...")
-#     sys.exit(-1)
+try:
+    gal_bias = np.loadtxt(input_dir + "/" + bias_file)
+except:
+    print("Could not find bias file:", bias_file,". Please check your /inputs directory.")
+    print("Aborting now...")
+    sys.exit(-1)
 
 gal_adip = np.asarray(code_options['ADIP'])
 gal_sigz_est = np.asarray(code_options['SIGZ_EST'])
@@ -313,21 +313,21 @@ r_bar = 1/2.0 + ((1.0*code_options['N_X'])/num_binsk)*np.arange(num_binsk)
 #
 kph = k_bar*2*np.pi/code_options['CELL_SIZE']
 
-# ##############################################
-# # Define the "effective bias" as the amplitude of the monopole
-# try:
-#     kdip_phys
-# except:
-#     kdip_phys = 1./(code_options['CELL_SIZE']*(code_options['N_Z_ORIG'] + code_options['N_Z']/2.))
-# else:
-#     print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
+##############################################
+# Define the "effective bias" as the amplitude of the monopole
+try:
+    kdip_phys
+except:
+    kdip_phys = 1./(code_options['CELL_SIZE']*(code_options['N_Z_ORIG'] + code_options['N_Z']/2.))
+else:
+    print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
 
-# try:
-#     dip = np.asarray(gal_adip) * kdip_phys
-# except:
-#     dip = 0.0
+try:
+    dip = np.asarray(gal_adip) * kdip_phys
+except:
+    dip = 0.0
 
-# pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
 
-# monopoles = pk_mg.mono
-# quadrupoles = pk_mg.quad
+monopoles = pk_mg.mono
+quadrupoles = pk_mg.quad

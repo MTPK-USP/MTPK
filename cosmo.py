@@ -55,6 +55,19 @@ class cosmo:
             gamma : float
             	Parameter used in the phenomenological matgrowth factor: f = Omega0_m^gamma
 
+            matgrowcentral : float
+            	Parameter of matgrowth.
+            	You can use the default value or:
+            	0) Define a new value
+            	1) Compute using method f_evolving(z)
+            	2) Compute using method f_phenomenological()
+
+            zcentral : float
+                Central (mean, or median) redshift of the catalog or simulated data
+
+            c_light : float
+                Speed of light in vacuum
+
             Yields
             ------
             
@@ -83,7 +96,10 @@ class cosmo:
                 'w1'         : 0,
                 'z_re'       : 9.99999,
                 'flat'       : True,
-                'gamma'      : 0.5454
+                'gamma'      : 0.5454,
+                'matgrowcentral' : 0.00001,
+                'zcentral'   : 1.0,
+                'c_light'   : 299792.458 #km/s
                 }
 
         for key, value in kwargs.items():
@@ -110,8 +126,7 @@ class cosmo:
         if(self.flat):
             if(self.Omega0_m + self.Omega0_DE != 1):
                 raise ValueError(r"This is not a flat cosmology, Omega0_m + Omega0_DE = {}".format(self.Omega0_m + self.Omega0_DE) )
-        
-
+        	
         self.default_params = default_params
     
     '''
@@ -169,7 +184,7 @@ class cosmo:
         if(h_units):
             h = 1
         else:
-            h = cosmo.h
+            h = self.h
 
         Omega0_m   = self.Omega0_m
         Omega0_DE  = self.Omega0_DE
@@ -199,7 +214,7 @@ class cosmo:
 
         '''
     
-        c_light = 299792.458 #km/s
+        c_light = self.c_light
     
         if(z==0):
             return 0

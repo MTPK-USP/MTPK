@@ -15,10 +15,16 @@ class code_parameters:
     the code will simply use the default parameter defined below
 
     sims_only : bool
+	'''
+	Eliminate this! Keep only True Case
+	'''
     True -> for test simulation
     False -> for real data
 
     use_window_function : True or False
+	'''
+	Eliminate this and 'dec' spectra!
+	'''
     True -> will obtain window function for all tracers from file
     False -> will normalize data ("dec") to theoretical spectra ("model")
         
@@ -32,10 +38,13 @@ class code_parameters:
     Number of halo bins
             
     halo_ids : list of strings
+	'''
+	Eliminate this! See gal_ids eliminate too
+	'''
     A list of strings to identify each halo bin
             
     n_maps : integer
-    Number of lognormal simulations of the maps for halo type
+    Number maps
             
     cell_size : float
     Cell physical size, in units of h^-1 Mpc
@@ -47,10 +56,19 @@ class code_parameters:
     Displacement of the origin (0,0,0) of the box with respect to Earth (in cell units)
             
     sel_fun_data : bool
-    True -> If the tracer selection function is fiven
+    True -> If the tracer selection function is given by a separate map
     False -> Otherwise
+
+    sel_fun_file : string
+    '''
+    Include right after sel_fun_data
+    '''
+    Name of the map of the selection function
         
     mf_to_nbar : string
+	'''
+	Remove it!
+	'''
     Path and name of the mass function file
                 
     cell_low_count_thresh : float
@@ -74,6 +92,12 @@ class code_parameters:
 
     kmin_phys : float
     Min k (in units of h^-1 Mpc) -- this should be > 1.0/box_size. In units of h^-1 Mpc
+
+    k_max_camb : float
+    Max k (in units of h^-1 Mpc) for CAMB
+
+    k_min_CAMB : float
+    Min k (in units of h^-1 Mpc) for CAMB
 
     zcentral : float
     Central (mean, or median) redshift of the catalog or simulated data
@@ -147,8 +171,10 @@ class code_parameters:
         default_params = {
             'sims_only'            : True,
             'use_window_function'  : False,
-            'mass_fun_file'        : "inputs/ExSHalos_MF.dat",
-            'halo_bias_file'       : "inputs/ExSHalos_bias.dat",
+#            'mass_fun_file'        : "inputs/ExSHalos_MF.dat",
+#            'halo_bias_file'       : "inputs/ExSHalos_bias.dat",
+            'mass_fun'             : [0.001, 0.002, 0.003],
+            'halo_bias'            : [3., 2.0, 1.5],
             'nhalos'               : 3,
             'halos_ids'            : ['h1', 'h2', 'h3'],
             'n_maps'               : 3,
@@ -160,22 +186,25 @@ class code_parameters:
             'n_y_orig'             : -64.,
             'n_z_orig'             : 10000.,
             'sel_fun_data'         : False,
-            'mf_to_nbar'           : "inputs/ExSHalos_MF.dat",
-            'cell_low_count_thresh': 0.0,
-            'mult_sel_fun'         : 1.0,
-            'shift_sel_fun'        : 0.0,
+#            'mf_to_nbar'           : "inputs/ExSHalos_MF.dat",
             'kmin_bias'            : 0.05,
             'kmax_bias'            : 0.15,
             'kph_central'          : 0.1,
-            'dkph_phys'            : 0.6,
+            'dkph_bin'             : 0.01,
+#            'dkph_phys'            : 0.6, => What is this?
             'kmin_phys'            : 0.05,
             'kmax_phys'            : 0.6,
-            'zbinwidth'            : 0.1,
+#            'zbinwidth'            : 0.1, => Eliminate this!
             'whichspec'            : 1,
             'jing_dec_sims'        : True,
             'power_jing_sims'      : 2.0,
-            'power_jing_data'      : 2.0,
+#            'power_jing_data'      : 2.0, => Eliminate
             'plot_all_cov'         : False,
+            'cell_low_count_thresh': 0.0,
+            'mult_sel_fun'         : 1.0,
+            'shift_sel_fun'        : 0.0,
+            'k_min_CAMB'           : 1.e-4,
+            'k_max_CAMB'           : 1.e+0,
             'fudge'                : 0.0000001
         }
 
