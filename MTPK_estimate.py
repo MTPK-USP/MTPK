@@ -364,77 +364,79 @@ if use_mask:
     n_bar_matrix_fid = n_bar_matrix_fid * mask
 
 
-# if sims_only:
-#     mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
-#     if len(mapnames_sims)==0 :
-#         print()
-#         print ('Simulated map files not found! Check input simulation files.')
-#         print ('Exiting program...')
-#         print ()
-#         sys.exit(-1)
-#     if len(mapnames_sims) != n_maps :
-#         print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
-#         answer = input('Continue anyway? y/n  ')
-#         if answer!='y':
-#             print ('Aborting now...')
-#             sys.exit(-1)
-#     print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
-# else:
-#     mapnames_data = glob.glob(dir_data + '/*DATA.hdf5')
-#     if len(mapnames_data) > 1 :
-#         print()
-#         print( 'Only one DATA map file supported. Check /inputs and /maps.')
-#         print( 'Exiting program...')
-#         print ()
-#         sys.exit(-1)
-#     mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
-#     if (len(mapnames_sims)==0) or (len(mapnames_data)==0) :
-#         print()
-#         print ('SIMS or DATA map files not found! Check MTPK.py, /inputs and /maps.')
-#         print ('Exiting program...')
-#         print()
-#         sys.exit(-1)
+n_maps = parameters_code['n_maps']
+if sims_only:
+    mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
+    if len(mapnames_sims)==0 :
+        print()
+        print ('Simulated map files not found! Check input simulation files.')
+        print ('Exiting program...')
+        print ()
+        sys.exit(-1)
+    if len(mapnames_sims) != n_maps :
+        print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
+        answer = input('Continue anyway? y/n  ')
+        if answer!='y':
+            print ('Aborting now...')
+            sys.exit(-1)
+    print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
+else:
+    mapnames_data = glob.glob(dir_data + '/*DATA.hdf5')
+    if len(mapnames_data) > 1 :
+        print()
+        print( 'Only one DATA map file supported. Check /inputs and /maps.')
+        print( 'Exiting program...')
+        print ()
+        sys.exit(-1)
+    mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
+    if (len(mapnames_sims)==0) or (len(mapnames_data)==0) :
+        print()
+        print ('SIMS or DATA map files not found! Check MTPK.py, /inputs and /maps.')
+        print ('Exiting program...')
+        print()
+        sys.exit(-1)
 
-#     mapnames_data = mapnames_data[0]
-#     print ('Will use the data maps contained in the file:')
-#     print ('     ' + mapnames_data)
-#     print ('and the N =', n_maps , ' simulated maps contained contained in directory', dir_maps)
-#     # read data box (all galaxy types)
-#     h5map = h5py.File(mapnames_data,'r')
-#     data_maps = np.asarray(h5map.get(list(h5map.keys())[0]))
-#     h5map.close
-#     if not data_maps.shape == (ntracers,n_x,n_y,n_z):
-#         print ('Unexpected shape of data maps:', data_maps.shape)
-#         print ('Please check again. Aborting now...')
-#         sys.exit(-1)
-
-
-# ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
-# ## We will treat this as an additional MASK (thresh_mask) for data and mocks
-# try:
-#     cell_low_count_thresh
-#     thresh_mask = np.ones_like(n_bar_matrix_fid)
-#     thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
-#     n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
-# except:
-#     pass
+    mapnames_data = mapnames_data[0]
+    print ('Will use the data maps contained in the file:')
+    print ('     ' + mapnames_data)
+    print ('and the N =', n_maps , ' simulated maps contained contained in directory', dir_maps)
+    # read data box (all galaxy types)
+    h5map = h5py.File(mapnames_data,'r')
+    data_maps = np.asarray(h5map.get(list(h5map.keys())[0]))
+    h5map.close
+    if not data_maps.shape == (ntracers,n_x,n_y,n_z):
+        print ('Unexpected shape of data maps:', data_maps.shape)
+        print ('Please check again. Aborting now...')
+        sys.exit(-1)
 
 
-# print ()
-# print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
+## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
+## We will treat this as an additional MASK (thresh_mask) for data and mocks
+try:
+    cell_low_count_thresh = parameters_code['cell_low_count_thresh']
+    # cell_low_count_thresh
+    thresh_mask = np.ones_like(n_bar_matrix_fid)
+    thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
+    n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
+except:
+    pass
 
 
-# print()
-# if whichspec == 0:
-#     print ('Using LINEAR power spectrum from CAMB')
-# elif whichspec == 1:
-#     print ('Using power spectrum from CAMB + HaloFit')
-# else:
-#     print ('Using power spectrum from CAMB + HaloFit with PkEqual')
+print ()
+print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
 
-# print()
-# print ('----------------------------------')
-# print()
+
+print()
+if whichspec == 0:
+    print ('Using LINEAR power spectrum from CAMB')
+elif whichspec == 1:
+    print ('Using power spectrum from CAMB + HaloFit')
+else:
+    print ('Using power spectrum from CAMB + HaloFit with PkEqual')
+
+print()
+print ('----------------------------------')
+print()
 
 
 
