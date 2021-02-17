@@ -1932,136 +1932,136 @@ for nt in range(ntracers):
         ntcount = ntcount + 1
 
 
-# # # Correlation matrix of total effective power spectrum and ratios of spectra
-# # cov_Pt_ratios_MT = np.cov(P0_tot_ratios_MT.T)
-# # cov_Pt_ratios_FKP = np.cov(P0_tot_ratios_MT.T)
-# # cov_Pt_MT = np.cov(P0tot_MT.T)
-# # cov_Pt_FKP = np.cov(P0tot_FKP.T)
+# Correlation matrix of total effective power spectrum and ratios of spectra
+cov_Pt_ratios_MT = np.cov(P0_tot_ratios_MT.T)
+cov_Pt_ratios_FKP = np.cov(P0_tot_ratios_MT.T)
+cov_Pt_MT = np.cov(P0tot_MT.T)
+cov_Pt_FKP = np.cov(P0tot_FKP.T)
 
-# # print ('Done computing data covariances. Time spent: ', np.int((time()-tempor)*1000)/1000., 's')
-# # print ()
-# # print ('----------------------------------')
-# # print ()
-
-
-# # #print('Mean D0D0/true:',np.mean(frac00))
-
-# # print ('Results:')
-
-# # Vfft_to_Vk = 1.0/((n_x*n_y)*(n_z/2.))
-
-# # ## Compare theory with sims and with data
-# # eff_mono_fkp = np.median(effbias**2*(P0_fkp_mean_dec/powtrue).T [myran],axis=0)
-# # eff_mono_mt = np.median((P0_mean_dec/powtrue).T [myran],axis=0)
-# # eff_quad_fkp = np.median(effbias**2*(P2_fkp_mean_dec/powtrue).T [myran],axis=0)
-# # eff_quad_mt = np.median((P2_mean_dec/powtrue).T [myran],axis=0)
-
-# # eff_mono_fkp_data = np.median(effbias**2*(P0_fkp_dec[0]/powtrue).T [myran],axis=0)
-# # eff_mono_mt_data = np.median((P0_data_dec[0]/powtrue).T [myran],axis=0)
-# # eff_quad_fkp_data = np.median(effbias**2*(P2_fkp_dec[0]/powtrue).T [myran],axis=0)
-# # eff_quad_mt_data = np.median((P2_data_dec[0]/powtrue).T [myran],axis=0)
-
-# # mono_theory = np.median((P0_model/powtrue).T [myran],axis=0)
-# # quad_theory = np.median((P2_model/powtrue).T [myran],axis=0)
+print ('Done computing data covariances. Time spent: ', np.int((time()-tempor)*1000)/1000., 's')
+print ()
+print ('----------------------------------')
+print ()
 
 
-# # print('At k=', kph[myk_min], '...', kph[myk_max])
-# # for nt in range(ntracers):
-# #     print('----------------------------------')
-# #     print('Tracer:', nt )
-# #     print('    Theory averaged monopole = ', 0.001*np.int( 1000.0*mono_theory[nt]))
-# #     print('FKP (sims) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_fkp[nt]))
-# #     print(' MT (sims) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_mt[nt]))
-# #     print('FKP (data) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_fkp_data[nt]))
-# #     print(' MT (data) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_mt_data[nt]))
-# #     print('    Theory averaged quadrupole = ', 0.001*np.int( 1000.0*quad_theory[nt]))
-# #     print('FKP (sims) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_fkp[nt]))
-# #     print(' MT (sims) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_mt[nt]))
-# #     print('FKP (data) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_fkp_data[nt]))
-# #     print(' MT (data) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_mt_data[nt]))
+#print('Mean D0D0/true:',np.mean(frac00))
 
-# # print('----------------------------------')
-# # print ()
+print ('Results:')
+
+Vfft_to_Vk = 1.0/((n_x*n_y)*(n_z/2.))
+
+## Compare theory with sims and with data
+eff_mono_fkp = np.median(effbias**2*(P0_fkp_mean_dec/powtrue).T [myran],axis=0)
+eff_mono_mt = np.median((P0_mean_dec/powtrue).T [myran],axis=0)
+eff_quad_fkp = np.median(effbias**2*(P2_fkp_mean_dec/powtrue).T [myran],axis=0)
+eff_quad_mt = np.median((P2_mean_dec/powtrue).T [myran],axis=0)
+
+eff_mono_fkp_data = np.median(effbias**2*(P0_fkp_dec[0]/powtrue).T [myran],axis=0)
+eff_mono_mt_data = np.median((P0_data_dec[0]/powtrue).T [myran],axis=0)
+eff_quad_fkp_data = np.median(effbias**2*(P2_fkp_dec[0]/powtrue).T [myran],axis=0)
+eff_quad_mt_data = np.median((P2_data_dec[0]/powtrue).T [myran],axis=0)
+
+mono_theory = np.median((P0_model/powtrue).T [myran],axis=0)
+quad_theory = np.median((P2_model/powtrue).T [myran],axis=0)
 
 
+print('At k=', kph[myk_min], '...', kph[myk_max])
+for nt in range(ntracers):
+    print('----------------------------------')
+    print('Tracer:', nt )
+    print('    Theory averaged monopole = ', 0.001*np.int( 1000.0*mono_theory[nt]))
+    print('FKP (sims) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_fkp[nt]))
+    print(' MT (sims) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_mt[nt]))
+    print('FKP (data) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_fkp_data[nt]))
+    print(' MT (data) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_mt_data[nt]))
+    print('    Theory averaged quadrupole = ', 0.001*np.int( 1000.0*quad_theory[nt]))
+    print('FKP (sims) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_fkp[nt]))
+    print(' MT (sims) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_mt[nt]))
+    print('FKP (data) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_fkp_data[nt]))
+    print(' MT (data) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_mt_data[nt]))
+
+print('----------------------------------')
+print ()
 
 
 
 
-# # ################################################################################
-# # ################################################################################
-# # ################################################################################
-# # ################################################################################
-# # #
-# # # Computations are basically completed.
-# # # Now create plots, outputs, etc.
-# # #
-# # ################################################################################
-# # ################################################################################
-# # ################################################################################
-# # ################################################################################
+
+
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+#
+# Computations are basically completed.
+# Now create plots, outputs, etc.
+#
+################################################################################
+################################################################################
+################################################################################
+################################################################################
 
 
 
-# # pl.rcParams["axes.titlesize"] = 8
-# # cm_subsection = np.linspace(0, 1, ntracers)
-# # mycolor = [ cm.jet(x) for x in cm_subsection ]
+pl.rcParams["axes.titlesize"] = 8
+cm_subsection = np.linspace(0, 1, ntracers)
+mycolor = [ cm.jet(x) for x in cm_subsection ]
 
-# # #colorsequence=['darkred','r','darkorange','goldenrod','y','yellowgreen','g','lightseagreen','c','deepskyblue','b','darkviolet','m']
-# # #jumpcolor=np.int(len(colorsequence)/ntracers)
+#colorsequence=['darkred','r','darkorange','goldenrod','y','yellowgreen','g','lightseagreen','c','deepskyblue','b','darkviolet','m']
+#jumpcolor=np.int(len(colorsequence)/ntracers)
 
 
-# # print('Plotting results to /figures...')
+print('Plotting results to /figures...')
 
-# # if plot_all_cov:
-# #     # Plot 2D correlation of Ptot and ratios
-# #     nblocks=1+ntracers*(ntracers-1)//2
-# #     indexcov = np.arange(0,nblocks*num_binsk,np.int(num_binsk//4))
-# #     nameindex = nblocks*[str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//4)]]
-# #     onesk=np.diag(np.ones((nblocks*num_binsk)))
-# #     dF=np.sqrt(np.abs(np.diag(cov_Pt_ratios_FKP)))
-# #     dM=np.sqrt(np.abs(np.diag(cov_Pt_ratios_MT)))
-# #     dF2 = small + np.outer(dF,dF)
-# #     dM2 = small + np.outer(dM,dM)
-# #     fullcov = np.tril(np.abs(cov_Pt_ratios_FKP)/dF2) + np.triu(np.abs(cov_Pt_ratios_MT.T)/dM2) - onesk
-# #     pl.imshow(fullcov,origin='lower',interpolation='none')
-# #     pl.title("Covariance of total effective power spectrum and ratios of spectra (monopoles only)")
-# #     pl.xticks(indexcov,nameindex,size=6,name='monospace')
-# #     pl.yticks(indexcov,nameindex,size=8,name='monospace')
-# #     pl.annotate('FKP',(np.int(pow_bins/5.),2*pow_bins),fontsize=20)
-# #     pl.annotate('Multi-tracer',(2*pow_bins,np.int(pow_bins/5.)),fontsize=20)
-# #     pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
-# #     pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
-# #     pl.colorbar()
-# #     pl.savefig(dir_figs + '/' + handle_estimates + '_2D_tot_ratios_corr.pdf')
-# #     pl.close('all')
+if plot_all_cov:
+    # Plot 2D correlation of Ptot and ratios
+    nblocks=1+ntracers*(ntracers-1)//2
+    indexcov = np.arange(0,nblocks*num_binsk,np.int(num_binsk//4))
+    nameindex = nblocks*[str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//4)]]
+    onesk=np.diag(np.ones((nblocks*num_binsk)))
+    dF=np.sqrt(np.abs(np.diag(cov_Pt_ratios_FKP)))
+    dM=np.sqrt(np.abs(np.diag(cov_Pt_ratios_MT)))
+    dF2 = small + np.outer(dF,dF)
+    dM2 = small + np.outer(dM,dM)
+    fullcov = np.tril(np.abs(cov_Pt_ratios_FKP)/dF2) + np.triu(np.abs(cov_Pt_ratios_MT.T)/dM2) - onesk
+    pl.imshow(fullcov,origin='lower',interpolation='none')
+    pl.title("Covariance of total effective power spectrum and ratios of spectra (monopoles only)")
+    pl.xticks(indexcov,nameindex,size=6,name='monospace')
+    pl.yticks(indexcov,nameindex,size=8,name='monospace')
+    pl.annotate('FKP',(np.int(pow_bins/5.),2*pow_bins),fontsize=20)
+    pl.annotate('Multi-tracer',(2*pow_bins,np.int(pow_bins/5.)),fontsize=20)
+    pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
+    pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
+    pl.colorbar()
+    pl.savefig(dir_figs + '/' + handle_estimates + '_2D_tot_ratios_corr.pdf')
+    pl.close('all')
 
-# #     # Plot 2D correlation coefficients
-# #     indexcov = np.arange(0,num_binsk,np.int(num_binsk//5))
-# #     nameindex = [str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//5)]]
-# #     onesk=np.diag(np.ones(num_binsk))
-# #     for nt in range(ntracers):
-# #         for ntp in range(nt,ntracers):
-# #             kk = np.outer(kph,kph)
-# #             FKPcov=relcov0_FKP[nt,ntp]
-# #             MTcov=relcov0_MT[nt,ntp]
-# #             dF=np.sqrt(np.abs(np.diag(FKPcov)))
-# #             dM=np.sqrt(np.abs(np.diag(MTcov)))
-# #             FKPcorr=FKPcov/(small+np.outer(dF,dF))
-# #             MTcorr=MTcov/(small+np.outer(dM,dM))
-# #             fullcov = np.tril(np.abs(FKPcorr)) + np.triu(np.abs(MTcorr.T)) - onesk
-# #             thistitle = 'Corr(P_' + str(nt) + ',P_' + str(ntp) + ') '
-# #             pl.imshow(fullcov,origin='lower',interpolation='none')
-# #             pl.title(thistitle)
-# #             pl.xticks(indexcov,nameindex,size=20,name='monospace')
-# #             pl.yticks(indexcov,nameindex,size=20,name='monospace')
-# #             pl.annotate('FKP',(np.int(pow_bins//10),np.int(pow_bins/2.5)),fontsize=20)
-# #             pl.annotate('Multi-tracer',(np.int(pow_bins//2),np.int(pow_bins//10)),fontsize=20)
-# #             pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
-# #             pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
-# #             pl.colorbar()
-# #             pl.savefig(dir_figs + '/' + handle_estimates + '_2Dcorr_' + str(nt) + '_' + str(ntp) + '.pdf')
-# #             pl.close('all')
+    # Plot 2D correlation coefficients
+    indexcov = np.arange(0,num_binsk,np.int(num_binsk//5))
+    nameindex = [str(0.001*np.round(1000*kin)) for kin in kph[0:-1:np.int(num_binsk//5)]]
+    onesk=np.diag(np.ones(num_binsk))
+    for nt in range(ntracers):
+        for ntp in range(nt,ntracers):
+            kk = np.outer(kph,kph)
+            FKPcov=relcov0_FKP[nt,ntp]
+            MTcov=relcov0_MT[nt,ntp]
+            dF=np.sqrt(np.abs(np.diag(FKPcov)))
+            dM=np.sqrt(np.abs(np.diag(MTcov)))
+            FKPcorr=FKPcov/(small+np.outer(dF,dF))
+            MTcorr=MTcov/(small+np.outer(dM,dM))
+            fullcov = np.tril(np.abs(FKPcorr)) + np.triu(np.abs(MTcorr.T)) - onesk
+            thistitle = 'Corr(P_' + str(nt) + ',P_' + str(ntp) + ') '
+            pl.imshow(fullcov,origin='lower',interpolation='none')
+            pl.title(thistitle)
+            pl.xticks(indexcov,nameindex,size=20,name='monospace')
+            pl.yticks(indexcov,nameindex,size=20,name='monospace')
+            pl.annotate('FKP',(np.int(pow_bins//10),np.int(pow_bins/2.5)),fontsize=20)
+            pl.annotate('Multi-tracer',(np.int(pow_bins//2),np.int(pow_bins//10)),fontsize=20)
+            pl.xlabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
+            pl.ylabel(r'$k\,[h$Mpc$^{-1}]$',fontsize=20)
+            pl.colorbar()
+            pl.savefig(dir_figs + '/' + handle_estimates + '_2Dcorr_' + str(nt) + '_' + str(ntp) + '.pdf')
+            pl.close('all')
 
 
 # # # Marker: open circle
