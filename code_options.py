@@ -21,6 +21,11 @@ class code_parameters:
     True -> for test simulation
     False -> for real data
 
+    use_mak : bool
+
+    True -> to include some mask to data
+    False -> otherwise
+
     use_window_function : True or False
        
 	=> Eliminate this and 'dec' spectra!
@@ -169,10 +174,11 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
+            'use_mask'             : False,
             'sims_only'            : True,
             'use_window_function'  : False,
-           'mass_fun_file'        : "inputs/ExSHalos_MF.dat",
-           'halo_bias_file'       : "inputs/ExSHalos_bias.dat",
+            'mass_fun_file'        : "inputs/ExSHalos_MF.dat",
+            'halo_bias_file'       : "inputs/ExSHalos_bias.dat",
             #Mudar para o caso abaixo
             # 'mass_fun'             : [0.001, 0.002, 0.003],
             # 'halo_bias'            : [3., 2.0, 1.5],

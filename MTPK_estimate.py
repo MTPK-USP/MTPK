@@ -119,6 +119,7 @@ print()
 dir_maps = this_dir + '/maps/sims/' + handle_sims
 
 # Directory with data
+use_mask = parameters_code['use_mask']
 sims_only = parameters_code['sims_only']
 sel_fun_data = parameters_code['sel_fun_data']
 dir_data = this_dir + '/maps/data/' + handle_data
@@ -306,61 +307,61 @@ L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size
 grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)
 
 
-# # Selection function
-# # If given by data
-# if sel_fun_data:
-#     try:
-#         h5map = h5py.File(dir_data + '/' + sel_fun_file,'r')
-#         h5data = h5map.get(list(h5map.keys())[0])
-#         n_bar_matrix_fid = np.asarray(h5data,dtype='float32')
-#         n_bar_matrix_fid = np.asarray(mult_sel_fun*(n_bar_matrix_fid + shift_sel_fun),dtype='float32')
-#         h5map.close
-#     except:
-#         print ('Could not find file with data selection function!')
-#         print ('Check your directory ', dir_data)
-#         print ('Aborting now...')
-#         sys.exit(-1)
-#     if (np.shape(n_bar_matrix_fid)[1] != n_x) or (np.shape(n_bar_matrix_fid)[2] != n_y) or (np.shape(n_bar_matrix_fid)[3] != n_z):
-#         print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
-#         print ('Please correct/check input files and/or maps. Aborting now.')
-#         sys.exit(-1)
-# else:
-#     try:
-#         mass_fun = mult_sel_fun*np.loadtxt(input_dir + "/" + mass_fun_file)
-#         nbar = mass_fun*cell_size**3
-#         ncentral = 10.0*nbar**0
-#         nsigma = 10000.0*nbar**0 
-#     except:
-#         print("Att.: using analytical selection function for galaxies (check parameters in input file).")
-#         print("Using n_bar, n_central, n_sigma  from input file")
+# Selection function
+# If given by data
+if sel_fun_data:
+    try:
+        h5map = h5py.File(dir_data + '/' + sel_fun_file,'r')
+        h5data = h5map.get(list(h5map.keys())[0])
+        n_bar_matrix_fid = np.asarray(h5data,dtype='float32')
+        n_bar_matrix_fid = np.asarray(mult_sel_fun*(n_bar_matrix_fid + shift_sel_fun),dtype='float32')
+        h5map.close
+    except:
+        print ('Could not find file with data selection function!')
+        print ('Check your directory ', dir_data)
+        print ('Aborting now...')
+        sys.exit(-1)
+    if (np.shape(n_bar_matrix_fid)[1] != n_x) or (np.shape(n_bar_matrix_fid)[2] != n_y) or (np.shape(n_bar_matrix_fid)[3] != n_z):
+        print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
+        print ('Please correct/check input files and/or maps. Aborting now.')
+        sys.exit(-1)
+else:
+    try:
+        mass_fun = mult_sel_fun*np.loadtxt(input_dir + "/" + mass_fun_file)
+        nbar = mass_fun*cell_size**3
+        ncentral = 10.0*nbar**0
+        nsigma = 10000.0*nbar**0 
+    except:
+        print("Att.: using analytical selection function for galaxies (check parameters in input file).")
+        print("Using n_bar, n_central, n_sigma  from input file")
 
-#     n_bar_matrix_fid = np.zeros((ntracers,n_x,n_y,n_z),dtype='float32')
-#     for nt in range(ntracers):
-#         # Here you can choose how to call the selection function, using the different dependencies
-#         # Exponential/Gaussian form:
-#         try:
-#             n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar[nt],ncentral[nt],nsigma[nt])
-#         except:  # If there is only one species of tracer, the nbar, ncentral etc. are not arrays
-#             n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar,ncentral,nsigma)
-#         # Linear form:
-#         #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
+    n_bar_matrix_fid = np.zeros((ntracers,n_x,n_y,n_z),dtype='float32')
+    for nt in range(ntracers):
+        # Here you can choose how to call the selection function, using the different dependencies
+        # Exponential/Gaussian form:
+        try:
+            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar[nt],ncentral[nt],nsigma[nt])
+        except:  # If there is only one species of tracer, the nbar, ncentral etc. are not arrays
+            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar,ncentral,nsigma)
+        # Linear form:
+        #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
 
-# if use_mask:
-#     try:
-#         h5map = h5py.File(dir_data + '/' + mask_filename,'r')
-#         h5data = h5map.get(list(h5map.keys())[0])
-#         mask = np.asarray(h5data,dtype='int32')
-#         h5map.close
-#     except:
-#         print ('Could not find file with mask!')
-#         print ('Check your directory ', dir_data)
-#         print ('Aborting now...')
-#         sys.exit(-1)
-#     if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
-#         print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
-#         print ('Please correct/check input files and/or maps. Aborting now.')
-#         sys.exit(-1)
-#     n_bar_matrix_fid = n_bar_matrix_fid * mask
+if use_mask:
+    try:
+        h5map = h5py.File(dir_data + '/' + mask_filename,'r')
+        h5data = h5map.get(list(h5map.keys())[0])
+        mask = np.asarray(h5data,dtype='int32')
+        h5map.close
+    except:
+        print ('Could not find file with mask!')
+        print ('Check your directory ', dir_data)
+        print ('Aborting now...')
+        sys.exit(-1)
+    if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
+        print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
+        print ('Please correct/check input files and/or maps. Aborting now.')
+        sys.exit(-1)
+    n_bar_matrix_fid = n_bar_matrix_fid * mask
 
 
 # if sims_only:
