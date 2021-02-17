@@ -254,24 +254,26 @@ kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_S, n_SA, k
 Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 ############# Ended CAMB calculation ####################################
 
-# try:
-#     power_low
-# except:
-#     pass
-# else:
-#     Pk_camb = power_low*np.power(Pk_camb,pk_power)
+try:
+    power_low
+except:
+    pass
+else:
+    Pk_camb = power_low*np.power(Pk_camb,pk_power)
 
 
-# # Construct spectrum that decays sufficiently rapidly, and interpolate
-# k_interp = np.append(k_camb,np.array([2*k_camb[-1],4*k_camb[-1],8*k_camb[-1],16*k_camb[-1]]))
-# P_interp = np.append(Pk_camb,np.array([1./4.*Pk_camb[-1],1./16*Pk_camb[-1],1./64*Pk_camb[-1],1./256*Pk_camb[-1]]))
-# pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
+# Construct spectrum that decays sufficiently rapidly, and interpolate
+k_interp = np.append(k_camb,np.array([2*k_camb[-1],4*k_camb[-1],8*k_camb[-1],16*k_camb[-1]]))
+P_interp = np.append(Pk_camb,np.array([1./4.*Pk_camb[-1],1./16*Pk_camb[-1],1./64*Pk_camb[-1],1./256*Pk_camb[-1]]))
+pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
 
 
 # #####################################################
 # #####################################################
 # #####################################################
 
+gal_bias = np.loadtxt(my_code_options.bias_file)
+adip = my_code_options.adip
 # try:
 #     gal_bias = np.loadtxt(input_dir + "/" + bias_file)
 # except:
@@ -279,18 +281,29 @@ Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 #     print("Aborting now...")
 #     sys.exit(-1)
 
-# gal_adip = np.asarray(adip)
-# gal_sigz_est = np.asarray(sigz_est)
-# gal_vdisp = np.asarray(vdisp)
-# a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
+gal_adip = np.asarray(adip)
+gal_sigz_est = np.asarray(sigz_est)
+gal_vdisp = np.asarray(vdisp)
+a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
 
 
-# #####################################################
-# # Generate real- and Fourier-space grids for FFTs
-# #####################################################
-# # print 'Generating the k-space Grid...'
-# L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size
-# grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)
+#####################################################
+# Generate real- and Fourier-space grids for FFTs
+#####################################################
+
+print('Generating the k-space Grid...')
+
+n_x = parameters_code['n_x']
+n_y = parameters_code['n_y']
+n_z = parameters_code['n_z']
+cell_size = parameters_code['cell_size']
+ntracers = my_code_options.ntracers
+nbar = my_code_options.nbar
+ncentral = my_code_options.ncentral
+nsigma = my_code_options.nsigma
+
+L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size
+grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)
 
 
 # # Selection function
