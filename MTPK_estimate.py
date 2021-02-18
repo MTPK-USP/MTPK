@@ -1879,150 +1879,150 @@ else:
 
 
 # free up memory
-#n_bar_matrix_fid=None
-#del n_bar_matrix_fid
+n_bar_matrix_fid=None
+del n_bar_matrix_fid
 
 
 
-# ################################################################################
-# ################################################################################
-# ################################################################################
-# ################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
 
 
 
 
-# print ('Now computing data covariances of the simulated spectra...')
-# tempor=time()
+print ('Now computing data covariances of the simulated spectra...')
+tempor=time()
 
-# # First, compute total effective spectrum of all species combined
-# P0tot_MT = np.zeros((n_maps,num_binsk),dtype="float16")
-# P0tot_FKP = np.zeros((n_maps,num_binsk),dtype="float16")
-# for i in range(n_maps):
-#     P0tot_MT[i] = np.sum(nbarbar*P0_data_dec[i].T,axis=1)/ntot
-#     P0tot_FKP[i] = np.sum(nbarbar*effbias**2*P0_fkp_dec[i].T,axis=1)/ntot
+# First, compute total effective spectrum of all species combined
+P0tot_MT = np.zeros((n_maps,num_binsk),dtype="float16")
+P0tot_FKP = np.zeros((n_maps,num_binsk),dtype="float16")
+for i in range(n_maps):
+    P0tot_MT[i] = np.sum(nbarbar*P0_data_dec[i].T,axis=1)/ntot
+    P0tot_FKP[i] = np.sum(nbarbar*effbias**2*P0_fkp_dec[i].T,axis=1)/ntot
 
-# P0tot_mean_MT = np.mean(P0tot_MT,axis=0)
-# P0tot_mean_FKP = np.mean(P0tot_FKP,axis=0)
+P0tot_mean_MT = np.mean(P0tot_MT,axis=0)
+P0tot_mean_FKP = np.mean(P0tot_FKP,axis=0)
 
-# # These are the RELATIVE covariances between all tracers .
-# # We have Dim P0,2_data : [nmaps,ntracers,num_binsk]
-# relcov0_MT  = np.zeros((ntracers,ntracers,num_binsk,num_binsk),dtype="float16")
-# relcov0_FKP = np.zeros((ntracers,ntracers,num_binsk,num_binsk),dtype="float16")
-# relcov2_MT  = np.zeros((ntracers,ntracers,num_binsk,num_binsk),dtype="float16")
-# relcov2_FKP = np.zeros((ntracers,ntracers,num_binsk,num_binsk),dtype="float16")
+# These are the RELATIVE covariances between all tracers .
+# We have Dim P0,2_data : [nmaps,ntracers,num_binsk]
+relcov0_MT  = np.zeros((ntracers,ntracers,num_binsk,num_binsk),dtype="float16")
+relcov0_FKP = np.zeros((ntracers,ntracers,num_binsk,num_binsk),dtype="float16")
+relcov2_MT  = np.zeros((ntracers,ntracers,num_binsk,num_binsk),dtype="float16")
+relcov2_FKP = np.zeros((ntracers,ntracers,num_binsk,num_binsk),dtype="float16")
 
-# # Covariance of the RATIOS between tracers -- there are n*(n-1)/2 of them -- like the cross-covariances
-# fraccov0_MT  = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
-# fraccov0_FKP = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
-# fraccov2_MT  = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
-# fraccov2_FKP = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
-
-
-# # Covariance calculations
-# # Use the convolved estimators for the amplitudes of the spectra;
-# # Use the DEconvolved estimators for the ratios of spectra
-
-# # Build "super array" containing Ptot and ratios of spectra
-# P0_tot_ratios_FKP = P0tot_FKP[1:]
-# P0_tot_ratios_MT = P0tot_MT[1:]
-# ntcount=0
-# for nt in range(ntracers):
-#     rc0_MT = np.cov(P0_data_dec[1:,nt].T)/(small+np.abs(np.outer(P0_mean_dec[nt],P0_mean_dec[nt])))
-#     rc0_FKP = np.cov(P0_fkp_dec[1:,nt].T)/(small+np.abs(np.outer(P0_fkp_mean_dec[nt],P0_fkp_mean_dec[nt])))
-#     dd_rc = np.diag(dd_P_spec_kbar[nt]**2)
-#     norm_rc0_nt = np.var(dd_P0_rel_kbar[nt])
-#     dd_rc0 = norm_rc0_nt*np.diag(dd_P0_rel_kbar[nt]**2)
-#     relcov0_MT[nt,nt] = rc0_MT + dd_rc + dd_rc0
-#     relcov0_FKP[nt,nt] = rc0_FKP + dd_rc + dd_rc0
-#     dd_rc2 = np.diag(dd_P2_rel_kbar[nt])
-#     rc2_MT = np.cov(P2_data_dec[1:,nt].T)/(small+np.abs(np.outer(P2_mean_dec[nt],P2_mean_dec[nt])))
-#     rc2_FKP = np.cov(P2_fkp_dec[1:,nt].T)/(small+np.abs(np.outer(P2_fkp_mean_dec[nt],P2_fkp_mean_dec[nt])))
-#     norm_rc2_nt = np.var(dd_P2_rel_kbar[nt])
-#     dd_rc2 = norm_rc2_nt*np.diag(dd_P2_rel_kbar[nt]**2)
-#     relcov2_MT[nt,nt] = rc2_MT + dd_rc + dd_rc2
-#     relcov2_FKP[nt,nt] = rc2_FKP + dd_rc + dd_rc2
-#     for ntp in range(nt+1,ntracers):
-#         dd_rc = np.diag(dd_P_spec_kbar[nt]*dd_P_spec_kbar[ntp])
-#         norm_rc0_ntp = np.var(dd_P0_rel_kbar[ntp])
-#         dd_rc0 = np.sqrt(norm_rc0_nt*norm_rc0_ntp)*np.diag(dd_P0_rel_kbar[nt]*dd_P0_rel_kbar[ntp])
-#         norm_rc2_ntp = np.var(dd_P2_rel_kbar[ntp])
-#         dd_rc2 = np.sqrt(norm_rc2_nt*norm_rc2_ntp)*np.diag(dd_P2_rel_kbar[nt]*dd_P2_rel_kbar[ntp])
-#         ppmt = small + np.abs(np.outer(P0_mean_dec[nt],P0_mean_dec[ntp]))
-#         ppmt2 = small + np.abs(np.outer(P2_mean_dec[nt],P2_mean_dec[ntp]))
-#         ppfkp = small + np.abs(np.outer(P0_fkp_mean_dec[nt],P0_fkp_mean_dec[ntp]))
-#         ppfkp2 = small + np.abs(np.outer(P2_fkp_mean_dec[nt],P2_fkp_mean_dec[ntp]))
-#         relcov0_MT[nt,ntp] = ((np.cov(P0_data_dec[1:,nt].T,P0_data_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppmt) + dd_rc + dd_rc0
-#         relcov2_MT[nt,ntp] = ((np.cov(P2_data_dec[1:,nt].T,P2_data_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppmt2) + dd_rc + dd_rc2
-#         relcov0_FKP[nt,ntp] = ((np.cov(P0_fkp_dec[1:,nt].T,P0_fkp_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppfkp) + dd_rc + dd_rc0
-#         relcov2_FKP[nt,ntp] = ((np.cov(P2_fkp_dec[1:,nt].T,P2_fkp_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppfkp2) + dd_rc + dd_rc2
-#         relcov0_MT[ntp,nt] = relcov0_MT[nt,ntp]
-#         relcov2_MT[ntp,nt] = relcov2_MT[nt,ntp]
-#         relcov0_FKP[ntp,nt] = relcov0_FKP[nt,ntp]
-#         relcov2_FKP[ntp,nt] = relcov2_FKP[nt,ntp]
-#         rat0_MT = P0_data_dec[1:,nt].T/(small+P0_data_dec[1:,ntp].T)
-#         rat2_MT = P2_data_dec[1:,nt].T/(small+P2_data_dec[1:,ntp].T)
-#         fraccov0_MT[ntcount] = np.cov(rat0_MT)
-#         fraccov2_MT[ntcount] = np.cov(rat2_MT)
-#         rat0_FKP = effbias[nt]**2*P0_fkp_dec[1:,nt].T/(small+effbias[ntp]**2*P0_fkp_dec[1:,ntp].T)
-#         rat2_FKP = effbias[nt]**2*P2_fkp_dec[1:,nt].T/(small+effbias[ntp]**2*P2_fkp_dec[1:,ntp].T)
-#         fraccov0_FKP[ntcount] = np.cov(rat0_FKP)
-#         fraccov2_FKP[ntcount] = np.cov(rat2_FKP)
-#         P0_tot_ratios_MT = np.hstack((P0_tot_ratios_MT,rat0_MT.T))
-#         P0_tot_ratios_FKP = np.hstack((P0_tot_ratios_FKP,rat0_FKP.T))
-#         ntcount = ntcount + 1
+# Covariance of the RATIOS between tracers -- there are n*(n-1)/2 of them -- like the cross-covariances
+fraccov0_MT  = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
+fraccov0_FKP = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
+fraccov2_MT  = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
+fraccov2_FKP = np.zeros((ntracers*(ntracers-1)//2,num_binsk,num_binsk),dtype="float16")
 
 
-# # Correlation matrix of total effective power spectrum and ratios of spectra
-# cov_Pt_ratios_MT = np.cov(P0_tot_ratios_MT.T)
-# cov_Pt_ratios_FKP = np.cov(P0_tot_ratios_MT.T)
-# cov_Pt_MT = np.cov(P0tot_MT.T)
-# cov_Pt_FKP = np.cov(P0tot_FKP.T)
+# Covariance calculations
+# Use the convolved estimators for the amplitudes of the spectra;
+# Use the DEconvolved estimators for the ratios of spectra
 
-# print ('Done computing data covariances. Time spent: ', np.int((time()-tempor)*1000)/1000., 's')
-# print ()
-# print ('----------------------------------')
-# print ()
+# Build "super array" containing Ptot and ratios of spectra
+P0_tot_ratios_FKP = P0tot_FKP[1:]
+P0_tot_ratios_MT = P0tot_MT[1:]
+ntcount=0
+for nt in range(ntracers):
+    rc0_MT = np.cov(P0_data_dec[1:,nt].T)/(small+np.abs(np.outer(P0_mean_dec[nt],P0_mean_dec[nt])))
+    rc0_FKP = np.cov(P0_fkp_dec[1:,nt].T)/(small+np.abs(np.outer(P0_fkp_mean_dec[nt],P0_fkp_mean_dec[nt])))
+    dd_rc = np.diag(dd_P_spec_kbar[nt]**2)
+    norm_rc0_nt = np.var(dd_P0_rel_kbar[nt])
+    dd_rc0 = norm_rc0_nt*np.diag(dd_P0_rel_kbar[nt]**2)
+    relcov0_MT[nt,nt] = rc0_MT + dd_rc + dd_rc0
+    relcov0_FKP[nt,nt] = rc0_FKP + dd_rc + dd_rc0
+    dd_rc2 = np.diag(dd_P2_rel_kbar[nt])
+    rc2_MT = np.cov(P2_data_dec[1:,nt].T)/(small+np.abs(np.outer(P2_mean_dec[nt],P2_mean_dec[nt])))
+    rc2_FKP = np.cov(P2_fkp_dec[1:,nt].T)/(small+np.abs(np.outer(P2_fkp_mean_dec[nt],P2_fkp_mean_dec[nt])))
+    norm_rc2_nt = np.var(dd_P2_rel_kbar[nt])
+    dd_rc2 = norm_rc2_nt*np.diag(dd_P2_rel_kbar[nt]**2)
+    relcov2_MT[nt,nt] = rc2_MT + dd_rc + dd_rc2
+    relcov2_FKP[nt,nt] = rc2_FKP + dd_rc + dd_rc2
+    for ntp in range(nt+1,ntracers):
+        dd_rc = np.diag(dd_P_spec_kbar[nt]*dd_P_spec_kbar[ntp])
+        norm_rc0_ntp = np.var(dd_P0_rel_kbar[ntp])
+        dd_rc0 = np.sqrt(norm_rc0_nt*norm_rc0_ntp)*np.diag(dd_P0_rel_kbar[nt]*dd_P0_rel_kbar[ntp])
+        norm_rc2_ntp = np.var(dd_P2_rel_kbar[ntp])
+        dd_rc2 = np.sqrt(norm_rc2_nt*norm_rc2_ntp)*np.diag(dd_P2_rel_kbar[nt]*dd_P2_rel_kbar[ntp])
+        ppmt = small + np.abs(np.outer(P0_mean_dec[nt],P0_mean_dec[ntp]))
+        ppmt2 = small + np.abs(np.outer(P2_mean_dec[nt],P2_mean_dec[ntp]))
+        ppfkp = small + np.abs(np.outer(P0_fkp_mean_dec[nt],P0_fkp_mean_dec[ntp]))
+        ppfkp2 = small + np.abs(np.outer(P2_fkp_mean_dec[nt],P2_fkp_mean_dec[ntp]))
+        relcov0_MT[nt,ntp] = ((np.cov(P0_data_dec[1:,nt].T,P0_data_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppmt) + dd_rc + dd_rc0
+        relcov2_MT[nt,ntp] = ((np.cov(P2_data_dec[1:,nt].T,P2_data_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppmt2) + dd_rc + dd_rc2
+        relcov0_FKP[nt,ntp] = ((np.cov(P0_fkp_dec[1:,nt].T,P0_fkp_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppfkp) + dd_rc + dd_rc0
+        relcov2_FKP[nt,ntp] = ((np.cov(P2_fkp_dec[1:,nt].T,P2_fkp_dec[1:,ntp].T))[num_binsk:,:num_binsk])/(small+ppfkp2) + dd_rc + dd_rc2
+        relcov0_MT[ntp,nt] = relcov0_MT[nt,ntp]
+        relcov2_MT[ntp,nt] = relcov2_MT[nt,ntp]
+        relcov0_FKP[ntp,nt] = relcov0_FKP[nt,ntp]
+        relcov2_FKP[ntp,nt] = relcov2_FKP[nt,ntp]
+        rat0_MT = P0_data_dec[1:,nt].T/(small+P0_data_dec[1:,ntp].T)
+        rat2_MT = P2_data_dec[1:,nt].T/(small+P2_data_dec[1:,ntp].T)
+        fraccov0_MT[ntcount] = np.cov(rat0_MT)
+        fraccov2_MT[ntcount] = np.cov(rat2_MT)
+        rat0_FKP = effbias[nt]**2*P0_fkp_dec[1:,nt].T/(small+effbias[ntp]**2*P0_fkp_dec[1:,ntp].T)
+        rat2_FKP = effbias[nt]**2*P2_fkp_dec[1:,nt].T/(small+effbias[ntp]**2*P2_fkp_dec[1:,ntp].T)
+        fraccov0_FKP[ntcount] = np.cov(rat0_FKP)
+        fraccov2_FKP[ntcount] = np.cov(rat2_FKP)
+        P0_tot_ratios_MT = np.hstack((P0_tot_ratios_MT,rat0_MT.T))
+        P0_tot_ratios_FKP = np.hstack((P0_tot_ratios_FKP,rat0_FKP.T))
+        ntcount = ntcount + 1
 
 
-# #print('Mean D0D0/true:',np.mean(frac00))
+# Correlation matrix of total effective power spectrum and ratios of spectra
+cov_Pt_ratios_MT = np.cov(P0_tot_ratios_MT.T)
+cov_Pt_ratios_FKP = np.cov(P0_tot_ratios_MT.T)
+cov_Pt_MT = np.cov(P0tot_MT.T)
+cov_Pt_FKP = np.cov(P0tot_FKP.T)
 
-# print ('Results:')
-
-# Vfft_to_Vk = 1.0/((n_x*n_y)*(n_z/2.))
-
-# ## Compare theory with sims and with data
-# eff_mono_fkp = np.median(effbias**2*(P0_fkp_mean_dec/powtrue).T [myran],axis=0)
-# eff_mono_mt = np.median((P0_mean_dec/powtrue).T [myran],axis=0)
-# eff_quad_fkp = np.median(effbias**2*(P2_fkp_mean_dec/powtrue).T [myran],axis=0)
-# eff_quad_mt = np.median((P2_mean_dec/powtrue).T [myran],axis=0)
-
-# eff_mono_fkp_data = np.median(effbias**2*(P0_fkp_dec[0]/powtrue).T [myran],axis=0)
-# eff_mono_mt_data = np.median((P0_data_dec[0]/powtrue).T [myran],axis=0)
-# eff_quad_fkp_data = np.median(effbias**2*(P2_fkp_dec[0]/powtrue).T [myran],axis=0)
-# eff_quad_mt_data = np.median((P2_data_dec[0]/powtrue).T [myran],axis=0)
-
-# mono_theory = np.median((P0_model/powtrue).T [myran],axis=0)
-# quad_theory = np.median((P2_model/powtrue).T [myran],axis=0)
+print ('Done computing data covariances. Time spent: ', np.int((time()-tempor)*1000)/1000., 's')
+print ()
+print ('----------------------------------')
+print ()
 
 
-# print('At k=', kph[myk_min], '...', kph[myk_max])
-# for nt in range(ntracers):
-#     print('----------------------------------')
-#     print('Tracer:', nt )
-#     print('    Theory averaged monopole = ', 0.001*np.int( 1000.0*mono_theory[nt]))
-#     print('FKP (sims) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_fkp[nt]))
-#     print(' MT (sims) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_mt[nt]))
-#     print('FKP (data) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_fkp_data[nt]))
-#     print(' MT (data) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_mt_data[nt]))
-#     print('    Theory averaged quadrupole = ', 0.001*np.int( 1000.0*quad_theory[nt]))
-#     print('FKP (sims) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_fkp[nt]))
-#     print(' MT (sims) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_mt[nt]))
-#     print('FKP (data) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_fkp_data[nt]))
-#     print(' MT (data) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_mt_data[nt]))
+#print('Mean D0D0/true:',np.mean(frac00))
 
-# print('----------------------------------')
-# print ()
+print ('Results:')
+
+Vfft_to_Vk = 1.0/((n_x*n_y)*(n_z/2.))
+
+## Compare theory with sims and with data
+eff_mono_fkp = np.median(effbias**2*(P0_fkp_mean_dec/powtrue).T [myran],axis=0)
+eff_mono_mt = np.median((P0_mean_dec/powtrue).T [myran],axis=0)
+eff_quad_fkp = np.median(effbias**2*(P2_fkp_mean_dec/powtrue).T [myran],axis=0)
+eff_quad_mt = np.median((P2_mean_dec/powtrue).T [myran],axis=0)
+
+eff_mono_fkp_data = np.median(effbias**2*(P0_fkp_dec[0]/powtrue).T [myran],axis=0)
+eff_mono_mt_data = np.median((P0_data_dec[0]/powtrue).T [myran],axis=0)
+eff_quad_fkp_data = np.median(effbias**2*(P2_fkp_dec[0]/powtrue).T [myran],axis=0)
+eff_quad_mt_data = np.median((P2_data_dec[0]/powtrue).T [myran],axis=0)
+
+mono_theory = np.median((P0_model/powtrue).T [myran],axis=0)
+quad_theory = np.median((P2_model/powtrue).T [myran],axis=0)
+
+
+print('At k=', kph[myk_min], '...', kph[myk_max])
+for nt in range(ntracers):
+    print('----------------------------------')
+    print('Tracer:', nt )
+    print('    Theory averaged monopole = ', 0.001*np.int( 1000.0*mono_theory[nt]))
+    print('FKP (sims) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_fkp[nt]))
+    print(' MT (sims) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_mt[nt]))
+    print('FKP (data) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_fkp_data[nt]))
+    print(' MT (data) averaged monopole = ', 0.001*np.int( 1000.0*eff_mono_mt_data[nt]))
+    print('    Theory averaged quadrupole = ', 0.001*np.int( 1000.0*quad_theory[nt]))
+    print('FKP (sims) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_fkp[nt]))
+    print(' MT (sims) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_mt[nt]))
+    print('FKP (data) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_fkp_data[nt]))
+    print(' MT (data) averaged quadrupole = ', 0.001*np.int( 1000.0*eff_quad_mt_data[nt]))
+
+print('----------------------------------')
+print ()
 
 
 
