@@ -791,83 +791,83 @@ pow_bins = len(kph)
 
 
 
-# ################################################################
-# #R   Initialize the sparse matrices MR and MRk
-# ################################################################
-# #R
-# #R Entries of these matrices are 0 or 1.
-# #R Use dtype=int8 to keep size as small as possible.
-# #R
-# #R Each row of those matrices corresponds to a (k,mu) bin, or to a (k) bin
-# #R The columns are the values of the flattened array kflat=|k|=|(kx,ky,kz)|
-# #R
-# #R The entries of the MR/MRk matrices are:
-# #R   1 when the value of (k,mu)/(k) belongs to the bin
-# #R   0 if it does not
+################################################################
+#R   Initialize the sparse matrices MR and MRk
+################################################################
+#R
+#R Entries of these matrices are 0 or 1.
+#R Use dtype=int8 to keep size as small as possible.
+#R
+#R Each row of those matrices corresponds to a (k,mu) bin, or to a (k) bin
+#R The columns are the values of the flattened array kflat=|k|=|(kx,ky,kz)|
+#R
+#R The entries of the MR/MRk matrices are:
+#R   1 when the value of (k,mu)/(k) belongs to the bin
+#R   0 if it does not
 
-# print ('Initializing the k-binning matrix...')
-# tempor = time()
+print ('Initializing the k-binning matrix...')
+tempor = time()
 
-# #R Initialize first row of the M-matrices (vector of zeros)
-# MRline = np.zeros(lenkf,dtype=np.int8)
+#R Initialize first row of the M-matrices (vector of zeros)
+MRline = np.zeros(lenkf,dtype=np.int8)
 
-# #R These are the sparse matrices, built in the fastest way:
-# MRkl = coo_matrix([MRline] , dtype=np.int8)
+#R These are the sparse matrices, built in the fastest way:
+MRkl = coo_matrix([MRline] , dtype=np.int8)
 
-# #R And these are the matrices in the final format (easiest to make computations):
-# MRk = csc_matrix((num_binsk,lenkf),dtype=np.int8)
+#R And these are the matrices in the final format (easiest to make computations):
+MRk = csc_matrix((num_binsk,lenkf),dtype=np.int8)
 
-# #R Now build the M-matrix by stacking the rows for each bin in (mu,k)
+#R Now build the M-matrix by stacking the rows for each bin in (mu,k)
 
-# for ak in range(0,num_binsk):
-#     #R Now for the M-matrix that applies only for k bins (not mu), and for r bins:
-#     MRline[ np.where(  (kflat >= k_bar[ak] - dk0/2.00) & \
-#                      (kflat < k_bar[ak] + dk0/2.00) ) ] = 1
-#     MRline[ np.isnan(MRline) ] = 0
-#     # stack the lines to construct the new M matrix
-#     MRkl = vstack([MRkl,coo_matrix(MRline)], dtype=np.int8)
-#     MRline = np.zeros(lenkf,dtype=np.int8)
+for ak in range(0,num_binsk):
+    #R Now for the M-matrix that applies only for k bins (not mu), and for r bins:
+    MRline[ np.where(  (kflat >= k_bar[ak] - dk0/2.00) & \
+                     (kflat < k_bar[ak] + dk0/2.00) ) ] = 1
+    MRline[ np.isnan(MRline) ] = 0
+    # stack the lines to construct the new M matrix
+    MRkl = vstack([MRkl,coo_matrix(MRline)], dtype=np.int8)
+    MRline = np.zeros(lenkf,dtype=np.int8)
 
-# #R The way the matrix MRk was organized is such that
-# #R each rows corresponds to the kflats that belong to the bins:
-# #R (null), (k[0]), (k[1]), ... , (k[-1])
-# #R
-# ######################################################################
-# #R ATTENTION! The first lines of the matrix MRk is ALL ZEROS,
-# #R and should be DISCARDED!
-# ######################################################################
+#R The way the matrix MRk was organized is such that
+#R each rows corresponds to the kflats that belong to the bins:
+#R (null), (k[0]), (k[1]), ... , (k[-1])
+#R
+######################################################################
+#R ATTENTION! The first lines of the matrix MRk is ALL ZEROS,
+#R and should be DISCARDED!
+######################################################################
 
-# #R Convert MR and MRk matrices to csr format
-# Mknew=MRkl.tocsr()
-# MRklr=vstack(Mknew[1:,:])
+#R Convert MR and MRk matrices to csr format
+Mknew=MRkl.tocsr()
+MRklr=vstack(Mknew[1:,:])
 
-# #R Now convert the matrix to csc format, which is fastest for computations
-# MRk = MRklr.tocsc()
+#R Now convert the matrix to csc format, which is fastest for computations
+MRk = MRklr.tocsc()
 
-# # Delete the initial sparse matrices to save memory
-# MRkl = None
-# Mknew = None
-# MRklr = None
-# del MRkl
-# del Mknew
+# Delete the initial sparse matrices to save memory
+MRkl = None
+Mknew = None
+MRklr = None
+del MRkl
+del Mknew
 
-# # Counts in each bin
-# kkbar_counts = MRk.dot(np.ones(lenkf))
+# Counts in each bin
+kkbar_counts = MRk.dot(np.ones(lenkf))
 
-# print ('Done with k-binning matrices. Time cost: ', np.int((time()-tempor)*1000)/1000., 's')
-# print ('Memory occupied by the binning matrix: ', MRk.nnz)
+print ('Done with k-binning matrices. Time cost: ', np.int((time()-tempor)*1000)/1000., 's')
+print ('Memory occupied by the binning matrix: ', MRk.nnz)
 
-# #print('Bin counts in k, using M(k):')
-# #print(kkbar_counts[10:15])
+#print('Bin counts in k, using M(k):')
+#print(kkbar_counts[10:15])
 
-# #R We defined "target" k's , but <k> on bins may be slightly different
-# kkav=(((MRk*kflat))/(kkbar_counts+0.00001))
-# print ('Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ])
-# print ('The true mean of k for each bin is:', [ "{:1.4f}".format(x) for x in kkav[10:16:2] ])
-# print()
-# print ('----------------------------------')
-# print()
-# print ('Now estimating the power spectra...')
+#R We defined "target" k's , but <k> on bins may be slightly different
+kkav=(((MRk*kflat))/(kkbar_counts+0.00001))
+print ('Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ])
+print ('The true mean of k for each bin is:', [ "{:1.4f}".format(x) for x in kkav[10:16:2] ])
+print()
+print ('----------------------------------')
+print()
+print ('Now estimating the power spectra...')
 
 # ######################################################################
 # #R    FKP of the data to get the P_data(k) -- using MR and MRk
