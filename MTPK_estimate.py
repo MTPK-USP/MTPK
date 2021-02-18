@@ -107,9 +107,32 @@ print()
 # print()
 # # print()
 # ##########################
+
+my_code_options = code_parameters() #This stantiates the class
+parameters_code = my_code_options.default_params #This returns a dictionary with all the default parameters
+print("##########################")
+print('The code options are')
+print("##########################")
+# 1) Using the method parameters_print
+print(my_code_options.parameters_print())
+# # 2) Using dictionary directly
+# print(parameters_code)
+# # 3) Printing the cosmology without directly call for the method parameters_print
+# print(my_code_options.parameters_print)
+print()
+# ##########################
+# #Example of changing cosmology
+# parameters_code['cell_size'] = 0.9
+# # 1) Using the method parameters_print
+# print(my_code_options.parameters_print())
+# # # 2) Using dictionary directly
+# # print(parameters_code)
+# # # 3) Printing the cosmology without directly call for the method cosmo_print
+# # print(my_code_options.parameters_print)
+# print()
+##########################
 sys.exit(-1)
-my_code_options = code_parameters()
-parameters_code = my_code_options.default_params
+
 #Some other cosmological quantities
 h = physical_options['h']
 H0 = h*100.

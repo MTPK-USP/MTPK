@@ -287,9 +287,12 @@ class code_parameters:
         self.default_params = default_params
 
     def parameters_print(self):
-        for key, value in self.default_params.items():
-            print('{} = {}'.format(key, vars(self)[key] ) )
+        '''
+        Method to print the code parameters
+        '''
+        for key in self.default_params:
+            print('{} = {}'.format(key, self.default_params[key] ) )
         return ''
 
-    #To print without calling cosmo_print to print
+    #To print without calling parameters_print to print
     __repr__ = parameters_print
