@@ -88,14 +88,25 @@ physical_options = my_cosmology.default_params #This returns a dictionary with a
 print("##########################")
 print('The cosmology is')
 print("##########################")
-print('Default physical_options', my_cosmology.cosmo_print())#physical_options)
+# 1) Using the method cosmo_print
+print(my_cosmology.cosmo_print())
+# # 2) Using dictionary directly
+# print(physical_options)
+# # 3) Printing the cosmology without directly call for the method cosmo_print
+# print(my_cosmology.cosmo_print)
 print()
-##########################
-#Example of changing cosmology
-physical_options['h'] = 0.72
-print('New physical_options', my_cosmology.cosmo_print())#physical_options)
-print()
-##########################
+# ##########################
+# #Example of changing cosmology
+# physical_options['h'] = 0.72
+# # 1) Using the method cosmo_print
+# print(my_cosmology.cosmo_print())
+# # # 2) Using dictionary directly
+# # print(physical_options)
+# # # 3) Printing the cosmology without directly call for the method cosmo_print
+# # print(my_cosmology.cosmo_print)
+# print()
+# # print()
+# ##########################
 sys.exit(-1)
 my_code_options = code_parameters()
 parameters_code = my_code_options.default_params
