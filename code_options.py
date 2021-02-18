@@ -149,6 +149,12 @@ class code_parameters:
     shot_fudge : list of float
     A parameter to subtract shot noise
 
+    shot_fudge_FKP : list of float
+    A parameter to subtract shot noise, specific to FKP
+
+    shot_fudge_MT : list of float
+    A parameter to subtract shot noise, specific to MT
+
     sigz_est : list of floats
     Gaussian redshift errors of GALAXIES/TRACERS created by HOD. It is in units of the cell size
 
@@ -269,6 +275,8 @@ class code_parameters:
         self.ncentral = self.ntracers*[20.0]
         self.nsigma = self.ntracers*[1000000.0]
         self.shot_fudge = self.nhalos*[0.]
+        self.shot_fudge_FKP = self.nhalos*[0.]
+        self.shot_fudge_MT = self.nhalos*[0.]
         self.sigz_est = self.ntracers*[0.0000001]
         self.adip = self.ntracers*[0.0000000001]
         self.vdisp = self.adip

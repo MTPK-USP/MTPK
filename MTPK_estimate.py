@@ -1566,27 +1566,30 @@ print("   P_shot FKP=",P1h_fkp_sims)
 print("  P_shot MTOE=",P1h_MT_sims)
 print()
 
-# # Here subtract the shot noise, using the shot_fudge defined in the input file
-# for nt in range(ntracers):
-#     #P0_fkp_dec[1:,nt] = P0_fkp[1:,nt] - np.outer(shot_fudge[nt]*P1h_fkp_sims[nt],np.ones_like(kph))
-#     #P0_data_dec[1:,nt] = P0_data[1:,nt] - np.outer(shot_fudge[nt]*P1h_MT_sims[nt],np.ones_like(kph))
-#     P0_fkp_dec[:,nt] = P0_fkp[:,nt] - np.outer(shot_fudge_FKP[nt]*P1h_fkp_sims[nt],np.ones_like(kph))
-#     P0_data_dec[:,nt] = P0_data[:,nt] - np.outer(shot_fudge_MT[nt]*P1h_MT_sims[nt],np.ones_like(kph))
-#     P0_fkp[:,nt] = P0_fkp[:,nt] - np.outer(shot_fudge_FKP[nt]*P1h_fkp_sims[nt],np.ones_like(kph))
-#     P0_data[:,nt] = P0_data[:,nt] - np.outer(shot_fudge_MT[nt]*P1h_MT_sims[nt],np.ones_like(kph))
+# Here subtract the shot noise, using the shot_fudge defined in the input file
+shot_fudge = my_code_options.shot_fudge
+shot_fudge_FKP = my_code_options.shot_fudge_FKP
+shot_fudge_MT = my_code_options.shot_fudge_MT
+for nt in range(ntracers):
+    #P0_fkp_dec[1:,nt] = P0_fkp[1:,nt] - np.outer(shot_fudge[nt]*P1h_fkp_sims[nt],np.ones_like(kph))
+    #P0_data_dec[1:,nt] = P0_data[1:,nt] - np.outer(shot_fudge[nt]*P1h_MT_sims[nt],np.ones_like(kph))
+    P0_fkp_dec[:,nt] = P0_fkp[:,nt] - np.outer(shot_fudge_FKP[nt]*P1h_fkp_sims[nt],np.ones_like(kph))
+    P0_data_dec[:,nt] = P0_data[:,nt] - np.outer(shot_fudge_MT[nt]*P1h_MT_sims[nt],np.ones_like(kph))
+    P0_fkp[:,nt] = P0_fkp[:,nt] - np.outer(shot_fudge_FKP[nt]*P1h_fkp_sims[nt],np.ones_like(kph))
+    P0_data[:,nt] = P0_data[:,nt] - np.outer(shot_fudge_MT[nt]*P1h_MT_sims[nt],np.ones_like(kph))
 
 
-# P0_fkp_mean = np.mean(P0_fkp[1:],axis=0)
-# P0_mean = np.mean(P0_data[1:],axis=0)
+P0_fkp_mean = np.mean(P0_fkp[1:],axis=0)
+P0_mean = np.mean(P0_data[1:],axis=0)
 
-# P0_fkp_mean_dec = np.mean(P0_fkp_dec[1:],axis=0)
-# P0_mean_dec = np.mean(P0_data_dec[1:],axis=0)
+P0_fkp_mean_dec = np.mean(P0_fkp_dec[1:],axis=0)
+P0_mean_dec = np.mean(P0_data_dec[1:],axis=0)
 
-# P2_fkp_dec = np.copy(P2_fkp)
-# P2_data_dec = np.copy(P2_data)
+P2_fkp_dec = np.copy(P2_fkp)
+P2_data_dec = np.copy(P2_data)
 
-# P2_fkp_mean_dec = np.mean(P2_fkp_dec[1:],axis=0)
-# P2_mean_dec = np.mean(P2_data_dec[1:],axis=0)
+P2_fkp_mean_dec = np.mean(P2_fkp_dec[1:],axis=0)
+P2_mean_dec = np.mean(P2_data_dec[1:],axis=0)
 
 
 
