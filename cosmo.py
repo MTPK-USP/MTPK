@@ -250,30 +250,6 @@ class cosmo:
 
         return (d_c)
 
-    def chi_h_vec(self, zend, dz):
-        '''
-        Vector with the comoving radial distance in units of h^-1 Mpc, 
-        in intervals of dz.
-        Should be used in interpolation function
-        '''
-        Omegam = self.Omega0_m
-        OmegaDE = self.Omega0_DE
-        w0 = self.w0
-        w1 = self.w1
-
-        zint=np.arange(0.0, zend+dz, dz)
-        aint=1./(1+zint)
-        w = w0 + (1.-aint)*w1
-        dchi=2997.9*dz*1./np.sqrt( Omegam*aint**(-3.) + OmegaDE*aint**(-3.*(1.+w)) )
-        return ( np.cumsum(dchi) )
-
-    def chi_h_interp(chi_h_vector, zend, dz, z):
-        '''
-        Interpolation function for chi(z)
-        '''
-        zint=np.arange(0.0,zend+dz,dz)
-        return np.interp(z,zint,chivec)
-
     def chi_h(self, z):
         '''
         Comoving radial distance in units of h^-1 Mpc. Standalone.
@@ -284,9 +260,9 @@ class cosmo:
         w0 = self.w0
         w1 = self.w1
 
-        dz=0.0002
-        zint=np.arange(0.0,5.0,dz)
-        aint=1./(1+zint)
-        w = w0 + (1.-aint)*w1
-        chi=np.cumsum ( 2997.9*dz*1./np.sqrt( Omegam*aint**(-3.) + OmegaDE*aint**(-3.*(1.+w)) ) )
-        return( np.interp(z,zint,chi) ) 
+        dz = 0.0002
+        zint = np.arange(0.0,5.0,dz)
+        aint = 1./(1 + zint)
+        w = w0 + (1. - aint)*w1
+        chi = np.cumsum ( 2997.9*dz*1./np.sqrt( Omegam*aint**(-3.) + OmegaDE*aint**(-3.*(1.+w)) ) )
+        return ( np.interp(z, zint, chi) ) 
