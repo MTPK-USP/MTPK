@@ -82,7 +82,12 @@ def est_f(m,q):
 #####################################################
 # Parameters to this run
 #####################################################
-my_cosmology = cosmo() #This stantiates the class
+my_cosmology = cosmo() #This stantiates the class with default parameters
+'''
+To change the cosmological parameters at all, change in this way:
+my_cosmology = cosmo(x = y)
+where x is the parameter and y its new value
+'''
 physical_options = my_cosmology.default_params #This returns a dictionary with all the default parameters
 
 print("##########################")
@@ -96,8 +101,11 @@ print(my_cosmology.cosmo_print())
 # print(my_cosmology.cosmo_print)
 print()
 # ##########################
+# '''
+# Local changes
+# '''
 # #Example of changing cosmology
-# physical_options['h'] = 0.72
+# # physical_options['h'] = 0.72
 # # 1) Using the method cosmo_print
 # print(my_cosmology.cosmo_print())
 # # # 2) Using dictionary directly
@@ -107,24 +115,30 @@ print()
 # print()
 # # print()
 # ##########################
-
-print("Testing f_evolving(z = 1)", my_cosmology.f_evolving(1.0) )
-print("Testing f_phenomenological", my_cosmology.f_phenomenological() )
-print("Testing H(z = 0)", my_cosmology.H(0, True) )
-print("Testing H(z = 0)", my_cosmology.H(0, False) )
-print("Testing cosmological distance: z = 0:", my_cosmology.comoving(0, True) )
-print("Testing cosmological distance: z = 0:", my_cosmology.comoving(0, False) )
-print("Testing cosmological distance: z = 1:", my_cosmology.comoving(1., True) )
-print("Testing cosmological distance: z = 1:", my_cosmology.comoving(1., False) )
-print('chi_h: z = 0:', my_cosmology.chi_h(0.0))
-print('chi_h: z = 1:', my_cosmology.chi_h(1.0))
 sys.exit(-1)
+
+# #Testing methods of cosmos class
+# print("Testing f_evolving(z = 1)", my_cosmology.f_evolving(1.0) )
+# print("Testing f_phenomenological", my_cosmology.f_phenomenological() )
+# print("Testing H(z = 0)", my_cosmology.H(0, True) )
+# print("Testing H(z = 0)", my_cosmology.H(0, False) )
+# print("Testing cosmological distance: z = 0:", my_cosmology.comoving(0, True) )
+# print("Testing cosmological distance: z = 0:", my_cosmology.comoving(0, False) )
+# print("Testing cosmological distance: z = 1:", my_cosmology.comoving(1., True) )
+# print("Testing cosmological distance: z = 1:", my_cosmology.comoving(1., False) )
+# print('chi_h: z = 0:', my_cosmology.chi_h(0.0))
+# print('chi_h: z = 1:', my_cosmology.chi_h(1.0))
 
 my_code_options = code_parameters() #This stantiates the class
 parameters_code = my_code_options.default_params #This returns a dictionary with all the default parameters
 print("##########################")
 print('The code options are')
 print("##########################")
+'''
+To change the code parameters at all, change in this way:
+my_code_options = code_parameter(x = y)
+where x is the parameter and y its new value
+'''
 # 1) Using the method parameters_print
 print(my_code_options.parameters_print())
 # # 2) Using dictionary directly
@@ -133,7 +147,10 @@ print(my_code_options.parameters_print())
 # print(my_code_options.parameters_print)
 print()
 # ##########################
-# #Example of changing cosmology
+# '''
+# Local changes
+# '''
+# #Example of code parameters
 # parameters_code['cell_size'] = 0.9
 # # 1) Using the method parameters_print
 # print(my_code_options.parameters_print())

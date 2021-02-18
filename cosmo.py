@@ -1,6 +1,7 @@
 '''
 Class to contain cosmological parameters. 
-This code also implements certain very common cosmological functions: 
+This code also implements certain very common cosmological functions,
+as methods: 
    - matgrow: when not defined as a new value
         1) f_evolving: evolving with z,
         2) f_phenomenological: phenomenological value, 
@@ -44,6 +45,10 @@ class cosmo:
             
             A_s : float
                 Primordial Spectrum amplitude
+
+            ln10e10AsA : float
+                It is the neperian logarithmic of the Spectrum amplitude
+                times 1e10
             
             n_s : float 
                 Primordial spectrum spectral index
@@ -105,6 +110,7 @@ class cosmo:
                 'Omega0_k'       : 0.0,
                 'Omega0_DE'      : 1. - 0.2589 - 0.048206,
                 'A_s'            : 2.1867466842075255e-9,
+                'ln10e10AsA'     : np.log(2.1867466842075255e-9*1e10),
                 'n_s'            : 0.96,
                 'w0'             : -1.,
                 'w1'             : 0.,
@@ -116,6 +122,17 @@ class cosmo:
                 'c_light'        : 299792.458 #km/s
                 }
 
+        self.A_s        = default_params['A_s']
+        self.ln10e10AsA = default_params['ln10e10AsA']
+
+        if 'A_s' in kwargs.keys() and 'ln10e10AsA' in kwargs.keys():
+            aux_A_s = np.exp(kwargs['ln10e10AsA'])*1e-10
+            if not np.allclose(aux_A_s, kwargs['A_s'], rtol = 1e-13, atol = 1e-13):
+                raise ValueError("Your keys A_s and ln10e10AsA are incompatible")
+            aux_ln10e10AsA = np.log(kwargs['A_s']*1e10)
+            if not np.allclose(aux_ln10e10AsA, kwargs['ln10e10AsA'], rtol = 1e-13, atol = 1e-13):
+                raise ValueError("Your keys A_s and ln10e10AsA are incompatible")
+
         for key, value in kwargs.items():
             if key not in default_params.keys():
                 raise KeyError(f"You may not create new parameters. Available parameters are {list(default_params.keys())}. You passed '{key}' as key.")
@@ -123,13 +140,21 @@ class cosmo:
                 raise TypeError(f"Expected {type(default_params[key])}, got {type(value)} in key '{key}'")
             default_params[key] = value
 
+        if self.A_s != default_params['A_s'] and 'ln10e10AsA' not in kwargs.keys():
+            self.A_s = default_params['A_s']
+            self.ln10e10AsA = np.log(self.A_s*1e10)
+            default_params['ln10e10AsA'] = self.ln10e10AsA
+        if self.ln10e10AsA != default_params['ln10e10AsA'] and 'A_s' not in kwargs.keys():
+            self.ln10e10AsA = default_params['ln10e10AsA']
+            self.A_s = np.exp(self.ln10e10AsA)*1e-10
+            default_params['A_s'] = self.A_s
+
         self.h          = default_params['h']
         self.Omega0_b   = default_params['Omega0_b']
         self.Omega0_cdm = default_params['Omega0_cdm']
         self.Omega0_m   = self.Omega0_b + self.Omega0_cdm
         self.Omega0_DE  = default_params['Omega0_DE']
         self.Omega0_k   = 1 -self.Omega0_m - self.Omega0_DE
-        self.A_s        = default_params['A_s']
         self.n_s        = default_params['n_s']
         self.w0         = default_params['w0']
         self.w1         = default_params['w1']
@@ -141,7 +166,7 @@ class cosmo:
         if(self.flat):
             if(self.Omega0_m + self.Omega0_DE != 1):
                 raise ValueError(r"This is not a flat cosmology, Omega0_m + Omega0_DE = {}".format(self.Omega0_m + self.Omega0_DE) )
-        	
+
         self.default_params = default_params
     
     '''
