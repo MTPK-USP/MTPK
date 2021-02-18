@@ -55,8 +55,9 @@ from camb_spec import camb_spectrum
 from cosmo_funcs import matgrow, H
 from analytical_selection_function import *
 import grid3D as gr
-from cosmo import cosmo
-from code_options import code_parameters
+#Te following two classes have the inttention to substitute the old program of inputs
+from cosmo import cosmo #class to cosmological parameter
+from code_options import code_parameters #class to code options
 
 
 
@@ -81,8 +82,21 @@ def est_f(m,q):
 #####################################################
 # Parameters to this run
 #####################################################
-my_cosmology = cosmo()
-physical_options = my_cosmology.default_params
+my_cosmology = cosmo() #This stantiates the class
+physical_options = my_cosmology.default_params #This returns a dictionary with all the default parameters
+
+print("##########################")
+print('The cosmology is')
+print("##########################")
+print('Default physical_options', my_cosmology.cosmo_print())#physical_options)
+print()
+##########################
+#Example of changing cosmology
+physical_options['h'] = 0.72
+print('New physical_options', my_cosmology.cosmo_print())#physical_options)
+print()
+##########################
+sys.exit(-1)
 my_code_options = code_parameters()
 parameters_code = my_code_options.default_params
 #Some other cosmological quantities
@@ -2824,5 +2838,5 @@ print()
 print ("Quick update bias (from MT estimator):")
 for nt in range(ntracers):
     print (np.around(normmonos_mocks[nt]*gal_bias[nt],3))
-
+    
 sys.exit(-1)

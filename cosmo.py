@@ -84,22 +84,22 @@ class cosmo:
 
         '''
         default_params = {
-                'h'          : 0.678,
-                'Omega0_b'   : 0.048206,
-                'Omega0_cdm' : 0.2589,
-                'Omega0_m'   : 0.2589 + 0.048206,
-                'Omega0_k'   : 0.0,
-                'Omega0_DE'  : 1 - 0.2589 - 0.048206,
-                'A_s'        : 2.1867466842075255e-9,
-                'n_s'        : 0.96,
-                'w0'         : -1,
-                'w1'         : 0,
-                'z_re'       : 9.99999,
-                'flat'       : True,
-                'gamma'      : 0.5454,
+                'h'              : 0.678,
+                'Omega0_b'       : 0.048206,
+                'Omega0_cdm'     : 0.2589,
+                'Omega0_m'       : 0.2589 + 0.048206,
+                'Omega0_k'       : 0.0,
+                'Omega0_DE'      : 1. - 0.2589 - 0.048206,
+                'A_s'            : 2.1867466842075255e-9,
+                'n_s'            : 0.96,
+                'w0'             : -1.,
+                'w1'             : 0.,
+                'z_re'           : 9.99999,
+                'flat'           : True,
+                'gamma'          : 0.5454,
                 'matgrowcentral' : 0.00001,
-                'zcentral'   : 1.0,
-                'c_light'   : 299792.458 #km/s
+                'zcentral'       : 1.0,
+                'c_light'        : 299792.458 #km/s
                 }
 
         for key, value in kwargs.items():
@@ -137,8 +137,8 @@ class cosmo:
         ''' Method to print the cosmological parameters
 
         '''
-        for key, value in self.default_params.items():
-            print('{} = {}'.format(key, vars(self)[key] ) )
+        for key in self.default_params:
+            print('{} = {}'.format(key, self.default_params[key] ) )
         return ''
 
     #To print without calling cosmo_print to print
