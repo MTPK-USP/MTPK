@@ -1266,56 +1266,56 @@ tempor=time()
 ################################################################################
 ################################################################################
 
-# print ('Applying mass assignement window function corrections...')
+print ('Applying mass assignement window function corrections...')
 
-# ################################################################################
-# # 1) Jing (cells) corrections
-# # Now apply ln correction and/or Jing deconvolution
-# if sims_only:
-#     P0_fkp = (P0_fkp)/winmass_sims
-#     P2_fkp = (P2_fkp)/winmass_sims
-#     Cross0 = Cross0/winmass_sims
-#     Cross2 = Cross2/winmass_sims
-# else:
-#     P0_fkp[0] = (P0_fkp[0])/winmass_data
-#     P2_fkp[0] = (P2_fkp[0])/winmass_data
-#     Cross0[0] = Cross0[0]/winmass_data
-#     Cross2[0] = Cross2[0]/winmass_data
+################################################################################
+# 1) Jing (cells) corrections
+# Now apply ln correction and/or Jing deconvolution
+if sims_only:
+    P0_fkp = (P0_fkp)/winmass_sims
+    P2_fkp = (P2_fkp)/winmass_sims
+    Cross0 = Cross0/winmass_sims
+    Cross2 = Cross2/winmass_sims
+else:
+    P0_fkp[0] = (P0_fkp[0])/winmass_data
+    P2_fkp[0] = (P2_fkp[0])/winmass_data
+    Cross0[0] = Cross0[0]/winmass_data
+    Cross2[0] = Cross2[0]/winmass_data
 
-#     P0_fkp[1:] = (P0_fkp[1:])/winmass_sims
-#     P2_fkp[1:] = (P2_fkp[1:])/winmass_sims
-#     Cross0[1:] = Cross0[1:]/winmass_sims
-#     Cross2[1:] = Cross2[1:]/winmass_sims
+    P0_fkp[1:] = (P0_fkp[1:])/winmass_sims
+    P2_fkp[1:] = (P2_fkp[1:])/winmass_sims
+    Cross0[1:] = Cross0[1:]/winmass_sims
+    Cross2[1:] = Cross2[1:]/winmass_sims
 
-# if sims_only:
-#     P0_data = (P0_data)/winmass_sims
-#     P2_data = (P2_data)/winmass_sims
-# else:
-#     P0_data[0] = (P0_data[0])/winmass_data
-#     P2_data[0] = (P2_data[0])/winmass_data
-#     P0_data[1:] = (P0_data[1:])/winmass_sims
-#     P2_data[1:] = (P2_data[1:])/winmass_sims
+if sims_only:
+    P0_data = (P0_data)/winmass_sims
+    P2_data = (P2_data)/winmass_sims
+else:
+    P0_data[0] = (P0_data[0])/winmass_data
+    P2_data[0] = (P2_data[0])/winmass_data
+    P0_data[1:] = (P0_data[1:])/winmass_sims
+    P2_data[1:] = (P2_data[1:])/winmass_sims
 
-# # Means
-# P0_fkp_mean = np.mean(P0_fkp,axis=0)
-# P2_fkp_mean = np.mean(P2_fkp,axis=0)
-# Cross0_mean = np.mean(Cross0,axis=0)
-# Cross2_mean = np.mean(Cross2,axis=0)
+# Means
+P0_fkp_mean = np.mean(P0_fkp,axis=0)
+P2_fkp_mean = np.mean(P2_fkp,axis=0)
+Cross0_mean = np.mean(Cross0,axis=0)
+Cross2_mean = np.mean(Cross2,axis=0)
 
-# P0_mean = np.mean(P0_data,axis=0)
-# P2_mean = np.mean(P2_data,axis=0)
-
-
+P0_mean = np.mean(P0_data,axis=0)
+P2_mean = np.mean(P2_data,axis=0)
 
 
-# ################################################################################
-# ################################################################################
-# ################################################################################
-# ################################################################################
-# ################################################################################
-# ################################################################################
-# ################################################################################
-# ################################################################################
+
+
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
 
 
 # # Re-compute the model/theory here.
