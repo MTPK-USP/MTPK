@@ -1090,181 +1090,181 @@ except:
 print ("... done. Starting computations for each map (box) now.")
 print()
 
-# #################################
+#################################
 
-# est_bias_fkp = np.zeros(ntracers)
-# est_bias_mt = np.zeros(ntracers)
+est_bias_fkp = np.zeros(ntracers)
+est_bias_mt = np.zeros(ntracers)
 
-# for nm in range(n_maps):
-#     time_start=time()
-#     if sims_only:
-#         print ('Loading simulated box #', nm)
-#         h5map = h5py.File(mapnames_sims[nm],'r')
-#         maps = np.asarray(h5map.get(list(h5map.keys())[0]))
-#         if not maps.shape == (ntracers,n_x,n_y,n_z):
-#             print()
-#             print ('Unexpected shape of simulated maps! Found:', maps.shape)
-#             print ('Check inputs and sims.  Aborting now...')
-#             print()
-#             sys.exit(-1)
-#         h5map.close
-#     elif nm == 0:
-#         print ('Loading data box...')
-#         h5map_data = h5py.File(mapnames_data,'r')
-#         h5data_data = h5map_data.get(list(h5map_data.keys())[0])
-#         maps = np.asarray(h5data_data)
-#         if not maps.shape == (ntracers,n_x,n_y,n_z):
-#             print()
-#             print ('Incorrect shape of data maps! Found:', maps.shape)
-#             print ('Aborting now...')
-#             print()
-#             sys.exit(-1)
-#         h5map_data.close
-#         # read and store sims maps
-#     elif nm > 0:
-#         print ('Loading simulated box #', nm)
-#         h5map = h5py.File(mapnames_sims[nm-1],'r')
-#         maps = np.asarray(h5map.get(list(h5map.keys())[0]))
-#         if not maps.shape == (ntracers,n_x,n_y,n_z):
-#             print()
-#             print( 'Unexpected shape of simulated halo maps! Found:', maps.shape)
-#             print ('Check inputs and sims.  Aborting now...')
-#             print()
-#             sys.exit(-1)
-#         h5map.close
-
-
-#     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
-
-#     ## !! NEW !! Additional mask from low-cell-count threshold
-#     try:
-#         cell_low_count_thresh
-#         maps = thresh_mask*maps
-#         #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
-#     except:
-#         pass
-
-#     if use_mask:
-#         maps = maps * mask
-#     ##################################################
-#     # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
-#     # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
-#     # Notice that this means that the output of the FKP quadrupole
-#     # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
-#     ##################################################
-
-#     # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-#     print ('  Estimating FKP power spectra...')
-#     normsel = np.mean(n_bar_matrix_fid,axis=(1,2,3))/np.mean(maps,axis=(1,2,3))
-#     if ( (normsel.any() > 2.0) | (normsel.any() < 0.5) ):
-#         print("Attention! Your selection function and simulation have very different numbers of objects:")
-#         print("Selecion function/map for all tracers:",np.around(normsel,3))
-#         normsel[normsel > 2.0] = 2.0
-#         normsel[normsel < 0.5] = 0.5
-#         print(" Normalized selection function/map at:",np.around(normsel,3))
-#     if nm==0:
-#         # If data bias is different from mocks
-#         try:
-#             data_bias
-#             FKPmany = fkp_many_data.fkp((normsel*maps.T).T)
-#             P0_fkp[nm] = np.abs(fkp_many.P_ret)
-#             P2_fkp[nm] = fkp_many.P2a_ret
-#             Cross0[nm] = fkp_many.cross_spec
-#             Cross2[nm] = fkp_many.cross_spec2
-#             ThCov_fkp[nm] = (fkp_many.sigma)**2
-#         except:
-#             FKPmany = fkp_many.fkp((normsel*maps.T).T)
-#             P0_fkp[nm] = np.abs(fkp_many.P_ret)
-#             P2_fkp[nm] = fkp_many.P2a_ret
-#             Cross0[nm] = fkp_many.cross_spec
-#             Cross2[nm] = fkp_many.cross_spec2
-#             ThCov_fkp[nm] = (fkp_many.sigma)**2
-#     else:
-#         FKPmany = fkp_many.fkp((normsel*maps.T).T)
-#         P0_fkp[nm] = np.abs(fkp_many.P_ret)
-#         P2_fkp[nm] = fkp_many.P2a_ret
-#         Cross0[nm] = fkp_many.cross_spec
-#         Cross2[nm] = fkp_many.cross_spec2
-#         ThCov_fkp[nm] = (fkp_many.sigma)**2
-
-#     #################################
-#     # Now, the multi-tracer method
-#     print ('  Now estimating multi-tracer spectra...')
-#     if nm==0:
-#     # If data bias is different from mocks
-#         try:
-#             data_bias
-#             FKPmult = fkp_mult_data.fkp((normsel*maps.T).T)
-#             P0_data[nm] = np.abs(fkp_mult_data.P0_mu_ret)
-#             P2_data[nm] = fkp_mult_data.P2_mu_ret
-#         except:
-#             FKPmult = fkp_mult.fkp((normsel*maps.T).T)
-#             P0_data[nm] = np.abs(fkp_mult.P0_mu_ret)
-#             P2_data[nm] = fkp_mult.P2_mu_ret
-#     else:
-#         FKPmult = fkp_mult.fkp((normsel*maps.T).T)
-#         P0_data[nm] = np.abs(fkp_mult.P0_mu_ret)
-#         P2_data[nm] = fkp_mult.P2_mu_ret
+for nm in range(n_maps):
+    time_start=time()
+    if sims_only:
+        print ('Loading simulated box #', nm)
+        h5map = h5py.File(mapnames_sims[nm],'r')
+        maps = np.asarray(h5map.get(list(h5map.keys())[0]))
+        if not maps.shape == (ntracers,n_x,n_y,n_z):
+            print()
+            print ('Unexpected shape of simulated maps! Found:', maps.shape)
+            print ('Check inputs and sims.  Aborting now...')
+            print()
+            sys.exit(-1)
+        h5map.close
+    elif nm == 0:
+        print ('Loading data box...')
+        h5map_data = h5py.File(mapnames_data,'r')
+        h5data_data = h5map_data.get(list(h5map_data.keys())[0])
+        maps = np.asarray(h5data_data)
+        if not maps.shape == (ntracers,n_x,n_y,n_z):
+            print()
+            print ('Incorrect shape of data maps! Found:', maps.shape)
+            print ('Aborting now...')
+            print()
+            sys.exit(-1)
+        h5map_data.close
+        # read and store sims maps
+    elif nm > 0:
+        print ('Loading simulated box #', nm)
+        h5map = h5py.File(mapnames_sims[nm-1],'r')
+        maps = np.asarray(h5map.get(list(h5map.keys())[0]))
+        if not maps.shape == (ntracers,n_x,n_y,n_z):
+            print()
+            print( 'Unexpected shape of simulated halo maps! Found:', maps.shape)
+            print ('Check inputs and sims.  Aborting now...')
+            print()
+            sys.exit(-1)
+        h5map.close
 
 
-#     if nm==0:
-#     # If data bias is different from mocks
-#         try:
-#             data_bias
-#             est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-#             est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-#             print ("  Effective biases of the data maps:")
-#             print ("   Fiducial=", ["%.3f"%b for b in effbias])
-#             print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
-#             print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-#             dt = time() - time_start
-#             print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-#             print()
-#         except:
-#             est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-#             est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-#             print ("  Effective biases of the simulated maps:")
-#             print ("   Fiducial=", ["%.3f"%b for b in effbias])
-#             print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
-#             print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-#             dt = time() - time_start
-#             print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-#             print()
-#     else:
-#         est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-#         est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-#         print( "  Effective biases of these maps:")
-#         print( "   Fiducial=", ["%.3f"%b for b in effbias])
-#         print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
-#         print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-#         dt = time() - time_start
-#         print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-#         print()
+    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+
+    ## !! NEW !! Additional mask from low-cell-count threshold
+    try:
+        cell_low_count_thresh
+        maps = thresh_mask*maps
+        #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
+    except:
+        pass
+
+    if use_mask:
+        maps = maps * mask
+    ##################################################
+    # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
+    # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
+    # Notice that this means that the output of the FKP quadrupole
+    # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
+    ##################################################
+
+    # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
+    print ('  Estimating FKP power spectra...')
+    normsel = np.mean(n_bar_matrix_fid,axis=(1,2,3))/np.mean(maps,axis=(1,2,3))
+    if ( (normsel.any() > 2.0) | (normsel.any() < 0.5) ):
+        print("Attention! Your selection function and simulation have very different numbers of objects:")
+        print("Selecion function/map for all tracers:",np.around(normsel,3))
+        normsel[normsel > 2.0] = 2.0
+        normsel[normsel < 0.5] = 0.5
+        print(" Normalized selection function/map at:",np.around(normsel,3))
+    if nm==0:
+        # If data bias is different from mocks
+        try:
+            data_bias
+            FKPmany = fkp_many_data.fkp((normsel*maps.T).T)
+            P0_fkp[nm] = np.abs(fkp_many.P_ret)
+            P2_fkp[nm] = fkp_many.P2a_ret
+            Cross0[nm] = fkp_many.cross_spec
+            Cross2[nm] = fkp_many.cross_spec2
+            ThCov_fkp[nm] = (fkp_many.sigma)**2
+        except:
+            FKPmany = fkp_many.fkp((normsel*maps.T).T)
+            P0_fkp[nm] = np.abs(fkp_many.P_ret)
+            P2_fkp[nm] = fkp_many.P2a_ret
+            Cross0[nm] = fkp_many.cross_spec
+            Cross2[nm] = fkp_many.cross_spec2
+            ThCov_fkp[nm] = (fkp_many.sigma)**2
+    else:
+        FKPmany = fkp_many.fkp((normsel*maps.T).T)
+        P0_fkp[nm] = np.abs(fkp_many.P_ret)
+        P2_fkp[nm] = fkp_many.P2a_ret
+        Cross0[nm] = fkp_many.cross_spec
+        Cross2[nm] = fkp_many.cross_spec2
+        ThCov_fkp[nm] = (fkp_many.sigma)**2
+
+    #################################
+    # Now, the multi-tracer method
+    print ('  Now estimating multi-tracer spectra...')
+    if nm==0:
+    # If data bias is different from mocks
+        try:
+            data_bias
+            FKPmult = fkp_mult_data.fkp((normsel*maps.T).T)
+            P0_data[nm] = np.abs(fkp_mult_data.P0_mu_ret)
+            P2_data[nm] = fkp_mult_data.P2_mu_ret
+        except:
+            FKPmult = fkp_mult.fkp((normsel*maps.T).T)
+            P0_data[nm] = np.abs(fkp_mult.P0_mu_ret)
+            P2_data[nm] = fkp_mult.P2_mu_ret
+    else:
+        FKPmult = fkp_mult.fkp((normsel*maps.T).T)
+        P0_data[nm] = np.abs(fkp_mult.P0_mu_ret)
+        P2_data[nm] = fkp_mult.P2_mu_ret
 
 
-
-# # Correct missing factor of 2 in definition
-# Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
-
-# #del maps
-# #maps = None
+    if nm==0:
+    # If data bias is different from mocks
+        try:
+            data_bias
+            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+            print ("  Effective biases of the data maps:")
+            print ("   Fiducial=", ["%.3f"%b for b in effbias])
+            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+            dt = time() - time_start
+            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+            print()
+        except:
+            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+            print ("  Effective biases of the simulated maps:")
+            print ("   Fiducial=", ["%.3f"%b for b in effbias])
+            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+            dt = time() - time_start
+            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+            print()
+    else:
+        est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+        est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+        print( "  Effective biases of these maps:")
+        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+        dt = time() - time_start
+        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+        print()
 
 
 
-# ################################################################################
-# ################################################################################
+# Correct missing factor of 2 in definition
+Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
+
+#del maps
+#maps = None
 
 
-# time_end=time()
-# print ('Total time cost for estimation of spectra: ', time_end - time_start)
 
-# ################################################################################
-# ################################################################################
+################################################################################
+################################################################################
 
-# tempor=time()
 
-# ################################################################################
-# ################################################################################
+time_end=time()
+print ('Total time cost for estimation of spectra: ', time_end - time_start)
+
+################################################################################
+################################################################################
+
+tempor=time()
+
+################################################################################
+################################################################################
 
 # print ('Applying mass assignement window function corrections...')
 
