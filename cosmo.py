@@ -5,11 +5,11 @@ This code also implements certain very common cosmological functions:
         1) f_evolving: evolving with z,
         2) f_phenomenological: phenomenological value, 
    - H (z), 
-   - comoving distance: comoving, 
-   - sigma_8
+   - comoving distance: comoving
 '''
 
 import numpy as np
+from scipy.integrate import simps
 
 class cosmo:
 
@@ -136,6 +136,7 @@ class cosmo:
         self.z_re       = default_params['z_re']
         self.flat       = default_params['flat']
         self.gamma       = default_params['gamma']
+        self.c_light       = default_params['c_light']
         
         if(self.flat):
             if(self.Omega0_m + self.Omega0_DE != 1):
@@ -148,8 +149,8 @@ class cosmo:
     '''
 
     def cosmo_print(self):
-        ''' Method to print the cosmological parameters
-
+        ''' 
+        Method to print the cosmological parameters
         '''
         for key in self.default_params:
             print('{} = {}'.format(key, self.default_params[key] ) )
@@ -158,8 +159,10 @@ class cosmo:
     #To print without calling cosmo_print to print
     __repr__ = cosmo_print
 
-    #Matgrowth function - evolving with z
-    def f_evolving(self, z): 
+    def f_evolving(self, z):
+        '''
+        Matgrowth function - evolving with z
+        '''
         Omega0_m = self.Omega0_m
         Omega0_DE = self.Omega0_DE
         w0 = self.w0
@@ -171,23 +174,27 @@ class cosmo:
 
         return( ( Omega0_m*a**(-3.)/( Omega0_m*a**(-3.) + Omega0_DE*a**(-3.*(1.+w)) ) )**(gamma) )
 
-    #Matgrowth function - phenomenological
     def f_phenomenological(self):
+        '''
+        Matgrowth function - phenomenological
+        '''
         Omega0_m = self.Omega0_m
         gamma = self.gamma
 
         return Omega0_m**gamma
 
     def H(self, z, h_units):
-        '''Method to compute the Hubble factor at the cosmology defined above
+        '''
+        Method to compute the Hubble factor at the cosmology 
+        defined above
         
         Parameters
         ----------
         z : float
             Redshift at which we wish to compute H
         h_units : Bool
-            Boolean value controling whether we wish the output to be in units of km*(s*Mpc)^-1 
-            or km*(s*Mpc/h)^-1
+            Boolean value controling whether we wish the output to be 
+            in units of km*(s*Mpc)^-1 or km*(s*Mpc/h)^-1
 
         Returns
         -------
@@ -212,6 +219,7 @@ class cosmo:
         return( H0*np.sqrt( Omega0_m*a**(-3) + Omega0_DE*a**(-3*(1+w)) ) )
 
     def comoving(self, z, h_units):
+        # from scipy.integrate import simps
         '''
         Method to compute comoving distance using the cosmology defined 
         above, for a certain redshift
@@ -221,7 +229,8 @@ class cosmo:
         z : float
             Redshit
         h_units : Bool
-            Boolean variable controlling whether we want our output in units of Mpc or Mpc/h
+            Boolean variable controlling whether we want our output in 
+            units of Mpc or Mpc/h
 
         Returns
         -------
@@ -230,14 +239,14 @@ class cosmo:
 
         '''
     
-        c_light = self.c_light
+        c = self.c_light
     
         if(z==0):
             return 0
         else:
             z_temp = np.linspace(0, z, 1000)
-            integrand = c / self.H(z, h_units)
-            d_c = scipy.integrate.simps(integrand, z_temp)
+            integrand = c / self.H(z_temp, h_units)
+            d_c = simps(integrand, z_temp)
 
         return (d_c)
 
@@ -247,6 +256,11 @@ class cosmo:
         in intervals of dz.
         Should be used in interpolation function
         '''
+        Omegam = self.Omega0_m
+        OmegaDE = self.Omega0_DE
+        w0 = self.w0
+        w1 = self.w1
+
         zint=np.arange(0.0, zend+dz, dz)
         aint=1./(1+zint)
         w = w0 + (1.-aint)*w1
@@ -264,6 +278,12 @@ class cosmo:
         '''
         Comoving radial distance in units of h^-1 Mpc. Standalone.
         '''
+
+        Omegam = self.Omega0_m
+        OmegaDE = self.Omega0_DE
+        w0 = self.w0
+        w1 = self.w1
+
         dz=0.0002
         zint=np.arange(0.0,5.0,dz)
         aint=1./(1+zint)

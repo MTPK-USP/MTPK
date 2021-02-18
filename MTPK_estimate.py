@@ -108,6 +108,17 @@ print()
 # # print()
 # ##########################
 
+print("Testing f_evolving(z = 1)", my_cosmology.f_evolving(1.0) )
+print("Testing f_phenomenological", my_cosmology.f_phenomenological() )
+print("Testing H(z = 1)", my_cosmology.H(1.0, True) )
+print("Testing H(z = 1)", my_cosmology.H(1.0, False) )
+# print("Testing cosmological distance", my_cosmology.comoving(0, False) )
+# vector = my_cosmology.chi_h_vec(0.6, 0.1)
+# print("Testing chi_h_interp", my_cosmology.chi_h_interp( my_cosmology.chi_h_vec(0.6, 0.1), 0.6, 0.1, 0) )
+print('chi_h', my_cosmology.chi_h(1.0))
+print("Testing cosmological distance", my_cosmology.comoving(1.0, True) )
+sys.exit(-1)
+
 my_code_options = code_parameters() #This stantiates the class
 parameters_code = my_code_options.default_params #This returns a dictionary with all the default parameters
 print("##########################")
@@ -131,7 +142,6 @@ print()
 # # print(my_code_options.parameters_print)
 # print()
 ##########################
-sys.exit(-1)
 
 #Some other cosmological quantities
 h = physical_options['h']
