@@ -1744,142 +1744,143 @@ np.savetxt(dir_specs + '/' + handle_estimates + '_C0_bare.dat',save_C0.T,fmt="%3
 np.savetxt(dir_specs + '/' + handle_estimates + '_C2_bare.dat',save_C2.T,fmt="%3.4f")
 
 
-# ################################################################################
-# # 4) Window functions corrections (computed from simulations or from theory)
+################################################################################
+# 4) Window functions corrections (computed from simulations or from theory)
 
-# winfun0 = np.ones((ntracers,pow_bins))
-# winfun0_cross = np.ones((ntracers*(ntracers-1)//2,pow_bins))
+winfun0 = np.ones((ntracers,pow_bins))
+winfun0_cross = np.ones((ntracers*(ntracers-1)//2,pow_bins))
 
-# winfun2 = np.ones((ntracers,pow_bins))
-# winfun2_cross = np.ones((ntracers*(ntracers-1)//2,pow_bins))
-
-
-# # In order to be consistent with older versions:
-# try:
-# 	use_window_function
-# 	is_n_body_sims = use_window_function
-# except:
-# 	use_window_function = is_n_body_sims
+winfun2 = np.ones((ntracers,pow_bins))
+winfun2_cross = np.ones((ntracers*(ntracers-1)//2,pow_bins))
 
 
-# if use_window_function:
-#     try:
-#         win_fun_dir = this_dir + "/spectra/" + win_fun_dir
-#     except:
-#         print("You must define the directory where the window functions will be found.")
-#         print("Please check your input file. Aborting now...")
-#         print()
-#         sys.exit(-1)
-#     print()
-#     print("Using window function from directory:",win_fun_dir)
-#     print()
-#     win_fun_file=glob.glob(win_fun_dir+"*WinFun02*")
-#     win_fun_file_cross0=glob.glob(win_fun_dir+"*WinFun_Cross0*")
-#     win_fun_file_cross2=glob.glob(win_fun_dir+"*WinFun_Cross2*")
-#     if (len(win_fun_file)!=1) | (len(win_fun_file_cross0)!=1) | (len(win_fun_file_cross2)!=1):
-#         print ("Could not find (or found more than one) specified window functions at", "spectra/", win_fun_dir)
-#         print ("Using no window function")
-#         wf = np.ones((pow_bins,2*ntracers))
-#         wf_c0 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
-#         wf_c2 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
-#     else:
-#         win_fun_file = win_fun_file[0]
-#         win_fun_file_cross0 = win_fun_file_cross0[0]
-#         win_fun_file_cross2 = win_fun_file_cross2[0]
-
-#         wf = np.loadtxt(win_fun_file)
-
-#         if (len(wf) != pow_bins) | (len(wf.T) != 2*ntracers):
-#             print ("Dimensions of window functions (P0 auto & P2 auto) do not match those of this estimation code!")
-#             print ("Please check that window function, or create a new one. Aborting now...")
-#             sys.exit(-1)
-
-#         if(ntracers>1):
-#             wf_c0 = np.loadtxt(win_fun_file_cross0)
-#             wf_c2 = np.loadtxt(win_fun_file_cross2)
-
-#             if ( (ntracers>2) and (len(wf_c0) != pow_bins) | (len(wf_c0.T) != ntracers*(ntracers-1)//2) ):
-#                 print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
-#                 print ("Please check that window function, or create a new one. Aborting now...")
-#                 sys.exit(-1)
-#             if (len(wf_c0.T)!=pow_bins):
-#                 print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
-#                 print ("Please check that window function, or create a new one. Aborting now...")
-#                 sys.exit(-1)
-#             wf_c0 = np.reshape(wf_c0, (pow_bins,1))
-
-#             if ((ntracers>2) and (len(wf_c2) != pow_bins) | (len(wf_c2.T) != ntracers*(ntracers-1)//2)):
-#                 print ("Dimensions of window function of cross spectra for P2 do not match those of this estimation code!")
-#                 print ("Please check that window function, or create a new one. Aborting now...")
-#                 sys.exit(-1)
-
-#             if (len(wf_c2.T)!=pow_bins):
-#                 print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
-#                 print ("Please check that window function, or create a new one. Aborting now...")
-#                 sys.exit(-1)
-#             wf_c2 = np.reshape(wf_c2, (pow_bins,1))
+# In order to be consistent with older versions:
+try:
+	# use_window_function
+	use_window_function = my_code_options.use_window_function
+	is_n_body_sims = use_window_function
+except:
+	use_window_function = is_n_body_sims
 
 
-#     mean_win0 = wf[:,:ntracers]
-#     mean_win2 = wf[:,ntracers:]
-#     # Deconvolve FKP
-#     P0_fkp_dec = P0_fkp_dec / (small + mean_win0.T)
-#     P2_fkp_dec = P2_fkp_dec / (small + mean_win2.T)
-#     P0_fkp_mean_dec = np.mean(P0_fkp_dec,axis=0)
-#     P2_fkp_mean_dec = np.mean(P2_fkp_dec,axis=0)
-#     # Deconvolve MT
-#     P0_data_dec = P0_data_dec / (small + mean_win0.T)
-#     P2_data_dec = P2_data_dec / (small + mean_win2.T)
-#     P0_mean_dec = np.mean(P0_data_dec,axis=0)
-#     P2_mean_dec = np.mean(P2_data_dec,axis=0)
+if use_window_function:
+    try:
+        win_fun_dir = this_dir + "/spectra/" + win_fun_dir
+    except:
+        print("You must define the directory where the window functions will be found.")
+        print("Please check your input file. Aborting now...")
+        print()
+        sys.exit(-1)
+    print()
+    print("Using window function from directory:",win_fun_dir)
+    print()
+    win_fun_file=glob.glob(win_fun_dir+"*WinFun02*")
+    win_fun_file_cross0=glob.glob(win_fun_dir+"*WinFun_Cross0*")
+    win_fun_file_cross2=glob.glob(win_fun_dir+"*WinFun_Cross2*")
+    if (len(win_fun_file)!=1) | (len(win_fun_file_cross0)!=1) | (len(win_fun_file_cross2)!=1):
+        print ("Could not find (or found more than one) specified window functions at", "spectra/", win_fun_dir)
+        print ("Using no window function")
+        wf = np.ones((pow_bins,2*ntracers))
+        wf_c0 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
+        wf_c2 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
+    else:
+        win_fun_file = win_fun_file[0]
+        win_fun_file_cross0 = win_fun_file_cross0[0]
+        win_fun_file_cross2 = win_fun_file_cross2[0]
 
-#     index = 0
-#     for i in range(ntracers):
-#         for j in range(i+1,ntracers):
-#             Cross0_dec[:,index] = Cross0_dec[:,index] / (small + wf_c0[:,index])
-#             Cross2_dec[:,index] = Cross2_dec[:,index] / (small + wf_c2[:,index])
-#             index += 1
-# else:
-#     wf_c0 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
-#     wf_c2 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
-#     for nt in range(ntracers):
-#         # FKP has its window function...
-#         winfun0[nt] = effbias[nt]**2*P0_fkp_mean_dec[nt]/(small + P0_model[nt])
-#         winfun2[nt] = effbias[nt]**2*P2_fkp_mean_dec[nt]/(small + P2_model[nt])
-#         P0_fkp_dec[:,nt] = P0_fkp_dec[:,nt] / (small + winfun0[nt])
-#         P2_fkp_dec[:,nt] = P2_fkp_dec[:,nt] / (small + winfun2[nt])
-#         P0_fkp_mean_dec[nt] = np.mean(P0_fkp_dec[:,nt],axis=0)
-#         P2_fkp_mean_dec[nt] = np.mean(P2_fkp_dec[:,nt],axis=0)
-#         # MT has its window function... which is the only one we store... so, same name
-#         winfun0[nt] = P0_mean_dec[nt]/(small + P0_model[nt])
-#         winfun2[nt] = P2_mean[nt]/(small + P2_model[nt])
-#         P0_data_dec[:,nt] = P0_data_dec[:,nt] / (small + winfun0[nt])
-#         P2_data_dec[:,nt] = P2_data[:,nt] / (small + winfun2[nt])
-#         P0_mean_dec[nt] = np.mean(P0_data_dec[:,nt],axis=0)
-#         P2_mean_dec[nt] = np.mean(P2_data_dec[:,nt],axis=0)
-#     # Cross spectra        
-#     index = 0
-#     for i in range(ntracers):
-#         for j in range(i+1,ntracers):
-#             model0 = np.sqrt( P0_model[i]*P0_model[j] )
-#             model2 = np.sqrt( P2_model[i]*P0_model[j] )
-#             wf_c0[:,index] = effbias[i]*effbias[j]*Cross0_mean_dec[index] / (small + model0)
-#             wf_c2[:,index] = effbias[i]*effbias[j]*Cross2_mean_dec[index] / (small + model2)
-#             index += 1
+        wf = np.loadtxt(win_fun_file)
+
+        if (len(wf) != pow_bins) | (len(wf.T) != 2*ntracers):
+            print ("Dimensions of window functions (P0 auto & P2 auto) do not match those of this estimation code!")
+            print ("Please check that window function, or create a new one. Aborting now...")
+            sys.exit(-1)
+
+        if(ntracers>1):
+            wf_c0 = np.loadtxt(win_fun_file_cross0)
+            wf_c2 = np.loadtxt(win_fun_file_cross2)
+
+            if ( (ntracers>2) and (len(wf_c0) != pow_bins) | (len(wf_c0.T) != ntracers*(ntracers-1)//2) ):
+                print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
+                print ("Please check that window function, or create a new one. Aborting now...")
+                sys.exit(-1)
+            if (len(wf_c0.T)!=pow_bins):
+                print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
+                print ("Please check that window function, or create a new one. Aborting now...")
+                sys.exit(-1)
+            wf_c0 = np.reshape(wf_c0, (pow_bins,1))
+
+            if ((ntracers>2) and (len(wf_c2) != pow_bins) | (len(wf_c2.T) != ntracers*(ntracers-1)//2)):
+                print ("Dimensions of window function of cross spectra for P2 do not match those of this estimation code!")
+                print ("Please check that window function, or create a new one. Aborting now...")
+                sys.exit(-1)
+
+            if (len(wf_c2.T)!=pow_bins):
+                print ("Dimensions of window function of cross spectra for P0 do not match those of this estimation code!")
+                print ("Please check that window function, or create a new one. Aborting now...")
+                sys.exit(-1)
+            wf_c2 = np.reshape(wf_c2, (pow_bins,1))
+
+
+    mean_win0 = wf[:,:ntracers]
+    mean_win2 = wf[:,ntracers:]
+    # Deconvolve FKP
+    P0_fkp_dec = P0_fkp_dec / (small + mean_win0.T)
+    P2_fkp_dec = P2_fkp_dec / (small + mean_win2.T)
+    P0_fkp_mean_dec = np.mean(P0_fkp_dec,axis=0)
+    P2_fkp_mean_dec = np.mean(P2_fkp_dec,axis=0)
+    # Deconvolve MT
+    P0_data_dec = P0_data_dec / (small + mean_win0.T)
+    P2_data_dec = P2_data_dec / (small + mean_win2.T)
+    P0_mean_dec = np.mean(P0_data_dec,axis=0)
+    P2_mean_dec = np.mean(P2_data_dec,axis=0)
+
+    index = 0
+    for i in range(ntracers):
+        for j in range(i+1,ntracers):
+            Cross0_dec[:,index] = Cross0_dec[:,index] / (small + wf_c0[:,index])
+            Cross2_dec[:,index] = Cross2_dec[:,index] / (small + wf_c2[:,index])
+            index += 1
+else:
+    wf_c0 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
+    wf_c2 = np.ones((pow_bins,ntracers*(ntracers-1)//2))
+    for nt in range(ntracers):
+        # FKP has its window function...
+        winfun0[nt] = effbias[nt]**2*P0_fkp_mean_dec[nt]/(small + P0_model[nt])
+        winfun2[nt] = effbias[nt]**2*P2_fkp_mean_dec[nt]/(small + P2_model[nt])
+        P0_fkp_dec[:,nt] = P0_fkp_dec[:,nt] / (small + winfun0[nt])
+        P2_fkp_dec[:,nt] = P2_fkp_dec[:,nt] / (small + winfun2[nt])
+        P0_fkp_mean_dec[nt] = np.mean(P0_fkp_dec[:,nt],axis=0)
+        P2_fkp_mean_dec[nt] = np.mean(P2_fkp_dec[:,nt],axis=0)
+        # MT has its window function... which is the only one we store... so, same name
+        winfun0[nt] = P0_mean_dec[nt]/(small + P0_model[nt])
+        winfun2[nt] = P2_mean[nt]/(small + P2_model[nt])
+        P0_data_dec[:,nt] = P0_data_dec[:,nt] / (small + winfun0[nt])
+        P2_data_dec[:,nt] = P2_data[:,nt] / (small + winfun2[nt])
+        P0_mean_dec[nt] = np.mean(P0_data_dec[:,nt],axis=0)
+        P2_mean_dec[nt] = np.mean(P2_data_dec[:,nt],axis=0)
+    # Cross spectra        
+    index = 0
+    for i in range(ntracers):
+        for j in range(i+1,ntracers):
+            model0 = np.sqrt( P0_model[i]*P0_model[j] )
+            model2 = np.sqrt( P2_model[i]*P0_model[j] )
+            wf_c0[:,index] = effbias[i]*effbias[j]*Cross0_mean_dec[index] / (small + model0)
+            wf_c2[:,index] = effbias[i]*effbias[j]*Cross2_mean_dec[index] / (small + model2)
+            index += 1
 
 
 
-# ################################################################################
-# ################################################################################
+################################################################################
+################################################################################
 
-# # Compute the theoretical covariance:
-# # first, compute the Fisher matrix, then invert it.
-# # Do this for for each k bin
+# Compute the theoretical covariance:
+# first, compute the Fisher matrix, then invert it.
+# Do this for for each k bin
 
 
-# # free up memory
-# #n_bar_matrix_fid=None
-# #del n_bar_matrix_fid
+# free up memory
+#n_bar_matrix_fid=None
+#del n_bar_matrix_fid
 
 
 
