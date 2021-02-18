@@ -1,5 +1,12 @@
-'''Class to contain cosmological parameters. This code also implements certain 
-   very common cosmological functions: matgrow (evolving with z or phenomenological), H, d_comoving, sigma_8
+'''
+Class to contain cosmological parameters. 
+This code also implements certain very common cosmological functions: 
+   - matgrow: when not defined as a new value
+        1) f_evolving: evolving with z,
+        2) f_phenomenological: phenomenological value, 
+   - H (z), 
+   - comoving distance: comoving, 
+   - sigma_8
 '''
 
 import numpy as np
@@ -7,13 +14,15 @@ import numpy as np
 class cosmo:
 
     def __init__(self, **kwargs):
-        '''Function to initialize object of the class cosmo
+        '''
+        Function to initialize object of the class cosmo
 
             Parameters
             ----------
 
-            All of these parameters are optional. If a parameter is not provided,
-            the code will simply use the default parameter defined below
+            All of these parameters are optional. 
+            If a parameter is not provided, the code will simply 
+            use the default parameter defined below
 
             h : float
                 Hubble constant parametrization H0 = 100*h
@@ -43,17 +52,19 @@ class cosmo:
                 Dark energy EoS parameter
             
             w1 : float
-                Parametrization for deviations of DE EoS from Cosmological Constant
+                Parametrization for deviations of DE EoS 
+                from Cosmological Constant
             
             z_re : float
                 Reionization redshift
             
             flat : Bool
-                Boolean variable controling whether the user wishes to enforce a flat
-                cosmology
+                Boolean variable controling whether the user wishes to 
+                enforce a flat cosmology
                 
             gamma : float
-            	Parameter used in the phenomenological matgrowth factor: f = Omega0_m^gamma
+            	Parameter used in the phenomenological matgrowth factor: 
+                f = Omega0_m^gamma
 
             matgrowcentral : float
             	Parameter of matgrowth.
@@ -63,7 +74,8 @@ class cosmo:
             	2) Compute using method f_phenomenological()
 
             zcentral : float
-                Central (mean, or median) redshift of the catalog or simulated data
+                Central (mean, or median) redshift of the catalog 
+                or simulated data
 
             c_light : float
                 Speed of light in vacuum
@@ -72,14 +84,16 @@ class cosmo:
             ------
             
             KeyError
-                If user passes a key which is not defined in default_params
+                If user passes a key which is not defined in 
+                default_params
             
             TypeError
-                If user passes a variable whose type is not the one expected
+                If user passes a variable whose type is not the one 
+                expected
 
             ValueError 
-                If user selects a flat cosmology but inputs parameters inconsistent
-                with this choice
+                If user selects a flat cosmology but inputs parameters 
+                inconsistent with this choice
 
 
         '''
@@ -198,7 +212,9 @@ class cosmo:
         return( H0*np.sqrt( Omega0_m*a**(-3) + Omega0_DE*a**(-3*(1+w)) ) )
 
     def comoving(self, z, h_units):
-        '''Method to compute comoving distance using the cosmology defined above, for a certain redshift
+        '''
+        Method to compute comoving distance using the cosmology defined 
+        above, for a certain redshift
     
         Parameters
         ----------
@@ -224,3 +240,33 @@ class cosmo:
             d_c = scipy.integrate.simps(integrand, z_temp)
 
         return (d_c)
+
+    def chi_h_vec(self, zend, dz):
+        '''
+        Vector with the comoving radial distance in units of h^-1 Mpc, 
+        in intervals of dz.
+        Should be used in interpolation function
+        '''
+        zint=np.arange(0.0, zend+dz, dz)
+        aint=1./(1+zint)
+        w = w0 + (1.-aint)*w1
+        dchi=2997.9*dz*1./np.sqrt( Omegam*aint**(-3.) + OmegaDE*aint**(-3.*(1.+w)) )
+        return ( np.cumsum(dchi) )
+
+    def chi_h_interp(chi_h_vector, zend, dz, z):
+        '''
+        Interpolation function for chi(z)
+        '''
+        zint=np.arange(0.0,zend+dz,dz)
+        return np.interp(z,zint,chivec)
+
+    def chi_h(self, z):
+        '''
+        Comoving radial distance in units of h^-1 Mpc. Standalone.
+        '''
+        dz=0.0002
+        zint=np.arange(0.0,5.0,dz)
+        aint=1./(1+zint)
+        w = w0 + (1.-aint)*w1
+        chi=np.cumsum ( 2997.9*dz*1./np.sqrt( Omegam*aint**(-3.) + OmegaDE*aint**(-3.*(1.+w)) ) )
+        return( np.interp(z,zint,chi) ) 
