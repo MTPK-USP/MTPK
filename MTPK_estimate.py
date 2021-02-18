@@ -1532,39 +1532,39 @@ for i in range(ntracers):
 
 
 
-# ################################################################################
-# # 2) Extra shot noise/1-halo-term subtraction
-# print()
-# print ('Reducing extra shot noise...')
+################################################################################
+# 2) Extra shot noise/1-halo-term subtraction
+print()
+print ('Reducing extra shot noise...')
 
-# ksn1 = (3*pow_bins)//4
-# ksn2 = -1
-# spec_index = np.mean(np.diff(np.log(powtrue[ksn1:ksn2]))/np.diff(np.log(kph[ksn1:ksn2])))
+ksn1 = (3*pow_bins)//4
+ksn2 = -1
+spec_index = np.mean(np.diff(np.log(powtrue[ksn1:ksn2]))/np.diff(np.log(kph[ksn1:ksn2])))
 
-# P1h_fkp_sims = np.zeros(ntracers)
-# P1h_MT_sims = np.zeros(ntracers)
+P1h_fkp_sims = np.zeros(ntracers)
+P1h_MT_sims = np.zeros(ntracers)
 
-# for nt in range(ntracers):
-#     spec_index = np.mean(np.diff(np.log(P0_model[nt,ksn1:ksn2]))/np.diff(np.log(kph[ksn1:ksn2])))
+for nt in range(ntracers):
+    spec_index = np.mean(np.diff(np.log(P0_model[nt,ksn1:ksn2]))/np.diff(np.log(kph[ksn1:ksn2])))
 
-#     frac_p1h = 1.0 - 1./spec_index*np.mean(np.diff(np.log(np.abs(P0_fkp_mean[nt,ksn1:ksn2])))/np.diff(np.log(kph[ksn1:ksn2])))
-#     #print "Sims"
-#     #print 'FKP:', frac_p1h
-#     frac_p1h = np.min([0.9, np.max([frac_p1h,-0.9])])
-#     P1h_fkp_sims[nt] = frac_p1h * np.mean(P0_fkp_mean[nt,ksn1:ksn2])
-#     if np.isnan(P1h_fkp_sims[nt]):
-#         P1h_fkp_sims[nt] = 0.0
+    frac_p1h = 1.0 - 1./spec_index*np.mean(np.diff(np.log(np.abs(P0_fkp_mean[nt,ksn1:ksn2])))/np.diff(np.log(kph[ksn1:ksn2])))
+    #print "Sims"
+    #print 'FKP:', frac_p1h
+    frac_p1h = np.min([0.9, np.max([frac_p1h,-0.9])])
+    P1h_fkp_sims[nt] = frac_p1h * np.mean(P0_fkp_mean[nt,ksn1:ksn2])
+    if np.isnan(P1h_fkp_sims[nt]):
+        P1h_fkp_sims[nt] = 0.0
 
-#     frac_p1h = 1.0 - 1./spec_index*np.mean(np.diff(np.log(np.abs(P0_mean[nt,ksn1:ksn2])))/np.diff(np.log(kph[ksn1:ksn2])))
-#     #print ' MT:', frac_p1h
-#     frac_p1h = np.min([0.9, np.max([frac_p1h,-0.9])])
-#     P1h_MT_sims[nt] = frac_p1h * np.mean(P0_mean[nt,ksn1:ksn2])
-#     if np.isnan(P1h_MT_sims[nt]):
-#         P1h_MT_sims[nt] = 0.0
+    frac_p1h = 1.0 - 1./spec_index*np.mean(np.diff(np.log(np.abs(P0_mean[nt,ksn1:ksn2])))/np.diff(np.log(kph[ksn1:ksn2])))
+    #print ' MT:', frac_p1h
+    frac_p1h = np.min([0.9, np.max([frac_p1h,-0.9])])
+    P1h_MT_sims[nt] = frac_p1h * np.mean(P0_mean[nt,ksn1:ksn2])
+    if np.isnan(P1h_MT_sims[nt]):
+        P1h_MT_sims[nt] = 0.0
 
-# print("   P_shot FKP=",P1h_fkp_sims)
-# print("  P_shot MTOE=",P1h_MT_sims)
-# print()
+print("   P_shot FKP=",P1h_fkp_sims)
+print("  P_shot MTOE=",P1h_MT_sims)
+print()
 
 # # Here subtract the shot noise, using the shot_fudge defined in the input file
 # for nt in range(ntracers):
