@@ -1318,187 +1318,187 @@ P2_mean = np.mean(P2_data,axis=0)
 ################################################################################
 
 
-# # Re-compute the model/theory here.
-# # If you are trying to fit the spectra with some theory, you may want to change
-# # the parameters and then running the code from this point on
-# #
-# # NOTICE that this is repeated from above; it is appearing here just for simplicity:
-# # copy-and-paste everything from below in order to re-compute the theory and
-# # compare with the estimated spectra. (Do this after changing some of the parameters, of course)
-# #
+# Re-compute the model/theory here.
+# If you are trying to fit the spectra with some theory, you may want to change
+# the parameters and then running the code from this point on
+#
+# NOTICE that this is repeated from above; it is appearing here just for simplicity:
+# copy-and-paste everything from below in order to re-compute the theory and
+# compare with the estimated spectra. (Do this after changing some of the parameters, of course)
+#
 
-# pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
 
-# monopoles = pk_mg.mono
-# quadrupoles = pk_mg.quad
+monopoles = pk_mg.mono
+quadrupoles = pk_mg.quad
 
-# try:
-#     pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-#     cross_monopoles = pk_mg_cross.monos
-#     cross_quadrupoles = pk_mg_cross.quads
-# except:
-#     cross_monopoles = np.zeros((len(k_camb),1))
-#     cross_quadrupoles = np.zeros((len(k_camb),1))
+try:
+    pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+    cross_monopoles = pk_mg_cross.monos
+    cross_quadrupoles = pk_mg_cross.quads
+except:
+    cross_monopoles = np.zeros((len(k_camb),1))
+    cross_quadrupoles = np.zeros((len(k_camb),1))
 
-# try:
-#     Pk_camb_sim = np.loadtxt(dir_spec_corr_sims + '/Pk_camb.dat')[:,1]
-#     spec_corr = np.loadtxt(dir_spec_corr_sims + '/spec_corrections.dat')
-#     k_corr = spec_corr[:,0]
-#     nks = len(k_corr)
-#     try:
-#         mono_model = np.loadtxt(dir_spec_corr_sims + '/monopole_model.dat')
-#         quad_model = np.loadtxt(dir_spec_corr_sims + '/quadrupole_model.dat')
-#         mono_theory = np.loadtxt(dir_spec_corr_sims + '/monopole_theory.dat')
-#         quad_theory = np.loadtxt(dir_spec_corr_sims + '/quadrupole_theory.dat')
-#         if(ntracers>1):
-#             crossmono_model = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_model.dat')
-#             crossquad_model = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_model.dat')
-#             crossmono_theory = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_theory.dat')
-#             crossquad_theory = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_theory.dat')
-#             if len(crossmono_model.shape) == 1:
-#                 crossmono_model = np.reshape(crossmono_model, (nks, 1))
-#                 crossquad_model = np.reshape(crossquad_model, (nks, 1))
-#                 crossmono_theory = np.reshape(crossmono_theory, (nks, 1))
-#                 crossquad_theory = np.reshape(crossquad_theory, (nks, 1))
-#     except:
-#         pk_mg2 = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_corr,a_gal_sig_tot,cH,zcentral)
-#         monopoles2 = pk_mg2.mono
-#         quadrupoles2 = pk_mg2.quad
-#         try:
-#             pk_mg_cross2 = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_corr,a_gal_sig_tot,cH,zcentral)
-#             cross_monopoles2 = pk_mg_cross2.monos
-#             cross_quadrupoles2 = pk_mg_cross2.quads
-#         except:
-#             cross_monopoles = np.zeros((len(k_corr),1))
-#             cross_quadrupoles = np.zeros((len(k_corr),1))
-#         mono_model = np.ones((nks,ntracers))
-#         quad_model = np.ones((nks,ntracers))
-#         mono_theory = np.ones((nks,ntracers))
-#         quad_theory = np.ones((nks,ntracers))
-#         if(ntracers>1):
-#             crossmono_model = np.ones((nks,ntracers*(ntracers-1)//2))
-#             crossquad_model = np.ones((nks,ntracers*(ntracers-1)//2))
-#             crossmono_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-#             crossquad_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-#         index=0
-#         for nt in range(ntracers):
-#             mono_model[:,nt]= monopoles2[nt]*Pk_camb_sim
-#             quad_model[:,nt]= quadrupoles2[nt]*Pk_camb_sim
-#             mono_theory[:,nt]= monopoles2[nt]*Pk_camb_sim
-#             quad_theory[:,nt]= quadrupoles2[nt]*Pk_camb_sim
-#             for ntp in range(nt+1,ntracers):
-#                 crossmono_model[:,index] = cross_monopoles2[index]*Pk_camb_sim
-#                 crossmono_theory[:,index] = cross_monopoles2[index]*Pk_camb_sim
-#                 crossquad_model[:,index] = cross_quadrupoles2[index]*Pk_camb_sim
-#                 crossquad_theory[:,index] = cross_quadrupoles2[index]*Pk_camb_sim
-#                 index += 1
-# except:
-#     k_corr = k_camb
-#     nks = len(k_camb)
-#     spec_corr = np.ones((nks,ntracers+1))
-#     mono_model = np.ones((nks,ntracers))
-#     quad_model = np.ones((nks,ntracers))
-#     mono_theory = np.ones((nks,ntracers))
-#     quad_theory = np.ones((nks,ntracers))
-#     #mono_model[:,0]=k_camb
-#     #quad_model[:,0]=k_camb
-#     #mono_theory[:,0]=k_camb
-#     #mono_theory[:,0]=k_camb
-#     if(ntracers>1):
-#         crossmono_model = np.ones((nks,ntracers*(ntracers-1)//2))
-#         crossquad_model = np.ones((nks,ntracers*(ntracers-1)//2))
-#         crossmono_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-#         crossquad_theory = np.ones((nks,ntracers*(ntracers-1)//2))
+try:
+    Pk_camb_sim = np.loadtxt(dir_spec_corr_sims + '/Pk_camb.dat')[:,1]
+    spec_corr = np.loadtxt(dir_spec_corr_sims + '/spec_corrections.dat')
+    k_corr = spec_corr[:,0]
+    nks = len(k_corr)
+    try:
+        mono_model = np.loadtxt(dir_spec_corr_sims + '/monopole_model.dat')
+        quad_model = np.loadtxt(dir_spec_corr_sims + '/quadrupole_model.dat')
+        mono_theory = np.loadtxt(dir_spec_corr_sims + '/monopole_theory.dat')
+        quad_theory = np.loadtxt(dir_spec_corr_sims + '/quadrupole_theory.dat')
+        if(ntracers>1):
+            crossmono_model = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_model.dat')
+            crossquad_model = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_model.dat')
+            crossmono_theory = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_theory.dat')
+            crossquad_theory = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_theory.dat')
+            if len(crossmono_model.shape) == 1:
+                crossmono_model = np.reshape(crossmono_model, (nks, 1))
+                crossquad_model = np.reshape(crossquad_model, (nks, 1))
+                crossmono_theory = np.reshape(crossmono_theory, (nks, 1))
+                crossquad_theory = np.reshape(crossquad_theory, (nks, 1))
+    except:
+        pk_mg2 = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_corr,a_gal_sig_tot,cH,zcentral)
+        monopoles2 = pk_mg2.mono
+        quadrupoles2 = pk_mg2.quad
+        try:
+            pk_mg_cross2 = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_corr,a_gal_sig_tot,cH,zcentral)
+            cross_monopoles2 = pk_mg_cross2.monos
+            cross_quadrupoles2 = pk_mg_cross2.quads
+        except:
+            cross_monopoles = np.zeros((len(k_corr),1))
+            cross_quadrupoles = np.zeros((len(k_corr),1))
+        mono_model = np.ones((nks,ntracers))
+        quad_model = np.ones((nks,ntracers))
+        mono_theory = np.ones((nks,ntracers))
+        quad_theory = np.ones((nks,ntracers))
+        if(ntracers>1):
+            crossmono_model = np.ones((nks,ntracers*(ntracers-1)//2))
+            crossquad_model = np.ones((nks,ntracers*(ntracers-1)//2))
+            crossmono_theory = np.ones((nks,ntracers*(ntracers-1)//2))
+            crossquad_theory = np.ones((nks,ntracers*(ntracers-1)//2))
+        index=0
+        for nt in range(ntracers):
+            mono_model[:,nt]= monopoles2[nt]*Pk_camb_sim
+            quad_model[:,nt]= quadrupoles2[nt]*Pk_camb_sim
+            mono_theory[:,nt]= monopoles2[nt]*Pk_camb_sim
+            quad_theory[:,nt]= quadrupoles2[nt]*Pk_camb_sim
+            for ntp in range(nt+1,ntracers):
+                crossmono_model[:,index] = cross_monopoles2[index]*Pk_camb_sim
+                crossmono_theory[:,index] = cross_monopoles2[index]*Pk_camb_sim
+                crossquad_model[:,index] = cross_quadrupoles2[index]*Pk_camb_sim
+                crossquad_theory[:,index] = cross_quadrupoles2[index]*Pk_camb_sim
+                index += 1
+except:
+    k_corr = k_camb
+    nks = len(k_camb)
+    spec_corr = np.ones((nks,ntracers+1))
+    mono_model = np.ones((nks,ntracers))
+    quad_model = np.ones((nks,ntracers))
+    mono_theory = np.ones((nks,ntracers))
+    quad_theory = np.ones((nks,ntracers))
+    #mono_model[:,0]=k_camb
+    #quad_model[:,0]=k_camb
+    #mono_theory[:,0]=k_camb
+    #mono_theory[:,0]=k_camb
+    if(ntracers>1):
+        crossmono_model = np.ones((nks,ntracers*(ntracers-1)//2))
+        crossquad_model = np.ones((nks,ntracers*(ntracers-1)//2))
+        crossmono_theory = np.ones((nks,ntracers*(ntracers-1)//2))
+        crossquad_theory = np.ones((nks,ntracers*(ntracers-1)//2))
 
-#     index=0
-#     for nt in range(ntracers):
-#         mono_model[:,nt]= monopoles[nt]*Pk_camb
-#         quad_model[:,nt]= quadrupoles[nt]*Pk_camb
-#         mono_theory[:,nt]= monopoles[nt]*Pk_camb
-#         quad_theory[:,nt]= quadrupoles[nt]*Pk_camb
-#         for ntp in range(nt+1,ntracers):
-#             crossmono_model[:,index] = cross_monopoles[index]*Pk_camb
-#             crossmono_theory[:,index] = cross_monopoles[index]*Pk_camb
-#             crossquad_model[:,index] = cross_quadrupoles[index]*Pk_camb
-#             crossquad_theory[:,index] = cross_quadrupoles[index]*Pk_camb
-#             index += 1
+    index=0
+    for nt in range(ntracers):
+        mono_model[:,nt]= monopoles[nt]*Pk_camb
+        quad_model[:,nt]= quadrupoles[nt]*Pk_camb
+        mono_theory[:,nt]= monopoles[nt]*Pk_camb
+        quad_theory[:,nt]= quadrupoles[nt]*Pk_camb
+        for ntp in range(nt+1,ntracers):
+            crossmono_model[:,index] = cross_monopoles[index]*Pk_camb
+            crossmono_theory[:,index] = cross_monopoles[index]*Pk_camb
+            crossquad_model[:,index] = cross_quadrupoles[index]*Pk_camb
+            crossquad_theory[:,index] = cross_quadrupoles[index]*Pk_camb
+            index += 1
 
-# # Discard the first column of spec_corr, since it just gives the values of k
-# spec_corr = spec_corr[:,1:]
+# Discard the first column of spec_corr, since it just gives the values of k
+spec_corr = spec_corr[:,1:]
 
-# # NOW INCLUDING CROSS-CORRELATIONS
-# all_mono_model = np.zeros((nks,ntracers,ntracers))
-# all_quad_model = np.zeros((nks,ntracers,ntracers))
-# all_mono_theory = np.zeros((nks,ntracers,ntracers))
-# all_quad_theory = np.zeros((nks,ntracers,ntracers))
+# NOW INCLUDING CROSS-CORRELATIONS
+all_mono_model = np.zeros((nks,ntracers,ntracers))
+all_quad_model = np.zeros((nks,ntracers,ntracers))
+all_mono_theory = np.zeros((nks,ntracers,ntracers))
+all_quad_theory = np.zeros((nks,ntracers,ntracers))
 
-# index=0
-# for i in range(ntracers):
-#     all_mono_model[:,i,i] = mono_model[:,i]
-#     all_mono_theory[:,i,i] = mono_theory[:,i]
-#     all_quad_model[:,i,i] = quad_model[:,i]
-#     all_quad_theory[:,i,i] = quad_theory[:,i]
-#     for j in range(i+1,ntracers):
-#         all_mono_model[:,i,j] = crossmono_model[:,index]
-#         all_mono_theory[:,i,j] = crossmono_theory[:,index]
-#         all_quad_model[:,i,j] = crossquad_model[:,index]
-#         all_quad_theory[:,i,j] = crossquad_theory[:,index]
-#         all_mono_model[:,j,i] = crossmono_model[:,index] 
-#         all_mono_theory[:,j,i] = crossmono_theory[:,index] 
-#         all_quad_model[:,j,i] = crossquad_model[:,index]
-#         all_quad_theory[:,j,i] = crossquad_theory[:,index]
-#         index += 1
+index=0
+for i in range(ntracers):
+    all_mono_model[:,i,i] = mono_model[:,i]
+    all_mono_theory[:,i,i] = mono_theory[:,i]
+    all_quad_model[:,i,i] = quad_model[:,i]
+    all_quad_theory[:,i,i] = quad_theory[:,i]
+    for j in range(i+1,ntracers):
+        all_mono_model[:,i,j] = crossmono_model[:,index]
+        all_mono_theory[:,i,j] = crossmono_theory[:,index]
+        all_quad_model[:,i,j] = crossquad_model[:,index]
+        all_quad_theory[:,i,j] = crossquad_theory[:,index]
+        all_mono_model[:,j,i] = crossmono_model[:,index] 
+        all_mono_theory[:,j,i] = crossmono_theory[:,index] 
+        all_quad_model[:,j,i] = crossquad_model[:,index]
+        all_quad_theory[:,j,i] = crossquad_theory[:,index]
+        index += 1
 
-# k_spec_corr = np.append(np.append(0.,k_corr),k_corr[-1] + dkph_bin )
-# pk_ln_spec_corr = np.vstack((np.vstack((np.asarray(spec_corr[0]),np.asarray(spec_corr))),spec_corr[-1]))
+k_spec_corr = np.append(np.append(0.,k_corr),k_corr[-1] + dkph_bin )
+pk_ln_spec_corr = np.vstack((np.vstack((np.asarray(spec_corr[0]),np.asarray(spec_corr))),spec_corr[-1]))
 
-# pk_ln_mono_model = np.vstack((np.vstack((np.asarray(mono_model[0]),np.asarray(mono_model))),mono_model[-1]))
-# pk_ln_quad_model = np.vstack((np.vstack((np.asarray(quad_model[0]),np.asarray(quad_model))),quad_model[-1]))
+pk_ln_mono_model = np.vstack((np.vstack((np.asarray(mono_model[0]),np.asarray(mono_model))),mono_model[-1]))
+pk_ln_quad_model = np.vstack((np.vstack((np.asarray(quad_model[0]),np.asarray(quad_model))),quad_model[-1]))
 
-# pk_ln_mono_theory = np.vstack((np.vstack((np.asarray(mono_theory[0]),np.asarray(mono_theory))),mono_theory[-1]))
-# pk_ln_quad_theory = np.vstack((np.vstack((np.asarray(quad_theory[0]),np.asarray(quad_theory))),quad_theory[-1]))
+pk_ln_mono_theory = np.vstack((np.vstack((np.asarray(mono_theory[0]),np.asarray(mono_theory))),mono_theory[-1]))
+pk_ln_quad_theory = np.vstack((np.vstack((np.asarray(quad_theory[0]),np.asarray(quad_theory))),quad_theory[-1]))
 
-# if (ntracers>1):
-#     pk_ln_crossmono_model = np.vstack((np.vstack((np.asarray(crossmono_model[0]),np.asarray(crossmono_model))),crossmono_model[-1]))
-#     pk_ln_crossmono_theory = np.vstack((np.vstack((np.asarray(crossmono_theory[0]),np.asarray(crossmono_theory))),crossmono_theory[-1]))
+if (ntracers>1):
+    pk_ln_crossmono_model = np.vstack((np.vstack((np.asarray(crossmono_model[0]),np.asarray(crossmono_model))),crossmono_model[-1]))
+    pk_ln_crossmono_theory = np.vstack((np.vstack((np.asarray(crossmono_theory[0]),np.asarray(crossmono_theory))),crossmono_theory[-1]))
 
-#     pk_ln_crossquad_model = np.vstack((np.vstack((np.asarray(crossquad_model[0]),np.asarray(crossquad_model))),crossquad_model[-1]))
-#     pk_ln_crossquad_theory = np.vstack((np.vstack((np.asarray(crossquad_theory[0]),np.asarray(crossquad_theory))),crossquad_theory[-1]))
+    pk_ln_crossquad_model = np.vstack((np.vstack((np.asarray(crossquad_model[0]),np.asarray(crossquad_model))),crossquad_model[-1]))
+    pk_ln_crossquad_theory = np.vstack((np.vstack((np.asarray(crossquad_theory[0]),np.asarray(crossquad_theory))),crossquad_theory[-1]))
 
 
-# # Theory monopoles of spectra (as realized on the rectangular box)
-# pk_ln_spec_corr_kbar=np.zeros((ntracers,pow_bins))
-# P0_theory=np.zeros((ntracers,pow_bins))
-# P2_theory=np.zeros((ntracers,pow_bins))
-# P0_model=np.zeros((ntracers,pow_bins))
-# P2_model=np.zeros((ntracers,pow_bins))
+# Theory monopoles of spectra (as realized on the rectangular box)
+pk_ln_spec_corr_kbar=np.zeros((ntracers,pow_bins))
+P0_theory=np.zeros((ntracers,pow_bins))
+P2_theory=np.zeros((ntracers,pow_bins))
+P0_model=np.zeros((ntracers,pow_bins))
+P2_model=np.zeros((ntracers,pow_bins))
 
-# Cross_P0_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-# Cross_P2_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-# Cross_P0_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-# Cross_P2_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P0_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P2_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P0_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P2_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
 
-# index=0
-# for i in range(ntracers):
-#     pk_ln_spec_corr_kbar[i] = np.interp(kph,k_spec_corr,pk_ln_spec_corr[:,i])
-#     P0_model[i] = np.interp(kph,k_spec_corr,pk_ln_mono_model[:,i])
-#     P2_model[i] = np.interp(kph,k_spec_corr,pk_ln_quad_model[:,i])
-#     P0_theory[i] = np.interp(kph,k_spec_corr,pk_ln_mono_theory[:,i])
-#     P2_theory[i] = np.interp(kph,k_spec_corr,pk_ln_quad_theory[:,i])
-#     for j in range(i+1,ntracers):
-#         Cross_P0_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_model[:,index])
-#         Cross_P2_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_model[:,index])
-#         Cross_P0_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_theory[:,index])
-#         Cross_P2_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_theory[:,index])
-#         index += 1
+index=0
+for i in range(ntracers):
+    pk_ln_spec_corr_kbar[i] = np.interp(kph,k_spec_corr,pk_ln_spec_corr[:,i])
+    P0_model[i] = np.interp(kph,k_spec_corr,pk_ln_mono_model[:,i])
+    P2_model[i] = np.interp(kph,k_spec_corr,pk_ln_quad_model[:,i])
+    P0_theory[i] = np.interp(kph,k_spec_corr,pk_ln_mono_theory[:,i])
+    P2_theory[i] = np.interp(kph,k_spec_corr,pk_ln_quad_theory[:,i])
+    for j in range(i+1,ntracers):
+        Cross_P0_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_model[:,index])
+        Cross_P2_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_model[:,index])
+        Cross_P0_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_theory[:,index])
+        Cross_P2_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_theory[:,index])
+        index += 1
 
-# # Corrections for cross-spectra
-# cross_pk_ln_spec_corr_kbar=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-# index = 0
-# for i in range(ntracers):
-#     for j in range(i+1,ntracers):
-#         cross_pk_ln_spec_corr_kbar[index] = np.sqrt(pk_ln_spec_corr_kbar[i]*pk_ln_spec_corr_kbar[j])
-#         index +=1
+# Corrections for cross-spectra
+cross_pk_ln_spec_corr_kbar=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+index = 0
+for i in range(ntracers):
+    for j in range(i+1,ntracers):
+        cross_pk_ln_spec_corr_kbar[index] = np.sqrt(pk_ln_spec_corr_kbar[i]*pk_ln_spec_corr_kbar[j])
+        index +=1
 
 
 
