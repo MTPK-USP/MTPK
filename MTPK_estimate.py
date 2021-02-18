@@ -755,38 +755,38 @@ print()
 
 
 
-# ###############################
-# #R
-# #R  Now let's start the construction of the bin matrices, MR and MRk.
-# #R
-# #R  * MR accounts for the modes that should be averaged to obtain a bin in (k,\mu)
-# #R  * MRk accounts for the modes that should be averaged to obtain a bin in (k)
-# #R
-# #R  Hence, MR gives the RSD bin matrix; MRk gives the bin matrix for the monopole P_0(k).
-# #R
-# #R  In order to minimize memory usage and computation time,
-# #R  we employ sparse matrix methods.
+###############################
+#R
+#R  Now let's start the construction of the bin matrices, MR and MRk.
+#R
+#R  * MR accounts for the modes that should be averaged to obtain a bin in (k,\mu)
+#R  * MRk accounts for the modes that should be averaged to obtain a bin in (k)
+#R
+#R  Hence, MR gives the RSD bin matrix; MRk gives the bin matrix for the monopole P_0(k).
+#R
+#R  In order to minimize memory usage and computation time,
+#R  we employ sparse matrix methods.
 
-# #R  First, construct the flattened array of |k|, kflat .
-# #R  NOTICE THAT kflat is in GRID units -- must divide by cell_size eventually
-# #R  (Remembering that 1/2 of the grid is redundant, since the maps are real-valued)
-# #RR kflat=np.ndarray.flatten(grid.grid_k[:,:,:n_z/2-1])
+#R  First, construct the flattened array of |k|, kflat .
+#R  NOTICE THAT kflat is in GRID units -- must divide by cell_size eventually
+#R  (Remembering that 1/2 of the grid is redundant, since the maps are real-valued)
+#RR kflat=np.ndarray.flatten(grid.grid_k[:,:,:n_z/2-1])
 
-# kflat=(np.ndarray.flatten(kgrid[:,:,:n_z//2+1]))
-# lenkf=len(kflat)
+kflat=(np.ndarray.flatten(kgrid[:,:,:n_z//2+1]))
+lenkf=len(kflat)
 
 
-# print ('Central physical k values where spectra will be estimated:', kph_central)
+print ('Central physical k values where spectra will be estimated:', kph_central)
 
-# # Get G(z)^2*P(k_central) for the central value of k and central value of z
-# kcmin = kph_central - 2.0*np.pi*( 4.0*dk0 )/cell_size
-# kcmax = kph_central + 2.0*np.pi*( 4.0*dk0 )/cell_size
-# # This will be the value used in the FKP and MT weights
-# powercentral = np.mean( Pk_camb[ (k_camb > kcmin) & (k_camb < kcmax) ] )
+# Get G(z)^2*P(k_central) for the central value of k and central value of z
+kcmin = kph_central - 2.0*np.pi*( 4.0*dk0 )/cell_size
+kcmax = kph_central + 2.0*np.pi*( 4.0*dk0 )/cell_size
+# This will be the value used in the FKP and MT weights
+powercentral = np.mean( Pk_camb[ (k_camb > kcmin) & (k_camb < kcmax) ] )
 
-# # Theory power spectra, interpolated on the k_physical used for estimations
-# powtrue = np.interp(kph,k_camb,Pk_camb)
-# pow_bins = len(kph)
+# Theory power spectra, interpolated on the k_physical used for estimations
+powtrue = np.interp(kph,k_camb,Pk_camb)
+pow_bins = len(kph)
 
 
 
