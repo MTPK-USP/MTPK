@@ -941,58 +941,63 @@ dd_P_spec_kbar = biaserr*np.sqrt(np.var(pk_ln_spec_corr_kbar))*pk_ln_spec_corr_k
 
 
 
-# #############################################################################
-# # Here we prepare to apply the Jing (2005) deconvolution of the mass assignement function
-# # For the situations when this is necessary, see the input file
-# winmass_sims=np.ones(pow_bins)
-# winmass_data=np.ones(pow_bins)
-# if (jing_dec_sims) or (not sims_only):
-#     print ('Preparing to apply Jing deconvolution of mass assignement window function...')
+#############################################################################
+# Here we prepare to apply the Jing (2005) deconvolution of the mass assignement function
+# For the situations when this is necessary, see the input file
+winmass_sims=np.ones(pow_bins)
+winmass_data=np.ones(pow_bins)
 
-#     kN = np.pi/cell_size  # Nyquist frequency
-#     nxyz = np.arange(-4,5)
-#     idxyz= np.ones_like(nxyz)
-#     nx_xyz = np.einsum('i,j,k', nxyz,idxyz,idxyz)
-#     ny_xyz = np.einsum('i,j,k', idxyz,nxyz,idxyz)
-#     nz_xyz = np.einsum('i,j,k', idxyz,idxyz,nxyz)
-#     nxyz2 = nx_xyz**2 + ny_xyz**2 + nz_xyz**2
+jing_dec_sims = my_code_options.jing_dec_sims
+power_jing_sims = my_code_options.power_jing_sims
+power_jing_data = my_code_options.power_jing_data
 
-#     nvec_xyz = np.meshgrid(nxyz,nxyz,nxyz)
-#     dmu_phi=0.02
-#     dmu_th=0.04
-#     # With these options for nxyz, dmu_phi and dmu_th, the WF is accurate to ~1% up to k~0.3 h/Mpc
-#     phi_xyz=np.arange(0.+dmu_phi/2.,1.,dmu_phi)*2*np.pi
-#     cosphi_xyz=np.cos(phi_xyz)
-#     sinphi_xyz=np.sin(phi_xyz)
-#     costheta_xyz=np.arange(-1.+dmu_th/2.,1.,dmu_th)
-#     sintheta_xyz=np.sqrt(1-costheta_xyz**2)
+if (jing_dec_sims) or (not sims_only):
+    print ('Preparing to apply Jing deconvolution of mass assignement window function...')
 
-#     # More or less randomly placed unit vectors
-#     unitxyz=np.zeros((len(phi_xyz),len(costheta_xyz),3))
-#     for iphi in range(len(phi_xyz)):
-#         for jth in range(len(costheta_xyz)):
-#             unitxyz[iphi,jth] = np.array([sintheta_xyz[jth]*cosphi_xyz[iphi],sintheta_xyz[jth]*sinphi_xyz[iphi],costheta_xyz[jth]])
+    kN = np.pi/cell_size  # Nyquist frequency
+    nxyz = np.arange(-4,5)
+    idxyz= np.ones_like(nxyz)
+    nx_xyz = np.einsum('i,j,k', nxyz,idxyz,idxyz)
+    ny_xyz = np.einsum('i,j,k', idxyz,nxyz,idxyz)
+    nz_xyz = np.einsum('i,j,k', idxyz,idxyz,nxyz)
+    nxyz2 = nx_xyz**2 + ny_xyz**2 + nz_xyz**2
 
-#     Nangles=len(phi_xyz)*len(costheta_xyz)
-#     unitxyz_flat = np.reshape(unitxyz,(Nangles,3))
+    nvec_xyz = np.meshgrid(nxyz,nxyz,nxyz)
+    dmu_phi=0.02
+    dmu_th=0.04
+    # With these options for nxyz, dmu_phi and dmu_th, the WF is accurate to ~1% up to k~0.3 h/Mpc
+    phi_xyz=np.arange(0.+dmu_phi/2.,1.,dmu_phi)*2*np.pi
+    cosphi_xyz=np.cos(phi_xyz)
+    sinphi_xyz=np.sin(phi_xyz)
+    costheta_xyz=np.arange(-1.+dmu_th/2.,1.,dmu_th)
+    sintheta_xyz=np.sqrt(1-costheta_xyz**2)
 
-#     def wj02(ki,ni,power_jing):
-#         return np.abs(np.power(np.abs(special.j0(np.pi*(ki/kN/2. + ni))),power_jing))
+    # More or less randomly placed unit vectors
+    unitxyz=np.zeros((len(phi_xyz),len(costheta_xyz),3))
+    for iphi in range(len(phi_xyz)):
+        for jth in range(len(costheta_xyz)):
+            unitxyz[iphi,jth] = np.array([sintheta_xyz[jth]*cosphi_xyz[iphi],sintheta_xyz[jth]*sinphi_xyz[iphi],costheta_xyz[jth]])
 
-#     for i_k in range(pow_bins):
-#         kxyz = kph[i_k]*unitxyz_flat
-#         sum_sims=0.0
-#         sum_data=0.0
-#         for iang in range(Nangles):
-#             kdotk = kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
-#             kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
-#             sum_sims += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp(kprime))
-#             sum_data += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp(kprime))
+    Nangles=len(phi_xyz)*len(costheta_xyz)
+    unitxyz_flat = np.reshape(unitxyz,(Nangles,3))
 
-#         winmass_sims[i_k] = sum_sims/Nangles/powtrue[i_k]
-#         winmass_data[i_k] = sum_data/Nangles/powtrue[i_k]
+    def wj02(ki,ni,power_jing):
+        return np.abs(np.power(np.abs(special.j0(np.pi*(ki/kN/2. + ni))),power_jing))
 
-#     print ('... OK, computed Jing deconvolution functions')
+    for i_k in range(pow_bins):
+        kxyz = kph[i_k]*unitxyz_flat
+        sum_sims=0.0
+        sum_data=0.0
+        for iang in range(Nangles):
+            kdotk = kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
+            kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
+            sum_sims += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp(kprime))
+            sum_data += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp(kprime))
+
+        winmass_sims[i_k] = sum_sims/Nangles/powtrue[i_k]
+        winmass_data[i_k] = sum_data/Nangles/powtrue[i_k]
+
+    print ('... OK, computed Jing deconvolution functions')
 
 # #############################################################################
 # # BEGIN ESTIMATION
