@@ -1594,121 +1594,123 @@ P2_mean_dec = np.mean(P2_data_dec[1:],axis=0)
 
 
 
-# ################################################################################
-# # 3) Corrections for lognormal maps / sim bias
-# if sims_only:
-#     P0_fkp_dec = (P0_fkp_dec*pk_ln_spec_corr_kbar)
-#     P2_fkp_dec = (P2_fkp*pk_ln_spec_corr_kbar)
-#     Cross0_dec = (Cross0*cross_pk_ln_spec_corr_kbar)
-#     Cross2_dec = (Cross2*cross_pk_ln_spec_corr_kbar)
+################################################################################
+# 3) Corrections for lognormal maps / sim bias
+if sims_only:
+    P0_fkp_dec = (P0_fkp_dec*pk_ln_spec_corr_kbar)
+    P2_fkp_dec = (P2_fkp*pk_ln_spec_corr_kbar)
+    Cross0_dec = (Cross0*cross_pk_ln_spec_corr_kbar)
+    Cross2_dec = (Cross2*cross_pk_ln_spec_corr_kbar)
 
-#     P0_data_dec = (P0_data_dec*pk_ln_spec_corr_kbar)
-#     P2_data_dec = (P2_data*pk_ln_spec_corr_kbar)
-# else:
-#     P0_fkp_dec[1:] = (P0_fkp_dec[1:]*pk_ln_spec_corr_kbar)
-#     P2_fkp_dec[1:] = (P2_fkp[1:]*pk_ln_spec_corr_kbar)
-#     Cross0_dec[1:] = (Cross0[1:]*cross_pk_ln_spec_corr_kbar)
-#     Cross2_dec[1:] = (Cross2[1:]*cross_pk_ln_spec_corr_kbar)
+    P0_data_dec = (P0_data_dec*pk_ln_spec_corr_kbar)
+    P2_data_dec = (P2_data*pk_ln_spec_corr_kbar)
+else:
+    P0_fkp_dec[1:] = (P0_fkp_dec[1:]*pk_ln_spec_corr_kbar)
+    P2_fkp_dec[1:] = (P2_fkp[1:]*pk_ln_spec_corr_kbar)
+    Cross0_dec[1:] = (Cross0[1:]*cross_pk_ln_spec_corr_kbar)
+    Cross2_dec[1:] = (Cross2[1:]*cross_pk_ln_spec_corr_kbar)
 
-#     P0_data_dec[1:] = (P0_data_dec[1:]*pk_ln_spec_corr_kbar)
-#     P2_data_dec[1:] = (P2_data[1:]*pk_ln_spec_corr_kbar)
-
-
-# P0_fkp_mean_dec = np.mean(P0_fkp_dec[1:],axis=0)
-# P0_mean_dec = np.mean(P0_data_dec[1:],axis=0)
-# Cross0_mean_dec = np.mean(Cross0_dec[1:],axis=0)
-# Cross2_mean_dec = np.mean(Cross2_dec[1:],axis=0)
-
-# P2_fkp_mean_dec = np.mean(P2_fkp_dec[1:],axis=0)
-# P2_mean_dec = np.mean(P2_data_dec[1:],axis=0)
+    P0_data_dec[1:] = (P0_data_dec[1:]*pk_ln_spec_corr_kbar)
+    P2_data_dec[1:] = (P2_data[1:]*pk_ln_spec_corr_kbar)
 
 
+P0_fkp_mean_dec = np.mean(P0_fkp_dec[1:],axis=0)
+P0_mean_dec = np.mean(P0_data_dec[1:],axis=0)
+Cross0_mean_dec = np.mean(Cross0_dec[1:],axis=0)
+Cross2_mean_dec = np.mean(Cross2_dec[1:],axis=0)
 
-# ################################################################################
-
-# #
-# # Plot MT estimates along with theory -- convolved spectra, 
-# # AFTER shot noise subtraction and
-# # AFTER corrections for lognormal mocks (if applicable)
-
-
-# pl.rcParams["axes.titlesize"] = 8
-# cm_subsection = np.linspace(0, 1, ntracers)
-# mycolor = [ cm.jet(x) for x in cm_subsection ]
-
-# pl.xscale('log')
-# pl.yscale('log')
-# xlow=0.99*kph[2]
-# xhigh=1.01*kph[-1]
-
-# for nt in range(ntracers):
-#     ddk = dkph_bin*0.1*(nt-ntracers/2.0+0.25)
-#     # Monopole
-#     color1=mycolor[nt]
-#     p = P0_data_dec[0,nt]
-#     errp = np.sqrt(np.diag(np.cov(P0_data_dec[1:,nt].T)))
-#     pl.errorbar(kph+ddk,p,errp,color=color1,linestyle='None', marker='s', capsize=3, markersize=3)
-#     pl.errorbar(kph+ddk,-p,errp,color=color1,linestyle='None', marker='s', capsize=1, markersize=1)
-#     p = effbias[nt]**2*P0_fkp_dec[0,nt]
-#     errp = np.sqrt(np.diag(np.cov(effbias[nt]**2*P0_fkp_dec[1:,nt].T)))
-#     pl.errorbar(kph+2*ddk,p,errp,color=color1,linestyle='None', marker='^', capsize=3, markersize=3)
-#     pl.errorbar(kph+2*ddk,-p,errp,color=color1,linestyle='None', marker='^', capsize=1, markersize=1)
-#     #pl.plot(kph,gp*P0_model[nt],color=color1,linewidth=1.2)
-#     pl.plot(kph,P0_mean_dec[nt],color=color1,linewidth=0.3)
-#     pl.plot(kph,P0_theory[nt],color=color1,linewidth=1.0)
-#     p = P2_data_dec[0,nt]
-#     errp = np.sqrt(np.diag(np.cov(P2_data_dec[1:,nt].T)))
-#     pl.errorbar(kph+ddk,p,errp,color=color1,linestyle='None', marker='s', capsize=3, markersize=3)
-#     pl.errorbar(kph+ddk,-p,errp,color=color1,linestyle='None', marker='s', capsize=1, markersize=1)
-#     p = effbias[nt]**2*P2_fkp_dec[0,nt]
-#     errp = np.sqrt(np.diag(np.cov(effbias[nt]**2*P2_fkp_dec[1:,nt].T)))
-#     pl.errorbar(kph+2*ddk,p,errp,color=color1,linestyle='None', marker='^', capsize=3, markersize=3)
-#     pl.errorbar(kph+2*ddk,-p,errp,color=color1,linestyle='None', marker='^', capsize=1, markersize=1)
-#     #pl.plot(kph,gp*P0_model[nt],color=color1,linewidth=1.2)
-#     pl.plot(kph,np.abs(P2_mean_dec[nt]),color=color1,linewidth=0.3)
-#     pl.plot(kph,np.abs(P2_theory[nt]),color=color1,linewidth=1.0)
-
-
-# pl.legend()
-# pl.xlabel(r'$k \, [h \, $Mpc$^{-1}]$',fontsize=14)
-# pl.ylabel(r'$P^{(\ell)}(k) \, [h^{-3} \, $Mpc$^3]$',fontsize=14)
-# pl.xlim([xlow,xhigh])
-# pl.ylim([10,10**4.7])
-# pl.title(r'Convolved, after shot noise subtraction',fontsize=16)
-# pl.savefig(dir_figs + '/' + handle_estimates + '_errbar_Data_Conv_corr_kbar=' + str(kph_central) + '.pdf')
-# pl.close('all')
+P2_fkp_mean_dec = np.mean(P2_fkp_dec[1:],axis=0)
+P2_mean_dec = np.mean(P2_data_dec[1:],axis=0)
 
 
 
+################################################################################
 
-# ################################################################################
+#
+# Plot MT estimates along with theory -- convolved spectra, 
+# AFTER shot noise subtraction and
+# AFTER corrections for lognormal mocks (if applicable)
 
-# # Update bias estimate
-# kb_cut_min = np.argsort(np.abs(kph-kmin_bias))[0]
-# kb_cut_max = np.argsort(np.abs(kph-kmax_bias))[0]
 
-# def residuals(norm,data):
-#     return norm*data[1] - data[0]
+pl.rcParams["axes.titlesize"] = 8
+cm_subsection = np.linspace(0, 1, ntracers)
+mycolor = [ cm.jet(x) for x in cm_subsection ]
 
-# # The measured monopoles and the flat-sky/theory monopoles are different; find relative normalization
-# normmonos = np.zeros(ntracers)
-# chi2_red = np.zeros(ntracers)
+pl.xscale('log')
+pl.yscale('log')
+xlow=0.99*kph[2]
+xhigh=1.01*kph[-1]
 
-# for nt in range(ntracers):
-#     err = np.sqrt(np.diag(np.cov(P0_data_dec[1:,nt,kb_cut_min:kb_cut_max].T)))
-#     data = [ P0_data_dec[0,nt,kb_cut_min:kb_cut_max]/err , P0_mean_dec[nt,kb_cut_min:kb_cut_max]/err ]
-#     this_norm, success = leastsq(residuals,1.0,args=data)
-# #    print weights_mono
-#     normmonos[nt] = np.sqrt(this_norm)
-# #    norm_monos[nt] = np.mean(np.sqrt(P0_data_dec[0,nt,kb_cut_min:kb_cut_max]/P0_mean_dec[nt,kb_cut_min:kb_cut_max]))
-#     chi2_red[nt] = np.sum(residuals(this_norm,data)**2)/(len(err)-1.)
+for nt in range(ntracers):
+    ddk = dkph_bin*0.1*(nt-ntracers/2.0+0.25)
+    # Monopole
+    color1=mycolor[nt]
+    p = P0_data_dec[0,nt]
+    errp = np.sqrt(np.diag(np.cov(P0_data_dec[1:,nt].T)))
+    pl.errorbar(kph+ddk,p,errp,color=color1,linestyle='None', marker='s', capsize=3, markersize=3)
+    pl.errorbar(kph+ddk,-p,errp,color=color1,linestyle='None', marker='s', capsize=1, markersize=1)
+    p = effbias[nt]**2*P0_fkp_dec[0,nt]
+    errp = np.sqrt(np.diag(np.cov(effbias[nt]**2*P0_fkp_dec[1:,nt].T)))
+    pl.errorbar(kph+2*ddk,p,errp,color=color1,linestyle='None', marker='^', capsize=3, markersize=3)
+    pl.errorbar(kph+2*ddk,-p,errp,color=color1,linestyle='None', marker='^', capsize=1, markersize=1)
+    #pl.plot(kph,gp*P0_model[nt],color=color1,linewidth=1.2)
+    pl.plot(kph,P0_mean_dec[nt],color=color1,linewidth=0.3)
+    pl.plot(kph,P0_theory[nt],color=color1,linewidth=1.0)
+    p = P2_data_dec[0,nt]
+    errp = np.sqrt(np.diag(np.cov(P2_data_dec[1:,nt].T)))
+    pl.errorbar(kph+ddk,p,errp,color=color1,linestyle='None', marker='s', capsize=3, markersize=3)
+    pl.errorbar(kph+ddk,-p,errp,color=color1,linestyle='None', marker='s', capsize=1, markersize=1)
+    p = effbias[nt]**2*P2_fkp_dec[0,nt]
+    errp = np.sqrt(np.diag(np.cov(effbias[nt]**2*P2_fkp_dec[1:,nt].T)))
+    pl.errorbar(kph+2*ddk,p,errp,color=color1,linestyle='None', marker='^', capsize=3, markersize=3)
+    pl.errorbar(kph+2*ddk,-p,errp,color=color1,linestyle='None', marker='^', capsize=1, markersize=1)
+    #pl.plot(kph,gp*P0_model[nt],color=color1,linewidth=1.2)
+    pl.plot(kph,np.abs(P2_mean_dec[nt]),color=color1,linewidth=0.3)
+    pl.plot(kph,np.abs(P2_theory[nt]),color=color1,linewidth=1.0)
 
-# print()
-# print ("Fiducial bias of the mocks, compared with data, before deconvolution:")
-# for nt in range(ntracers):
-#     print ('Fiducial (mocks):', np.around(gal_bias[nt],3), '; based on these mocks, data bias should be:', np.around(normmonos[nt]*gal_bias[nt],3), ' (chi^2 = ', np.around(chi2_red[nt],3), ')')
 
-# print ()
+pl.legend()
+pl.xlabel(r'$k \, [h \, $Mpc$^{-1}]$',fontsize=14)
+pl.ylabel(r'$P^{(\ell)}(k) \, [h^{-3} \, $Mpc$^3]$',fontsize=14)
+pl.xlim([xlow,xhigh])
+pl.ylim([10,10**4.7])
+pl.title(r'Convolved, after shot noise subtraction',fontsize=16)
+pl.savefig(dir_figs + '/' + handle_estimates + '_errbar_Data_Conv_corr_kbar=' + str(kph_central) + '.pdf')
+pl.close('all')
+
+
+
+
+################################################################################
+
+# Update bias estimate
+kmin_bias = parameters_code['kmin_bias']
+kmax_bias = parameters_code['kmax_bias']
+kb_cut_min = np.argsort(np.abs(kph-kmin_bias))[0]
+kb_cut_max = np.argsort(np.abs(kph-kmax_bias))[0]
+
+def residuals(norm,data):
+    return norm*data[1] - data[0]
+
+# The measured monopoles and the flat-sky/theory monopoles are different; find relative normalization
+normmonos = np.zeros(ntracers)
+chi2_red = np.zeros(ntracers)
+
+for nt in range(ntracers):
+    err = np.sqrt(np.diag(np.cov(P0_data_dec[1:,nt,kb_cut_min:kb_cut_max].T)))
+    data = [ P0_data_dec[0,nt,kb_cut_min:kb_cut_max]/err , P0_mean_dec[nt,kb_cut_min:kb_cut_max]/err ]
+    this_norm, success = leastsq(residuals,1.0,args=data)
+#    print weights_mono
+    normmonos[nt] = np.sqrt(this_norm)
+#    norm_monos[nt] = np.mean(np.sqrt(P0_data_dec[0,nt,kb_cut_min:kb_cut_max]/P0_mean_dec[nt,kb_cut_min:kb_cut_max]))
+    chi2_red[nt] = np.sum(residuals(this_norm,data)**2)/(len(err)-1.)
+
+print()
+print ("Fiducial bias of the mocks, compared with data, before deconvolution:")
+for nt in range(ntracers):
+    print ('Fiducial (mocks):', np.around(gal_bias[nt],3), '; based on these mocks, data bias should be:', np.around(normmonos[nt]*gal_bias[nt],3), ' (chi^2 = ', np.around(chi2_red[nt],3), ')')
+
+print ()
 
 
 
