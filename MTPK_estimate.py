@@ -503,75 +503,78 @@ print()
 print ('----------------------------------')
 print()
 
-# #R This line makes some np variables be printed with less digits
-# np.set_printoptions(precision=6)
+#R This line makes some np variables be printed with less digits
+np.set_printoptions(precision=6)
 
 
-# #R Here are the k's that will be estimated (in grid units):
-# kgrid = grid.grid_k
-# kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
+#R Here are the k's that will be estimated (in grid units):
+kgrid = grid.grid_k
+kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
 
-# ### K_MAX_MIN
-# try:
-#     kmin_phys
-#     kminbar = kmin_phys*cell_size/2.0/np.pi
-# except:
-#     pass
+### K_MAX_MIN
+try:
+    kmin_phys = parameters_code['kmin_phys']
+    # kmin_phys
+    kminbar = kmin_phys*cell_size/2.0/np.pi
+except:
+    pass
 
-# ### K_MAX_MIN
-# num_binsk=np.int((kmaxbar-kminbar)/dk0)
-# dk_bar = dk0*np.ones(num_binsk)
-# k_bar = kminbar + dk0*np.arange(num_binsk)
-# r_bar = 1/2.0 + ((1.0*n_x)/num_binsk)*np.arange(num_binsk)
+### K_MAX_MIN
+num_binsk=np.int((kmaxbar-kminbar)/dk0)
+dk_bar = dk0*np.ones(num_binsk)
+k_bar = kminbar + dk0*np.arange(num_binsk)
+r_bar = 1/2.0 + ((1.0*n_x)/num_binsk)*np.arange(num_binsk)
 
-# #
-# # k in physical units
-# #
-# kph = k_bar*2*np.pi/cell_size
-
-
-# ##############################################
-# # Define the "effective bias" as the amplitude of the monopole
-# try:
-#     kdip_phys
-# except:
-#     kdip_phys = 1./(cell_size*(n_z_orig + n_z/2.))
-# else:
-#     print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
-
-# try:
-#     dip = np.asarray(gal_adip) * kdip_phys
-# except:
-#     dip = 0.0
-
-# pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-
-# monopoles = pk_mg.mono
-# quadrupoles = pk_mg.quad
-
-# try:
-#     pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-#     cross_monopoles = pk_mg_cross.monos
-#     cross_quadrupoles = pk_mg_cross.quads
-# except:
-#     cross_monopoles = np.zeros((len(k_camb),1))
-#     cross_quadrupoles = np.zeros((len(k_camb),1))
+#
+# k in physical units
+#
+kph = k_bar*2*np.pi/cell_size
 
 
-# # Compute effective dipole and bias of tracers
-# where_kph_central = np.argmin(np.abs(k_camb - kph_central))
+##############################################
+# Define the "effective bias" as the amplitude of the monopole
+n_z_orig = my_code_options.n_z_orig
+try:
+    kdip_phys
+except:
+    kdip_phys = 1./(cell_size*(n_z_orig + n_z/2.))
+else:
+    print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
 
-# effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
-# effbias = np.sqrt(monopoles[:,where_kph_central])
+try:
+    dip = np.asarray(gal_adip) * kdip_phys
+except:
+    dip = 0.0
 
-# try:
-#     data_bias
-#     #pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,len(data_bias)*[0],a_sig_tot,cH,zcentral)
-#     pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-#     monopoles_data = pk_mg_data.mono
-#     effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
-# except:
-#     pass
+pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+
+monopoles = pk_mg.mono
+quadrupoles = pk_mg.quad
+
+try:
+    pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+    cross_monopoles = pk_mg_cross.monos
+    cross_quadrupoles = pk_mg_cross.quads
+except:
+    cross_monopoles = np.zeros((len(k_camb),1))
+    cross_quadrupoles = np.zeros((len(k_camb),1))
+
+
+# Compute effective dipole and bias of tracers
+kph_central = my_code_options.kph_central
+where_kph_central = np.argmin(np.abs(k_camb - kph_central))
+
+effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
+effbias = np.sqrt(monopoles[:,where_kph_central])
+
+try:
+    data_bias
+    #pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,len(data_bias)*[0],a_sig_tot,cH,zcentral)
+    pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+    monopoles_data = pk_mg_data.mono
+    effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
+except:
+    pass
 
 
 
