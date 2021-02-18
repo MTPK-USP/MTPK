@@ -1714,34 +1714,34 @@ print ()
 
 
 
-# ################################################################################
-# # SAVE "bare" power spectra
+################################################################################
+# SAVE "bare" power spectra
 
-# save_P0_MT = np.reshape(P0_data_dec,(n_maps,num_binsk*ntracers))
-# save_P0_FKP= np.reshape(np.swapaxes(effbias**2*np.swapaxes(P0_fkp_dec,1,2),1,2),(n_maps,num_binsk*ntracers))
+save_P0_MT = np.reshape(P0_data_dec,(n_maps,num_binsk*ntracers))
+save_P0_FKP= np.reshape(np.swapaxes(effbias**2*np.swapaxes(P0_fkp_dec,1,2),1,2),(n_maps,num_binsk*ntracers))
 
-# save_P2_MT = np.reshape(P2_data_dec,(n_maps,num_binsk*ntracers))
-# save_P2_FKP= np.reshape(np.swapaxes(effbias**2*np.swapaxes(P2_fkp_dec,1,2),1,2),(n_maps,num_binsk*ntracers))
+save_P2_MT = np.reshape(P2_data_dec,(n_maps,num_binsk*ntracers))
+save_P2_FKP= np.reshape(np.swapaxes(effbias**2*np.swapaxes(P2_fkp_dec,1,2),1,2),(n_maps,num_binsk*ntracers))
 
-# np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_bare.dat',save_P0_FKP.T,fmt="%.2f")
-# np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MT_bare.dat',save_P0_MT.T,fmt="%.2f")
-# np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_bare.dat',save_P2_FKP.T,fmt="%.2f")
-# np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MT_bare.dat',save_P2_MT.T,fmt="%.2f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_bare.dat',save_P0_FKP.T,fmt="%.2f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MT_bare.dat',save_P0_MT.T,fmt="%.2f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_bare.dat',save_P2_FKP.T,fmt="%.2f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MT_bare.dat',save_P2_MT.T,fmt="%.2f")
 
-# if(ntracers>1):
-#     save_C0 = np.zeros((n_maps,num_binsk*ntracers*(ntracers-1)//2))
-#     save_C2 = np.zeros((n_maps,num_binsk*ntracers*(ntracers-1)//2))
-#     index=0
-#     for nt in range(ntracers):
-#         for ntp in range(nt+1,ntracers):
-#             var = effbias[nt]*effbias[ntp]*Cross0_dec[:,index]
-#             save_C0[:,index*num_binsk:(index+1)*num_binsk] = var
-#             var = effbias[nt]*effbias[ntp]*Cross2_dec[:,index]
-#             save_C2[:,index*num_binsk:(index+1)*num_binsk] = var
-#             index += 1
+if(ntracers>1):
+    save_C0 = np.zeros((n_maps,num_binsk*ntracers*(ntracers-1)//2))
+    save_C2 = np.zeros((n_maps,num_binsk*ntracers*(ntracers-1)//2))
+    index=0
+    for nt in range(ntracers):
+        for ntp in range(nt+1,ntracers):
+            var = effbias[nt]*effbias[ntp]*Cross0_dec[:,index]
+            save_C0[:,index*num_binsk:(index+1)*num_binsk] = var
+            var = effbias[nt]*effbias[ntp]*Cross2_dec[:,index]
+            save_C2[:,index*num_binsk:(index+1)*num_binsk] = var
+            index += 1
 
-# np.savetxt(dir_specs + '/' + handle_estimates + '_C0_bare.dat',save_C0.T,fmt="%3.4f")
-# np.savetxt(dir_specs + '/' + handle_estimates + '_C2_bare.dat',save_C2.T,fmt="%3.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_C0_bare.dat',save_C0.T,fmt="%3.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_C2_bare.dat',save_C2.T,fmt="%3.4f")
 
 
 # ################################################################################
