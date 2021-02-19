@@ -152,22 +152,23 @@ class cosmo:
         self.h          = default_params['h']
         self.Omega0_b   = default_params['Omega0_b']
         self.Omega0_cdm = default_params['Omega0_cdm']
-        self.Omega0_m   = self.Omega0_b + self.Omega0_cdm
+        self.Omega0_m   = default_params['Omega0_b'] + default_params['Omega0_cdm']
         self.Omega0_DE  = default_params['Omega0_DE']
-        self.Omega0_k   = 1 -self.Omega0_m - self.Omega0_DE
+        self.Omega0_k   = 1. - (default_params['Omega0_b'] + default_params['Omega0_cdm']) - default_params['Omega0_DE']
         self.n_s        = default_params['n_s']
         self.w0         = default_params['w0']
         self.w1         = default_params['w1']
         self.z_re       = default_params['z_re']
         self.flat       = default_params['flat']
-        self.gamma       = default_params['gamma']
-        self.c_light       = default_params['c_light']
+        self.gamma      = default_params['gamma']
+        self.c_light    = default_params['c_light']
         
-        if(self.flat):
-            if(self.Omega0_m + self.Omega0_DE != 1):
-                raise ValueError(r"This is not a flat cosmology, Omega0_m + Omega0_DE = {}".format(self.Omega0_m + self.Omega0_DE) )
-
         self.default_params = default_params
+
+        if(self.flat):
+            if(self.default_params['Omega0_m'] + self.default_params['Omega0_DE'] != 1):
+                raise ValueError(r"This is not a flat cosmology, Omega0_m + Omega0_DE = {}".format(self.default_params['Omega0_m'] + self.default_params['Omega0_DE']) )
+
     
     '''
         METHODS
@@ -188,11 +189,11 @@ class cosmo:
         '''
         Matgrowth function - evolving with z
         '''
-        Omega0_m = self.Omega0_m
-        Omega0_DE = self.Omega0_DE
-        w0 = self.w0
-        w1 = self.w1
-        gamma = self.gamma
+        Omega0_m = self.default_params['Omega0_m']
+        Omega0_DE = self.default_params['Omega0_DE']
+        w0 = self.default_params['w0']
+        w1 = self.default_params['w1']
+        gamma = self.default_params['gamma']
 
         a = 1/(1+z)
         w = w0 + (1-a)*w1
@@ -203,8 +204,8 @@ class cosmo:
         '''
         Matgrowth function - phenomenological
         '''
-        Omega0_m = self.Omega0_m
-        gamma = self.gamma
+        Omega0_m = self.default_params['Omega0_m']
+        gamma = self.default_params['gamma']
 
         return Omega0_m**gamma
 
@@ -230,12 +231,12 @@ class cosmo:
         if(h_units):
             h = 1
         else:
-            h = self.h
+            h = self.default_params['h']
 
-        Omega0_m   = self.Omega0_m
-        Omega0_DE  = self.Omega0_DE
-        w0         = self.w0
-        w1         = self.w1
+        Omega0_m   = self.default_params['Omega0_m']
+        Omega0_DE  = self.default_params['Omega0_DE']
+        w0         = self.default_params['w0']
+        w1         = self.default_params['w1']
 
         H0 = 100*h
         a  = 1 / (1+z)
@@ -264,7 +265,7 @@ class cosmo:
 
         '''
     
-        c = self.c_light
+        c = self.default_params['c_light']
     
         if(z==0):
             return 0
@@ -280,10 +281,10 @@ class cosmo:
         Comoving radial distance in units of h^-1 Mpc. Standalone.
         '''
 
-        Omegam = self.Omega0_m
-        OmegaDE = self.Omega0_DE
-        w0 = self.w0
-        w1 = self.w1
+        Omegam = self.default_params['Omega0_m']
+        OmegaDE = self.default_params['Omega0_DE']
+        w0 = self.default_params['w0']
+        w1 = self.default_params['w1']
 
         dz = 0.0002
         zint = np.arange(0.0,5.0,dz)

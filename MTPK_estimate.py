@@ -99,13 +99,13 @@ print(my_cosmology.cosmo_print())
 # print(physical_options)
 # # 3) Printing the cosmology without directly call for the method cosmo_print
 # print(my_cosmology.cosmo_print)
-print()
+# print()
 # ##########################
 # '''
 # Local changes
 # '''
 # #Example of changing cosmology
-# # physical_options['h'] = 0.72
+# physical_options['h'] = 0.72
 # # 1) Using the method cosmo_print
 # print(my_cosmology.cosmo_print())
 # # # 2) Using dictionary directly
@@ -115,7 +115,6 @@ print()
 # print()
 # # print()
 # ##########################
-sys.exit(-1)
 
 # #Testing methods of cosmos class
 # print("Testing f_evolving(z = 1)", my_cosmology.f_evolving(1.0) )
@@ -128,6 +127,7 @@ sys.exit(-1)
 # print("Testing cosmological distance: z = 1:", my_cosmology.comoving(1., False) )
 # print('chi_h: z = 0:', my_cosmology.chi_h(0.0))
 # print('chi_h: z = 1:', my_cosmology.chi_h(1.0))
+sys.exit(-1)
 
 my_code_options = code_parameters() #This stantiates the class
 parameters_code = my_code_options.default_params #This returns a dictionary with all the default parameters
