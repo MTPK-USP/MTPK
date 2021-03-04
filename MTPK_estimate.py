@@ -55,6 +55,9 @@ from camb_spec import camb_spectrum
 from cosmo_funcs import matgrow, H
 from analytical_selection_function import *
 import grid3D as gr
+#Te following two classes have the inttention to substitute the old program of inputs
+from cosmo import cosmo #class to cosmological parameter
+from code_options import code_parameters #class to code options
 
 
 
@@ -76,6 +79,94 @@ def est_f(m,q):
     delta=np.sqrt(35.*m**2 + 10.*m*q - 7.*q**2)
     return 0.25*np.sqrt(7./3.)*np.sqrt(35*m+5*q-np.sqrt(35.)*delta)
 
+#####################################################
+# Parameters for this run
+#####################################################
+my_cosmology = cosmo(Omega0_DE = 0.7, Omega0_b = 0.05, flat = False) #This stantiates the class with default parameters
+'''
+To change the cosmological parameters at all, change in this way:
+my_cosmology = cosmo(x = y)
+where x is the parameter and y its new value
+'''
+physical_options = my_cosmology.default_params #This returns a dictionary with all the default parameters
+
+print("##########################")
+print('The cosmology is')
+print("##########################")
+# 1) Using the method cosmo_print
+print(my_cosmology.cosmo_print())
+sys.exit(-1)
+# # 2) Using dictionary directly:
+# print(physical_options)
+# # 3) Printing the cosmology without directly call for the method cosmo_print
+# print(my_cosmology.cosmo_print)
+
+# print()
+# ##########################
+# '''
+# Local changes
+# '''
+# #Example of changing cosmology
+# physical_options['h'] = 0.72
+# # 1) Using the method cosmo_print
+# print(my_cosmology.cosmo_print())
+# # # 2) Using dictionary directly
+# # print(physical_options)
+# # # 3) Printing the cosmology without directly call for the method cosmo_print
+# # print(my_cosmology.cosmo_print)
+# print()
+# # print()
+# ##########################
+
+# #Testing methods of cosmos class
+# print("Testing f_evolving(z = 1)", my_cosmology.f_evolving(1.0) )
+# print("Testing f_phenomenological", my_cosmology.f_phenomenological() )
+# print("Testing H(z = 0)", my_cosmology.H(0, True) )
+# print("Testing H(z = 0)", my_cosmology.H(0, False) )
+# print("Testing cosmological distance: z = 0:", my_cosmology.comoving(0, True) )
+# print("Testing cosmological distance: z = 0:", my_cosmology.comoving(0, False) )
+# print("Testing cosmological distance: z = 1:", my_cosmology.comoving(1., True) )
+# print("Testing cosmological distance: z = 1:", my_cosmology.comoving(1., False) )
+# print('chi_h: z = 0:', my_cosmology.chi_h(0.0))
+# print('chi_h: z = 1:', my_cosmology.chi_h(1.0))
+
+my_code_options = code_parameters() #This stantiates the class
+parameters_code = my_code_options.default_params #This returns a dictionary with all the default parameters
+print("##########################")
+print('The code options are')
+print("##########################")
+'''
+To change the code parameters at all, change in this way:
+my_code_options = code_parameter(x = y)
+where x is the parameter and y its new value
+'''
+# 1) Using the method parameters_print
+print(my_code_options.parameters_print())
+# # 2) Using dictionary directly
+# print(parameters_code)
+# # 3) Printing the cosmology without directly call for the method parameters_print
+# print(my_code_options.parameters_print)
+print()
+# ##########################
+# '''
+# Local changes
+# '''
+# #Example of code parameters
+# parameters_code['cell_size'] = 0.9
+# # 1) Using the method parameters_print
+# print(my_code_options.parameters_print())
+# # # 2) Using dictionary directly
+# # print(parameters_code)
+# # # 3) Printing the cosmology without directly call for the method cosmo_print
+# # print(my_code_options.parameters_print)
+# print()
+##########################
+
+#Some other cosmological quantities
+h = physical_options['h']
+H0 = h*100.
+clight = physical_options['c_light']
+cH = clight*h/my_cosmology.H(physical_options['zcentral'], False) # c/H(z) , in units of h^-1 Mpc
 
 
 

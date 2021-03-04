@@ -26,7 +26,7 @@ class cosmo:
             use the default parameter defined below
 
             h : float
-                Hubble constant parametrization H0 = 100*h
+                Hubble constant parametrization H0 = 100*h at redshift 0
 
             Omega0_b : float
                 Baryon density fraction at refshift 0
@@ -47,8 +47,8 @@ class cosmo:
                 Primordial Spectrum amplitude
 
             ln10e10AsA : float
-                It is the neperian logarithmic of the Spectrum amplitude
-                times 1e10
+                It is the neperian logarithmic of the Spectrum 
+                amplitude times 1e10
             
             n_s : float 
                 Primordial spectrum spectral index
@@ -64,12 +64,12 @@ class cosmo:
                 Reionization redshift
             
             flat : Bool
-                Boolean variable controling whether the user wishes to 
-                enforce a flat cosmology
+                Boolean variable controling whether the user wishes
+                to enforce a flat cosmology
                 
             gamma : float
-            	Parameter used in the phenomenological matgrowth factor: 
-                f = Omega0_m^gamma
+            	Parameter used in the phenomenological matgrowth
+            	factor: f = Omega0_m^gamma
 
             matgrowcentral : float
             	Parameter of matgrowth.
@@ -97,8 +97,8 @@ class cosmo:
                 expected
 
             ValueError 
-                If user selects a flat cosmology but inputs parameters 
-                inconsistent with this choice
+                If user selects a cosmology which inputs
+                parameters are inconsistent
 
 
         '''
@@ -106,9 +106,9 @@ class cosmo:
                 'h'              : 0.678,
                 'Omega0_b'       : 0.048206,
                 'Omega0_cdm'     : 0.2589,
-                'Omega0_m'       : 0.2589 + 0.048206,
+                'Omega0_m'       : 0.307106,
                 'Omega0_k'       : 0.0,
-                'Omega0_DE'      : 1. - 0.2589 - 0.048206,
+                'Omega0_DE'      : 0.692894,
                 'A_s'            : 2.1867466842075255e-9,
                 'ln10e10AsA'     : np.log(2.1867466842075255e-9*1e10),
                 'n_s'            : 0.96,
@@ -124,6 +124,11 @@ class cosmo:
 
         self.A_s        = default_params['A_s']
         self.ln10e10AsA = default_params['ln10e10AsA']
+        self.Omega0_b   = default_params['Omega0_b']
+        self.Omega0_cdm = default_params['Omega0_cdm']
+        self.Omega0_m = default_params['Omega0_m']
+        self.Omega0_DE = default_params['Omega0_DE']
+        self.Omega0_k = default_params['Omega0_k']
 
         if 'A_s' in kwargs.keys() and 'ln10e10AsA' in kwargs.keys():
             aux_A_s = np.exp(kwargs['ln10e10AsA'])*1e-10
@@ -132,6 +137,16 @@ class cosmo:
             aux_ln10e10AsA = np.log(kwargs['A_s']*1e10)
             if not np.allclose(aux_ln10e10AsA, kwargs['ln10e10AsA'], rtol = 1e-13, atol = 1e-13):
                 raise ValueError("Your keys A_s and ln10e10AsA are incompatible")
+
+        if 'Omega0_b' in kwargs.keys() and 'Omega0_cdm' in kwargs.keys() and 'Omega0_m' in kwargs.keys():
+            aux_Omega0_m = kwargs['Omega0_b'] + kwargs['Omega0_cdm']
+            if not np.allclose(aux_Omega0_m, kwargs['Omega0_m'], rtol = 1e-13, atol = 1e-13):
+                raise ValueError("Your keys Omega0_b, Omega0_cdm and Omega0_m are incompatible")
+
+        if 'Omega0_m' in kwargs.keys() and 'Omega0_b' not in kwargs.keys() and 'Omega0_cdm' not in kwargs.keys():
+            aux_Omega0_m = self.Omega0_b + self.Omega0_cdm
+            if not np.allclose(aux_Omega0_m, kwargs['Omega0_m'], rtol = 1e-13, atol = 1e-13):
+                raise ValueError("Please, define your values for Omega0_b and Omega0_cdm in order that Omega0_m are its sum.")
 
         for key, value in kwargs.items():
             if key not in default_params.keys():
@@ -148,6 +163,56 @@ class cosmo:
             self.ln10e10AsA = default_params['ln10e10AsA']
             self.A_s = np.exp(self.ln10e10AsA)*1e-10
             default_params['A_s'] = self.A_s
+
+        if self.Omega0_DE != default_params['Omega0_DE'] and 'Omega0_k' not in kwargs.keys():
+            self.Omega0_DE = default_params['Omega0_DE']
+            default_params['Omega0_k'] = 1. - self.Omega0_m - self.Omega0_DE
+        if self.Omega0_b != default_params['Omega0_b'] and 'Omega0_m' not in kwargs.keys() and 'Omega0_k' not in kwargs.keys() and 'Omega0_DE' not in kwargs.keys():
+            self.Omega0_b = default_params['Omega0_b']
+            self.Omega0_m = self.Omega0_b + self.Omega0_cdm
+            default_params['Omega0_m'] = self.Omega0_m
+            default_params['Omega0_k'] = 1. - self.Omega0_m - self.Omega0_DE
+        if self.Omega0_b != default_params['Omega0_b'] and self.Omega0_DE != default_params['Omega0_DE'] and 'Omega0_m' not in kwargs.keys() and 'Omega0_k' not in kwargs.keys():
+            self.Omega0_b = default_params['Omega0_b']
+            self.Omega0_DE = default_params['Omega0_DE']
+            self.Omega0_m = self.Omega0_b + self.Omega0_cdm
+            default_params['Omega0_m'] = self.Omega0_m
+            default_params['Omega0_k'] = 1. - self.Omega0_m - self.Omega0_DE
+        if self.Omega0_cdm != default_params['Omega0_cdm'] and 'Omega0_m' not in kwargs.keys() and 'Omega0_k' not in kwargs.keys() and 'Omega0_DE' not in kwargs.keys():
+            self.Omega0_cdm = default_params['Omega0_cdm']
+            self.Omega0_m = self.Omega0_b + self.Omega0_cdm
+            default_params['Omega0_m'] = self.Omega0_m
+            default_params['Omega0_k'] = 1. - self.Omega0_m - self.Omega0_DE
+        if self.Omega0_cdm != default_params['Omega0_cdm'] and self.Omega0_DE != default_params['Omega0_DE'] and 'Omega0_m' not in kwargs.keys() and 'Omega0_k' not in kwargs.keys():
+            self.Omega0_cdm = default_params['Omega0_cdm']
+            self.Omega0_DE = default_params['Omega0_DE']
+            self.Omega0_m = self.Omega0_b + self.Omega0_cdm
+            default_params['Omega0_m'] = self.Omega0_m
+            default_params['Omega0_k'] = 1. - self.Omega0_m - self.Omega0_DE
+        if self.Omega0_b != default_params['Omega0_b'] and self.Omega0_cdm != default_params['Omega0_cdm'] and 'Omega0_m' not in kwargs.keys() and 'Omega0_DE' not in kwargs.keys() and 'Omega0_k' not in kwargs.keys():
+            self.Omega0_b = default_params['Omega0_b']
+            self.Omega0_cdm = default_params['Omega0_cdm']
+            self.Omega0_m = self.Omega0_b + self.Omega0_cdm
+            default_params['Omega0_m'] = self.Omega0_m
+            default_params['Omega0_k'] = 1. - self.Omega0_m - self.Omega0_DE
+        if self.Omega0_b != default_params['Omega0_b'] and self.Omega0_cdm != default_params['Omega0_cdm'] and self.Omega0_DE != default_params['Omega0_DE'] and 'Omega0_m' not in kwargs.keys() and 'Omega0_k' not in kwargs.keys():
+            self.Omega0_b = default_params['Omega0_b']
+            self.Omega0_cdm = default_params['Omega0_cdm']
+            self.Omega0_m = self.Omega0_b + self.Omega0_cdm
+            self.Omega0_DE = default_params['Omega0_DE']
+            default_params['Omega0_m'] = self.Omega0_m
+            default_params['Omega0_k'] = 1. - self.Omega0_m - self.Omega0_DE
+        if self.Omega0_m != default_params['Omega0_m'] and self.Omega0_b != default_params['Omega0_b'] and self.Omega0_cdm != default_params['Omega0_cdm'] and 'Omega0_DE' not in kwargs.keys() and 'Omega0_k' not in kwargs.keys():
+            self.Omega0_b = default_params['Omega0_b']
+            self.Omega0_cdm = default_params['Omega0_cdm']
+            self.Omega0_m = default_params['Omega0_m']
+            default_params['Omega0_k'] = 1. - self.Omega0_m - self.Omega0_DE
+        if self.Omega0_m != default_params['Omega0_m'] and self.Omega0_b != default_params['Omega0_b'] and self.Omega0_cdm != default_params['Omega0_cdm'] and self.Omega0_DE != default_params['Omega0_DE'] and 'Omega0_k' not in kwargs.keys():
+            self.Omega0_b = default_params['Omega0_b']
+            self.Omega0_cdm = default_params['Omega0_cdm']
+            self.Omega0_m = default_params['Omega0_m']
+            self.Omega0_DE = default_params['Omega0_DE']
+            default_params['Omega0_k'] = 1. - self.Omega0_m - self.Omega0_DE
 
         self.h          = default_params['h']
         self.Omega0_b   = default_params['Omega0_b']
