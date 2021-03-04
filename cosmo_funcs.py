@@ -22,7 +22,7 @@ def chi_h_vec(Omegam, OmegaDE, w0, w1, zend, dz):
     return( np.cumsum(dchi) ) 
 
 # Interpolation function for chi(z) . 
-def chi_h_interp(chi_h_vector,zend,dz,z):
+def chi_h_interp(chi_h_vector, zend, dz, z):
 	zint=np.arange(0.0,zend+dz,dz)
 	return np.interp(z,zint,chivec)
 

@@ -21,7 +21,7 @@ class code_parameters:
     True -> for test simulation
     False -> for real data
 
-    use_mak : bool
+    use_mask : bool
 
     True -> to include some mask to data
     False -> otherwise
