@@ -989,9 +989,6 @@ print ('Starting power spectra estimation')
 # Original (convolved) spectra:
 P0_data = np.zeros((n_maps,ntracers,num_binsk))
 P2_data = np.zeros((n_maps,ntracers,num_binsk))
-# Deconvolved spectra (divided by the window function):
-P0_data_dec = np.zeros((n_maps,ntracers,num_binsk))
-P2_data_dec = np.zeros((n_maps,ntracers,num_binsk))
 
 
 # Traditional (FKP) method
@@ -999,11 +996,6 @@ P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
 P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
 Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
 Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-
-P0_fkp_dec = np.zeros((n_maps,ntracers,num_binsk))
-P2_fkp_dec = np.zeros((n_maps,ntracers,num_binsk))
-Cross0_dec = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-Cross2_dec = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
 
 # Covariance
 ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))

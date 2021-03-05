@@ -16,15 +16,8 @@ class code_parameters:
 
     use_mask : bool
 
-    True -> to include some mask to data
+    True -> to include a mask to data
     False -> otherwise
-
-    use_window_function : True or False
-       
-	=> Eliminate this and 'dec' spectra!
-	
-    True -> will obtain window function for all tracers from file
-    False -> will normalize data ("dec") to theoretical spectra ("model")
         
     mass_fun_file : string
     Path and name of the file that keeps the mass function
@@ -174,7 +167,6 @@ class code_parameters:
     def __init__(self, **kwargs):
         default_params = {
             'use_mask'             : False,
-            'use_window_function'  : False,
             'mass_fun_file'        : "inputs/ExSHalos_MF.dat",
             'halo_bias_file'       : "inputs/ExSHalos_bias.dat",
             #Mudar para o caso abaixo
@@ -226,7 +218,6 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
-        self.use_window_function = default_params['use_window_function']
         self.mass_fun_file = default_params['mass_fun_file']
         self.halo_bias_file = default_params['halo_bias_file']
         self.nhalos = default_params['nhalos']
