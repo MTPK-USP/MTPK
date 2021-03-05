@@ -45,9 +45,6 @@ class code_parameters:
     False -> Otherwise
 
     sel_fun_file : string
-   
-    => Include right after sel_fun_data
-   
     Name of the map of the selection function
         
     mf_to_nbar : string
@@ -177,6 +174,7 @@ class code_parameters:
             'n_y_orig'             : -64.,
             'n_z_orig'             : 10000.,
             'sel_fun_data'         : False,
+            'sel_fun_file'         : "sel_fun-N128_halos.hdf5",
             # Tirar o mf_to_nbar
             'mf_to_nbar'           : "inputs/ExSHalos_MF.dat",
             'kmin_bias'            : 0.05,
@@ -225,6 +223,7 @@ class code_parameters:
         self.n_y_orig = default_params['n_y_orig']
         self.n_z_orig = default_params['n_z_orig']
         self.sel_fun_data = default_params['sel_fun_data']
+        self.sel_fun_file = default_params['sel_fun_file']
         self.mf_to_nbar = default_params['mf_to_nbar']
         self.cell_low_count_thresh = default_params['cell_low_count_thresh']
         self.mult_sel_fun = default_params['mult_sel_fun']
