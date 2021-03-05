@@ -27,13 +27,7 @@ class code_parameters:
             
     nhalos : integer
     Number of halo bins
-            
-    halo_ids : list of strings
-	
-	=> Eliminate this! See gal_ids eliminate too
-	
-    A list of strings to identify each halo bin
-            
+                        
     n_maps : integer
     Number maps
             
