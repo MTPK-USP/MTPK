@@ -19,11 +19,11 @@ class code_parameters:
     True -> to include a mask to data
     False -> otherwise
         
-    mass_fun_file : string
-    Path and name of the file that keeps the mass function
+    mass_fun : ndarray of floats
+    It is a list that keeps the mass function of each tracer
             
-    halo_bias_file : string
-    Path and name of the file that keeps the halo bias
+    halo_bias : ndarray of floats
+    It is a list that keeps the bias of each tracer
             
     nhalos : integer
     Number of halo bins
@@ -46,13 +46,7 @@ class code_parameters:
 
     sel_fun_file : string
     Name of the map of the selection function
-        
-    mf_to_nbar : string
-	
-	=> Remove it!
-	
-    Path and name of the mass function file
-                
+                        
     cell_low_count_thresh : float
     If low-count cells must be masked out, then cells with counts below this threshold will be eliminated from the mocks AND from the data
 
@@ -158,11 +152,8 @@ class code_parameters:
     def __init__(self, **kwargs):
         default_params = {
             'use_mask'             : False,
-            'mass_fun_file'        : "inputs/ExSHalos_MF.dat",
-            'halo_bias_file'       : "inputs/ExSHalos_bias.dat",
-            #Mudar para o caso abaixo
-            # 'mass_fun'             : [0.001, 0.002, 0.003],
-            # 'halo_bias'            : [3., 2.0, 1.5],
+            'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),
+            'halo_bias'            : np.array([1.572, 1.906, 2.442]),
             'nhalos'               : 3,
             'halos_ids'            : ['h1', 'h2', 'h3'],
             'n_maps'               : 3,
@@ -175,8 +166,6 @@ class code_parameters:
             'n_z_orig'             : 10000.,
             'sel_fun_data'         : False,
             'sel_fun_file'         : "sel_fun-N128_halos.hdf5",
-            # Tirar o mf_to_nbar
-            'mf_to_nbar'           : "inputs/ExSHalos_MF.dat",
             'kmin_bias'            : 0.05,
             'kmax_bias'            : 0.15,
             'kph_central'          : 0.1,
@@ -210,8 +199,8 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
-        self.mass_fun_file = default_params['mass_fun_file']
-        self.halo_bias_file = default_params['halo_bias_file']
+        self.mass_fun = default_params['mass_fun']
+        self.halo_bias = default_params['halo_bias']
         self.nhalos = default_params['nhalos']
         self.halos_ids = default_params['halos_ids']
         self.n_maps = default_params['n_maps']
@@ -224,7 +213,6 @@ class code_parameters:
         self.n_z_orig = default_params['n_z_orig']
         self.sel_fun_data = default_params['sel_fun_data']
         self.sel_fun_file = default_params['sel_fun_file']
-        self.mf_to_nbar = default_params['mf_to_nbar']
         self.cell_low_count_thresh = default_params['cell_low_count_thresh']
         self.mult_sel_fun = default_params['mult_sel_fun']
         self.shift_sel_fun = default_params['shift_sel_fun']
@@ -245,8 +233,8 @@ class code_parameters:
         #Computed Parameters
         self.ntracers = self.nhalos
         self.tracer_ids = self.halos_ids
-        self.bias_file = self.halo_bias_file
-        self.nbar = list(np.loadtxt(self.mf_to_nbar)*(self.cell_size**3))
+        self.bias_file = self.halo_bias
+        self.nbar = self.mass_fun*(self.cell_size**3)
         self.ncentral = self.ntracers*[20.0]
         self.nsigma = self.ntracers*[1000000.0]
         self.shot_fudge = self.nhalos*[0.]

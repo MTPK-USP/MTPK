@@ -341,7 +341,7 @@ pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
 #####################################################
 #####################################################
 
-gal_bias = np.loadtxt(my_code_options.bias_file)
+gal_bias = my_code_options.bias_file
 adip = my_code_options.adip
 # try:
 #     gal_bias = np.loadtxt(input_dir + "/" + bias_file)
@@ -393,7 +393,9 @@ if sel_fun_data:
         sys.exit(-1)
 else:
     try:
-        mass_fun = mult_sel_fun*np.loadtxt(input_dir + "/" + mass_fun_file)
+        mass_fun = parameters_code['mass_fun']
+        mult_sel_fun = parameters_code['mult_sel_fun']
+        mass_fun = mult_sel_fun*mass_fun
         nbar = mass_fun*cell_size**3
         ncentral = 10.0*nbar**0
         nsigma = 10000.0*nbar**0 
