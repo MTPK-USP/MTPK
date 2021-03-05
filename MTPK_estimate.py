@@ -82,7 +82,7 @@ def est_f(m,q):
 #####################################################
 # Parameters for this run
 #####################################################
-my_cosmology = cosmo(Omega0_DE = 0.7, Omega0_b = 0.05, flat = False) #This stantiates the class with default parameters
+my_cosmology = cosmo() #This stantiates the class with default parameters
 '''
 To change the cosmological parameters at all, change in this way:
 my_cosmology = cosmo(x = y)
@@ -95,26 +95,25 @@ print('The cosmology is')
 print("##########################")
 # 1) Using the method cosmo_print
 print(my_cosmology.cosmo_print())
-sys.exit(-1)
 # # 2) Using dictionary directly:
 # print(physical_options)
 # # 3) Printing the cosmology without directly call for the method cosmo_print
 # print(my_cosmology.cosmo_print)
 
-# print()
+print()
 # ##########################
 # '''
 # Local changes
 # '''
 # #Example of changing cosmology
 # physical_options['h'] = 0.72
-# # 1) Using the method cosmo_print
-# print(my_cosmology.cosmo_print())
+# # # 1) Using the method cosmo_print
+# # print(my_cosmology.cosmo_print())
 # # # 2) Using dictionary directly
 # # print(physical_options)
 # # # 3) Printing the cosmology without directly call for the method cosmo_print
 # # print(my_cosmology.cosmo_print)
-# print()
+# # print()
 # # print()
 # ##########################
 
@@ -169,7 +168,6 @@ clight = physical_options['c_light']
 cH = clight*h/my_cosmology.H(physical_options['zcentral'], False) # c/H(z) , in units of h^-1 Mpc
 
 
-
 #####################################################
 # Load specs for this run
 #####################################################
@@ -185,19 +183,22 @@ print()
 print('Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates)
 print()
 
-# Load those properties
-input_filename = glob.glob('inputs/' + handle_estimates + '.py')
-if (len(input_filename)==0) or (len(input_filename)>2) :
-    print ('Input file not found!')
-    print ('Check on /inputs.  Aborting now...')
-    sys.exit(-1)
+# # Load those properties
+# input_filename = glob.glob('inputs/' + handle_estimates + '.py')
+# if (len(input_filename)==0) or (len(input_filename)>2) :
+#     print ('Input file not found!')
+#     print ('Check on /inputs.  Aborting now...')
+#     sys.exit(-1)
 
-exec ("from " + handle_estimates + " import *")
+# exec ("from " + handle_estimates + " import *")
 
 # Directory with data and simulated maps
 dir_maps = this_dir + '/maps/sims/' + handle_sims
 
 # Directory with data
+use_mask = parameters_code['use_mask']
+sims_only = parameters_code['sims_only']
+sel_fun_data = parameters_code['sel_fun_data']
 dir_data = this_dir + '/maps/data/' + handle_data
 
 
@@ -211,7 +212,8 @@ if not os.path.exists(dir_figs):
 
 
 # Save estimations for each assumed k_phys in subdirectories named after k_phys
-strkph = str(kph_central)
+# strkph = str(kph_central)
+strkph = str(parameters_code['kph_central'])
 
 dir_specs += '/k=' + strkph
 dir_figs  += '/k=' + strkph
@@ -237,40 +239,63 @@ else:
         print ('Aborting now...')
         sys.exit(-1)
 
+# ########################## Some other cosmological quantities ######################################
+# Omegam = Omegac + Omegab
+# OmegaDE = 1. - Omegam - Omegak
+# h = H0/100.
+# clight = 299792.46
+# cH = 299792.458*h/H(H0, Omegam, OmegaDE, w0, w1, zcentral)  # c/H(z) , in units of h^-1 Mpc
 
-########################## Some other cosmological quantities ######################################
-Omegam = Omegac + Omegab
-OmegaDE = 1. - Omegam - Omegak
-h = H0/100.
-clight = 299792.46
-cH = 299792.458*h/H(H0, Omegam, OmegaDE, w0, w1, zcentral)  # c/H(z) , in units of h^-1 Mpc
+# # Scalar amplitude may be defined by log
+# try:
+#     A_s
+# except:
+#     A_s = np.exp(ln10e10ASA)*1.e-10
 
-# Scalar amplitude may be defined by log
-try:
-    A_s
-except:
-    A_s = np.exp(ln10e10ASA)*1.e-10
+# try:
+#     gamma
+# except:
+#     gamma = 0.55
 
-try:
-    gamma
-except:
-    gamma = 0.55
+# try:
+#     matgrowcentral
+# except:
+#     matgrowcentral = matgrow(Omegam,OmegaDE,w0,w1,zcentral,gamma)
+# else:
+#     print('ATTENTION: pre-defined (on input) matter growth rate =' , matgrowcentral)
 
-try:
-    matgrowcentral
-except:
-    matgrowcentral = matgrow(Omegam,OmegaDE,w0,w1,zcentral,gamma)
-else:
-    print('ATTENTION: pre-defined (on input) matter growth rate =' , matgrowcentral)
+# # Velocity dispersion. vdisp is defined on inputs with units of km/s
+# vdisp = np.asarray(vdisp) #km/s
+# sigma_v = vdisp/H(100,Omegam,OmegaDE,-1,0.0,zcentral) #Mpc/h
+# a_vdisp = vdisp/clight #Adimensional vdisp
+
+# # Redshift errors. sigz_est is defined on inputs, and is adimensional
+# sigz_est = np.asarray(sigz_est)
+# sigma_z = sigz_est*clight/H(100,Omegam,OmegaDE,-1,0.0,zcentral) # Mpc/h
+
+Omegam = physical_options['Omega0_m']
+OmegaDE = physical_options['Omega0_DE']
+Omegab = physical_options['Omega0_b']
+Omegac = physical_options['Omega0_cdm']
+A_s = physical_options['A_s']
+gamma = physical_options['gamma']
+matgrowcentral = physical_options['matgrowcentral']
+w0 = physical_options['w0']
+w1 = physical_options['w1']
+z_re = physical_options['z_re']
+zcentral = physical_options['zcentral']
+n_SA = physical_options['n_s']
 
 # Velocity dispersion. vdisp is defined on inputs with units of km/s
-vdisp = np.asarray(vdisp) #km/s
-sigma_v = vdisp/H(100,Omegam,OmegaDE,-1,0.0,zcentral) #Mpc/h
-a_vdisp = vdisp/clight #Adimensional vdisp
+vdisp = np.asarray(my_code_options.vdisp) #km/s
+sigma_v = my_code_options.vdisp/my_cosmology.H(physical_options['zcentral'], False) #Mpc/h
+a_vdisp = vdisp/physical_options['c_light'] #Adimensional vdisp
 
 # Redshift errors. sigz_est is defined on inputs, and is adimensional
-sigz_est = np.asarray(sigz_est)
-sigma_z = sigz_est*clight/H(100,Omegam,OmegaDE,-1,0.0,zcentral) # Mpc/h
+sigz_est = np.asarray(my_code_options.sigz_est)
+sigma_z = sigz_est*physical_options['c_light']/my_cosmology.H(physical_options['zcentral'], False) # Mpc/h
+
+whichspec = parameters_code['whichspec']
 
 # Joint factor considering v dispersion and z error
 sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
@@ -279,17 +304,18 @@ a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
 ###################################################################################################
 
 
-
 #############Calling CAMB for calculations of the spectra#################
 print('Beggining CAMB calculations\n')
 
 # It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
-try:
-    k_min_camb
-    k_max_camb
-except:
-    k_min_camb = 1.0e-4
-    k_max_camb = 1.0e1
+k_min_camb = parameters_code['k_min_CAMB']
+k_max_camb = parameters_code['k_max_CAMB']
+# try:
+#     k_min_camb
+#     k_max_camb
+# except:
+#     k_min_camb = 1.0e-4
+#     k_max_camb = 1.0e1
 
 nklist = 1000
 k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
@@ -316,26 +342,37 @@ pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
 #####################################################
 #####################################################
 
-try:
-    gal_bias = np.loadtxt(input_dir + "/" + bias_file)
-except:
-    print("Could not find bias file:", bias_file,". Please check your /inputs directory.")
-    print("Aborting now...")
-    sys.exit(-1)
+gal_bias = np.loadtxt(my_code_options.bias_file)
+adip = my_code_options.adip
+# try:
+#     gal_bias = np.loadtxt(input_dir + "/" + bias_file)
+# except:
+#     print("Could not find bias file:", bias_file,". Please check your /inputs directory.")
+#     print("Aborting now...")
+#     sys.exit(-1)
 
 gal_adip = np.asarray(adip)
 gal_sigz_est = np.asarray(sigz_est)
 gal_vdisp = np.asarray(vdisp)
 a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
 
-
 #####################################################
 # Generate real- and Fourier-space grids for FFTs
 #####################################################
-# print 'Generating the k-space Grid...'
+
+print('Generating the k-space Grid...')
+
+n_x = parameters_code['n_x']
+n_y = parameters_code['n_y']
+n_z = parameters_code['n_z']
+cell_size = parameters_code['cell_size']
+ntracers = my_code_options.ntracers
+nbar = my_code_options.nbar
+ncentral = my_code_options.ncentral
+nsigma = my_code_options.nsigma
+
 L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size
 grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)
-
 
 # Selection function
 # If given by data
@@ -376,6 +413,7 @@ else:
         # Linear form:
         #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
 
+        
 if use_mask:
     try:
         h5map = h5py.File(dir_data + '/' + mask_filename,'r')
@@ -393,7 +431,7 @@ if use_mask:
         sys.exit(-1)
     n_bar_matrix_fid = n_bar_matrix_fid * mask
 
-
+n_maps = parameters_code['n_maps']
 if sims_only:
     mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
     if len(mapnames_sims)==0 :
@@ -439,10 +477,12 @@ else:
         sys.exit(-1)
 
 
+
 ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
 ## We will treat this as an additional MASK (thresh_mask) for data and mocks
 try:
-    cell_low_count_thresh
+    cell_low_count_thresh = parameters_code['cell_low_count_thresh']
+    # cell_low_count_thresh
     thresh_mask = np.ones_like(n_bar_matrix_fid)
     thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
     n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
@@ -465,7 +505,6 @@ else:
 print()
 print ('----------------------------------')
 print()
-
 
 
 
@@ -497,7 +536,8 @@ kk_bar = np.fft.fftfreq(nn)
 #  Maximum ***frequency*** allowed
 #  Nyquist frequency is 0.5 (in units of 1/cell)
 try:
-    kmax_phys
+    kmax_phys = parameters_code['kmax_phys']
+    # kmax_phys
     kmaxbar = min(0.5,kmax_phys*cell_size/2.0/np.pi)
     kmax_phys = kmaxbar*2*np.pi/cell_size
 except:
@@ -515,6 +555,7 @@ dk0 = 3.0/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
 dk_phys = 2.0*np.pi*dk0/cell_size
 
 # Ensure that the binning is at least a certain size
+dkph_bin = parameters_code['dkph_bin']
 dk_phys = max(dk_phys,dkph_bin)
 # Fourier bins in units of frequency
 dk0 = dk_phys*cell_size/2.0/np.pi
@@ -538,7 +579,8 @@ kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
 
 ### K_MAX_MIN
 try:
-    kmin_phys
+    kmin_phys = parameters_code['kmin_phys']
+    # kmin_phys
     kminbar = kmin_phys*cell_size/2.0/np.pi
 except:
     pass
@@ -555,8 +597,10 @@ r_bar = 1/2.0 + ((1.0*n_x)/num_binsk)*np.arange(num_binsk)
 kph = k_bar*2*np.pi/cell_size
 
 
+
 ##############################################
 # Define the "effective bias" as the amplitude of the monopole
+n_z_orig = my_code_options.n_z_orig
 try:
     kdip_phys
 except:
@@ -584,6 +628,7 @@ except:
 
 
 # Compute effective dipole and bias of tracers
+kph_central = my_code_options.kph_central
 where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 
 effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
@@ -699,6 +744,7 @@ except:
             crossquad_model[:,index] = cross_quadrupoles[index]*Pk_camb
             crossquad_theory[:,index] = cross_quadrupoles[index]*Pk_camb
             index += 1
+
 
 
 
@@ -1022,6 +1068,11 @@ effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
 
 print( "Initializing multi-tracer estimation toolbox...")
+
+n_x_orig = parameters_code['n_x_orig']
+n_y_orig = parameters_code['n_y_orig']
+n_z_orig = parameters_code['n_z_orig']
+
 fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
 
 # If data bias is different from mocks
@@ -1050,6 +1101,7 @@ print ("... done. Starting computations for each map (box) now.")
 print()
 
 #################################
+
 
 est_bias_fkp = np.zeros(ntracers)
 est_bias_mt = np.zeros(ntracers)
@@ -1233,6 +1285,10 @@ print ('Applying mass assignement window function corrections...')
 ################################################################################
 #############################################################################
 # 1) Jing (cells) corrections
+
+jing_dec_sims = my_code_options.jing_dec_sims
+power_jing_sims = my_code_options.power_jing_sims
+power_jing_data = my_code_options.power_jing_data
 
 # Here we prepare to apply the Jing (2005) deconvolution of the mass assignement function
 # For the situations when this is necessary, see the input file
@@ -1431,6 +1487,7 @@ P0_fkp_mean = np.mean(P0_fkp_save,axis=0)
 P2_fkp_mean = np.mean(P2_fkp_save,axis=0)
 Cross0_mean = np.mean(C0_fkp_save,axis=0)
 Cross2_mean = np.mean(C2_fkp_save,axis=0)
+
 
 
 ################################################################################
