@@ -197,7 +197,6 @@ dir_maps = this_dir + '/maps/sims/' + handle_sims
 
 # Directory with data
 use_mask = parameters_code['use_mask']
-sims_only = parameters_code['sims_only']
 sel_fun_data = parameters_code['sel_fun_data']
 dir_data = this_dir + '/maps/data/' + handle_data
 
@@ -432,50 +431,20 @@ if use_mask:
     n_bar_matrix_fid = n_bar_matrix_fid * mask
 
 n_maps = parameters_code['n_maps']
-if sims_only:
-    mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
-    if len(mapnames_sims)==0 :
-        print()
-        print ('Simulated map files not found! Check input simulation files.')
-        print ('Exiting program...')
-        print ()
+mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
+if len(mapnames_sims)==0 :
+    print()
+    print ('Simulated map files not found! Check input simulation files.')
+    print ('Exiting program...')
+    print ()
+    sys.exit(-1)
+if len(mapnames_sims) != n_maps :
+    print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
+    answer = input('Continue anyway? y/n  ')
+    if answer!='y':
+        print ('Aborting now...')
         sys.exit(-1)
-    if len(mapnames_sims) != n_maps :
-        print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
-        answer = input('Continue anyway? y/n  ')
-        if answer!='y':
-            print ('Aborting now...')
-            sys.exit(-1)
-    print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
-else:
-    mapnames_data = glob.glob(dir_data + '/*DATA.hdf5')
-    if len(mapnames_data) > 1 :
-        print()
-        print( 'Only one DATA map file supported. Check /inputs and /maps.')
-        print( 'Exiting program...')
-        print ()
-        sys.exit(-1)
-    mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
-    if (len(mapnames_sims)==0) or (len(mapnames_data)==0) :
-        print()
-        print ('SIMS or DATA map files not found! Check MTPK.py, /inputs and /maps.')
-        print ('Exiting program...')
-        print()
-        sys.exit(-1)
-
-    mapnames_data = mapnames_data[0]
-    print ('Will use the data maps contained in the file:')
-    print ('     ' + mapnames_data)
-    print ('and the N =', n_maps , ' simulated maps contained contained in directory', dir_maps)
-    # read data box (all galaxy types)
-    h5map = h5py.File(mapnames_data,'r')
-    data_maps = np.asarray(h5map.get(list(h5map.keys())[0]))
-    h5map.close
-    if not data_maps.shape == (ntracers,n_x,n_y,n_z):
-        print ('Unexpected shape of data maps:', data_maps.shape)
-        print ('Please check again. Aborting now...')
-        sys.exit(-1)
-
+print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
 
 
 ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
@@ -1108,42 +1077,16 @@ est_bias_mt = np.zeros(ntracers)
 
 for nm in range(n_maps):
     time_start=time()
-    if sims_only:
-        print ('Loading simulated box #', nm)
-        h5map = h5py.File(mapnames_sims[nm],'r')
-        maps = np.asarray(h5map.get(list(h5map.keys())[0]))
-        if not maps.shape == (ntracers,n_x,n_y,n_z):
-            print()
-            print ('Unexpected shape of simulated maps! Found:', maps.shape)
-            print ('Check inputs and sims.  Aborting now...')
-            print()
-            sys.exit(-1)
-        h5map.close
-    elif nm == 0:
-        print ('Loading data box...')
-        h5map_data = h5py.File(mapnames_data,'r')
-        h5data_data = h5map_data.get(list(h5map_data.keys())[0])
-        maps = np.asarray(h5data_data)
-        if not maps.shape == (ntracers,n_x,n_y,n_z):
-            print()
-            print ('Incorrect shape of data maps! Found:', maps.shape)
-            print ('Aborting now...')
-            print()
-            sys.exit(-1)
-        h5map_data.close
-        # read and store sims maps
-    elif nm > 0:
-        print ('Loading simulated box #', nm)
-        h5map = h5py.File(mapnames_sims[nm-1],'r')
-        maps = np.asarray(h5map.get(list(h5map.keys())[0]))
-        if not maps.shape == (ntracers,n_x,n_y,n_z):
-            print()
-            print( 'Unexpected shape of simulated halo maps! Found:', maps.shape)
-            print ('Check inputs and sims.  Aborting now...')
-            print()
-            sys.exit(-1)
-        h5map.close
-
+    print ('Loading simulated box #', nm)
+    h5map = h5py.File(mapnames_sims[nm],'r')
+    maps = np.asarray(h5map.get(list(h5map.keys())[0]))
+    if not maps.shape == (ntracers,n_x,n_y,n_z):
+        print()
+        print ('Unexpected shape of simulated maps! Found:', maps.shape)
+        print ('Check inputs and sims.  Aborting now...')
+        print()
+        sys.exit(-1)
+    h5map.close
 
     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
 
@@ -1173,85 +1116,30 @@ for nm in range(n_maps):
         normsel[normsel > 2.0] = 2.0
         normsel[normsel < 0.5] = 0.5
         print(" Normalized selection function/map at:",np.around(normsel,3))
-    if nm==0:
-        # If data bias is different from mocks
-        try:
-            data_bias
-            FKPmany = fkp_many_data.fkp((normsel*maps.T).T)
-            P0_fkp[nm] = np.abs(fkp_many.P_ret)
-            P2_fkp[nm] = fkp_many.P2a_ret
-            Cross0[nm] = fkp_many.cross_spec
-            Cross2[nm] = fkp_many.cross_spec2
-            ThCov_fkp[nm] = (fkp_many.sigma)**2
-        except:
-            FKPmany = fkp_many.fkp((normsel*maps.T).T)
-            P0_fkp[nm] = np.abs(fkp_many.P_ret)
-            P2_fkp[nm] = fkp_many.P2a_ret
-            Cross0[nm] = fkp_many.cross_spec
-            Cross2[nm] = fkp_many.cross_spec2
-            ThCov_fkp[nm] = (fkp_many.sigma)**2
-    else:
-        FKPmany = fkp_many.fkp((normsel*maps.T).T)
-        P0_fkp[nm] = np.abs(fkp_many.P_ret)
-        P2_fkp[nm] = fkp_many.P2a_ret
-        Cross0[nm] = fkp_many.cross_spec
-        Cross2[nm] = fkp_many.cross_spec2
-        ThCov_fkp[nm] = (fkp_many.sigma)**2
+    FKPmany = fkp_many.fkp((normsel*maps.T).T)
+    P0_fkp[nm] = np.abs(fkp_many.P_ret)
+    P2_fkp[nm] = fkp_many.P2a_ret
+    Cross0[nm] = fkp_many.cross_spec
+    Cross2[nm] = fkp_many.cross_spec2
+    ThCov_fkp[nm] = (fkp_many.sigma)**2
 
     #################################
     # Now, the multi-tracer method
     print ('  Now estimating multi-tracer spectra...')
-    if nm==0:
-    # If data bias is different from mocks
-        try:
-            data_bias
-            FKPmult = fkp_mult_data.fkp((normsel*maps.T).T)
-            P0_data[nm] = np.abs(fkp_mult_data.P0_mu_ret)
-            P2_data[nm] = fkp_mult_data.P2_mu_ret
-        except:
-            FKPmult = fkp_mult.fkp((normsel*maps.T).T)
-            P0_data[nm] = np.abs(fkp_mult.P0_mu_ret)
-            P2_data[nm] = fkp_mult.P2_mu_ret
-    else:
-        FKPmult = fkp_mult.fkp((normsel*maps.T).T)
-        P0_data[nm] = np.abs(fkp_mult.P0_mu_ret)
-        P2_data[nm] = fkp_mult.P2_mu_ret
+    FKPmult = fkp_mult.fkp((normsel*maps.T).T)
+    P0_data[nm] = np.abs(fkp_mult.P0_mu_ret)
+    P2_data[nm] = fkp_mult.P2_mu_ret
 
 
-    if nm==0:
-    # If data bias is different from mocks
-        try:
-            data_bias
-            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-            print ("  Effective biases of the data maps:")
-            print ("   Fiducial=", ["%.3f"%b for b in effbias])
-            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
-            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-            dt = time() - time_start
-            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-            print()
-        except:
-            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-            print ("  Effective biases of the simulated maps:")
-            print ("   Fiducial=", ["%.3f"%b for b in effbias])
-            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
-            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-            dt = time() - time_start
-            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-            print()
-    else:
-        est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-        est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-        print( "  Effective biases of these maps:")
-        print( "   Fiducial=", ["%.3f"%b for b in effbias])
-        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
-        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-        dt = time() - time_start
-        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-        print()
-
+    est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+    est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+    print( "  Effective biases of these maps:")
+    print( "   Fiducial=", ["%.3f"%b for b in effbias])
+    print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+    dt = time() - time_start
+    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+    print()
 
 
 # Correct missing factor of 2 in definition
@@ -1326,7 +1214,7 @@ winmass_data=np.ones((ntracers,pow_bins))
 #    return np.exp(-(k/2./kN)**2)
 
 # Now start the computation of the deconvolution kernel
-if (jing_dec_sims) or (not sims_only):
+if (jing_dec_sims):
     print ('Preparing to apply Jing deconvolution of mass assignement window function...')
 
     #nxyz = np.arange(-4,5)
@@ -1427,40 +1315,17 @@ if (jing_dec_sims) or (not sims_only):
 
 
 # Now apply ln correction and/or Jing deconvolution
-if sims_only:
-    P0_fkp = (P0_fkp)/winmass_sims
-    P2_fkp = (P2_fkp)/winmass_sims
-    P0_data = (P0_data)/winmass_sims
-    P2_data = (P2_data)/winmass_sims
+P0_fkp = (P0_fkp)/winmass_sims
+P2_fkp = (P2_fkp)/winmass_sims
+P0_data = (P0_data)/winmass_sims
+P2_data = (P2_data)/winmass_sims
 
-    index=0
-    for nt in range(ntracers):
-            for ntp in range(nt+1,ntracers):
-                Cross0[:,index] = Cross0[:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
-                Cross2[:,index] = Cross2[:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
-                index += 1
-else:
-    P0_fkp[0] = (P0_fkp[0])/winmass_data
-    P2_fkp[0] = (P2_fkp[0])/winmass_data
-    P0_fkp[1:] = (P0_fkp[1:])/winmass_sims
-    P2_fkp[1:] = (P2_fkp[1:])/winmass_sims
-
-    P0_data[0] = (P0_data[0])/winmass_data
-    P2_data[0] = (P2_data[0])/winmass_data
-    P0_data[1:] = (P0_data[1:])/winmass_sims
-    P2_data[1:] = (P2_data[1:])/winmass_sims
-
-    index=0
-    for nt in range(ntracers):
-            for ntp in range(nt+1,ntracers):
-                Cross0[0,index] = Cross0[0,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
-                Cross2[0,index] = Cross2[0,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
-                Cross0[1:,index] = Cross0[1:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
-                Cross2[1:,index] = Cross2[1:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
-                index += 1
-
-
-
+index=0
+for nt in range(ntracers):
+    for ntp in range(nt+1,ntracers):
+        Cross0[:,index] = Cross0[:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
+        Cross2[:,index] = Cross2[:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
+        index += 1
 
 # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
 # We can easily put back the bias by multiplying:

@@ -14,13 +14,6 @@ class code_parameters:
     All of these parameters are optional. If a parameter is not provided,
     the code will simply use the default parameter defined below
 
-    sims_only : bool
-
-	=> Eliminate this! Keep only True Case
-
-    True -> for test simulation
-    False -> for real data
-
     use_mask : bool
 
     True -> to include some mask to data
@@ -181,7 +174,6 @@ class code_parameters:
     def __init__(self, **kwargs):
         default_params = {
             'use_mask'             : False,
-            'sims_only'            : True,
             'use_window_function'  : False,
             'mass_fun_file'        : "inputs/ExSHalos_MF.dat",
             'halo_bias_file'       : "inputs/ExSHalos_bias.dat",
@@ -234,7 +226,6 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
-        self.sims_only = default_params['sims_only']
         self.use_window_function = default_params['use_window_function']
         self.mass_fun_file = default_params['mass_fun_file']
         self.halo_bias_file = default_params['halo_bias_file']
