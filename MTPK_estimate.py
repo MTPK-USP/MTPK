@@ -491,93 +491,91 @@ print(".")
 
 
 
-# #####################################################
-# # Start computing physical sizes of boxes
-# #####################################################
-# box_vol = L_x*L_y*L_z            # Box's volume
-# L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)    
+#####################################################
+# Start computing physical sizes of boxes
+#####################################################
+box_vol = L_x*L_y*L_z            # Box's volume
+L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)    
 
 
-# ##########################################
-# #  Generating the Bins Matrix M^a_{ijl}
-# #  The matrix MR maps the \vec{k}'s into bins (k,mu)
-# #  The matrix MRk maps the \vec{k}'s into bins (k)
-# ##########################################
+##########################################
+#  Generating the Bins Matrix M^a_{ijl}
+#  The matrix MR maps the \vec{k}'s into bins (k,mu)
+#  The matrix MRk maps the \vec{k}'s into bins (k)
+##########################################
 
-# #  Fundamental frequencies (NOT ANGULAR FREQUENCIES) of the grid
-# #  Here nn, kk_bar, etc., are in units of the grid, for which cell size == 1
+#  Fundamental frequencies (NOT ANGULAR FREQUENCIES) of the grid
+#  Here nn, kk_bar, etc., are in units of the grid, for which cell size == 1
 
-# #R NOTE ON CONVERSION OF k's (which here are FREQUENCIES) to PHYSICAL k:
-# #R
-# #R   k_phys = 2*pi/cell_size * frequency
-# #R
-# nn = int(np.sqrt(n_x**2 + n_y**2 + n_z**2))
-# kk_bar = np.fft.fftfreq(nn)
-
-
-# ### K_MAX_MIN
-# #  Maximum ***frequency*** allowed
-# #  Nyquist frequency is 0.5 (in units of 1/cell)
-# try:
-#     kmax_phys = parameters_code['kmax_phys']
-#     # kmax_phys
-#     kmaxbar = min(0.5,kmax_phys*cell_size/2.0/np.pi)
-#     kmax_phys = kmaxbar*2*np.pi/cell_size
-# except:
-#     kmaxbar = 0.5  # Use Nyquist frequency in cell units
-#     kmax_phys = np.pi/cell_size
-
-# # The number of bins should be set by the maximum k to be computed,
-# # together with the minimum separation based on the physical volume.
-# #
-# # Typically, dk_phys =~ 1.4/L , where L is the typical physical size
-# # of the survey (Abramo 2012)
-# # For some particular applications (esp. large scales) we can use larger bins
-# #dk0=1.4/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
-# dk0 = 3.0/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
-# dk_phys = 2.0*np.pi*dk0/cell_size
-
-# # Ensure that the binning is at least a certain size
-# dkph_bin = parameters_code['dkph_bin']
-# dk_phys = max(dk_phys,dkph_bin)
-# # Fourier bins in units of frequency
-# dk0 = dk_phys*cell_size/2.0/np.pi
-
-# #  Physically, the maximal useful k is perhaps k =~ 0.3 h/Mpc (non-linear scale)
-# np.set_printoptions(precision=3)
-
-# print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
-
-# print()
-# print ('----------------------------------')
-# print()
-
-# #R This line makes some np variables be printed with less digits
-# np.set_printoptions(precision=6)
+#R NOTE ON CONVERSION OF k's (which here are FREQUENCIES) to PHYSICAL k:
+#R
+#R   k_phys = 2*pi/cell_size * frequency
+#R
+nn = int(np.sqrt(n_x**2 + n_y**2 + n_z**2))
+kk_bar = np.fft.fftfreq(nn)
 
 
-# #R Here are the k's that will be estimated (in grid units):
-# kgrid = grid.grid_k
-# kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
+### K_MAX_MIN
+#  Maximum ***frequency*** allowed
+#  Nyquist frequency is 0.5 (in units of 1/cell)
+try:
+    kmax_phys = parameters_code['kmax_phys']
+    kmaxbar = min(0.5,kmax_phys*cell_size/2.0/np.pi)
+    kmax_phys = kmaxbar*2*np.pi/cell_size
+except:
+    kmaxbar = 0.5  # Use Nyquist frequency in cell units
+    kmax_phys = np.pi/cell_size
 
-# ### K_MAX_MIN
-# try:
-#     kmin_phys = parameters_code['kmin_phys']
-#     # kmin_phys
-#     kminbar = kmin_phys*cell_size/2.0/np.pi
-# except:
-#     pass
+# The number of bins should be set by the maximum k to be computed,
+# together with the minimum separation based on the physical volume.
+#
+# Typically, dk_phys =~ 1.4/L , where L is the typical physical size
+# of the survey (Abramo 2012)
+# For some particular applications (esp. large scales) we can use larger bins
+#dk0=1.4/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
+dk0 = 3.0/np.power(n_x_box*n_y_box*n_z_box,1/3.)/(2.0*np.pi)
+dk_phys = 2.0*np.pi*dk0/cell_size
 
-# ### K_MAX_MIN
-# num_binsk=np.int((kmaxbar-kminbar)/dk0)
-# dk_bar = dk0*np.ones(num_binsk)
-# k_bar = kminbar + dk0*np.arange(num_binsk)
-# r_bar = 1/2.0 + ((1.0*n_x)/num_binsk)*np.arange(num_binsk)
+# Ensure that the binning is at least a certain size
+dkph_bin = parameters_code['dkph_bin']
+dk_phys = max(dk_phys,dkph_bin)
+# Fourier bins in units of frequency
+dk0 = dk_phys*cell_size/2.0/np.pi
 
-# #
-# # k in physical units
-# #
-# kph = k_bar*2*np.pi/cell_size
+#  Physically, the maximal useful k is perhaps k =~ 0.3 h/Mpc (non-linear scale)
+np.set_printoptions(precision=3)
+
+print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
+
+print(".")
+print ('----------------------------------')
+print(".")
+
+#R This line makes some np variables be printed with less digits
+np.set_printoptions(precision=6)
+
+
+#R Here are the k's that will be estimated (in grid units):
+kgrid = grid.grid_k
+kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
+
+### K_MAX_MIN
+try:
+    kmin_phys = parameters_code['kmin_phys']
+    kminbar = kmin_phys*cell_size/2.0/np.pi
+except:
+    pass
+
+### K_MAX_MIN
+num_binsk = int((kmaxbar-kminbar)/dk0)
+dk_bar = dk0*np.ones(num_binsk)
+k_bar = kminbar + dk0*np.arange(num_binsk)
+r_bar = 1/2.0 + ((1.0*n_x_box)/num_binsk)*np.arange(num_binsk)
+
+#
+# k in physical units
+#
+kph = k_bar*2*np.pi/cell_size
 
 
 
