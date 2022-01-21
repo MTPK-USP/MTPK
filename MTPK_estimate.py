@@ -440,50 +440,54 @@ try:
 except:
     pass
     
-# n_maps = parameters_code['n_maps']
-# mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
-# if len(mapnames_sims)==0 :
-#     print()
-#     print ('Simulated map files not found! Check input simulation files.')
-#     print ('Exiting program...')
-#     print ()
-#     sys.exit(-1)
-# if len(mapnames_sims) != n_maps :
-#     print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
-#     answer = input('Continue anyway? y/n  ')
-#     if answer!='y':
-#         print ('Aborting now...')
-#         sys.exit(-1)
-# print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
+n_maps = parameters_code['n_maps']
+mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
+if len(mapnames_sims)==0 :
+    print()
+    print ('Simulated map files not found! Check input simulation files.')
+    print ('Exiting program...')
+    print ()
+    sys.exit(-1)
+if len(mapnames_sims) != n_maps :
+    print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
+    answer = input('Continue anyway? y/n  ')
+    if answer!='y':
+        print ('Aborting now...')
+        sys.exit(-1)
+print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
 
 
-# ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
-# ## We will treat this as an additional MASK (thresh_mask) for data and mocks
-# try:
-#     cell_low_count_thresh = parameters_code['cell_low_count_thresh']
-#     # cell_low_count_thresh
-#     thresh_mask = np.ones_like(n_bar_matrix_fid)
-#     thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
-#     n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
-# except:
-#     pass
+## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
+## We will treat this as an additional MASK (thresh_mask) for data and mocks
+try:
+    cell_low_count_thresh = parameters_code['cell_low_count_thresh']
+    thresh_mask = np.ones_like(n_bar_matrix_fid)
+    thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
+    n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
+except:
+    pass
 
 
-# print ()
-# print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
+print(".")
 
+print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
+# Apply padding, if it exists
+try:
+    print ('Geometry including bounding box: (nx,ny,nz) = (' +str(n_x_box)+','+str(n_y_box)+','+str(n_z_box) + ')')
+except:
+    pass
 
-# print()
-# if whichspec == 0:
-#     print ('Using LINEAR power spectrum from CAMB')
-# elif whichspec == 1:
-#     print ('Using power spectrum from CAMB + HaloFit')
-# else:
-#     print ('Using power spectrum from CAMB + HaloFit with PkEqual')
+print(".")
+if whichspec == 0:
+    print ('Using LINEAR power spectrum from CAMB')
+elif whichspec == 1:
+    print ('Using power spectrum from CAMB + HaloFit')
+else:
+    print ('Using power spectrum from CAMB + HaloFit with PkEqual')
 
-# print()
-# print ('----------------------------------')
-# print()
+print(".")
+print ('----------------------------------')
+print(".")
 
 
 
