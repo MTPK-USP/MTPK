@@ -383,22 +383,22 @@ else:
         #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
 
         
-# if use_mask:
-#     try:
-#         h5map = h5py.File(dir_data + '/' + mask_filename,'r')
-#         h5data = h5map.get(list(h5map.keys())[0])
-#         mask = np.asarray(h5data,dtype='int32')
-#         h5map.close
-#     except:
-#         print ('Could not find file with mask!')
-#         print ('Check your directory ', dir_data)
-#         print ('Aborting now...')
-#         sys.exit(-1)
-#     if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
-#         print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
-#         print ('Please correct/check input files and/or maps. Aborting now.')
-#         sys.exit(-1)
-#     n_bar_matrix_fid = n_bar_matrix_fid * mask
+if use_mask:
+    try:
+        h5map = h5py.File(dir_data + '/' + mask_filename,'r')
+        h5data = h5map.get(list(h5map.keys())[0])
+        mask = np.asarray(h5data,dtype='int32')
+        h5map.close
+    except:
+        print ('Could not find file with mask!')
+        print ('Check your directory ', dir_data)
+        print ('Aborting now...')
+        sys.exit(-1)
+    if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
+        print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
+        print ('Please correct/check input files and/or maps. Aborting now.')
+        sys.exit(-1)
+    n_bar_matrix_fid = n_bar_matrix_fid * mask
 
 # n_maps = parameters_code['n_maps']
 # mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))

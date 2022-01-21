@@ -38,6 +38,10 @@ class code_parameters:
 
     True -> to include a mask to data
     False -> otherwise
+
+    mask_filename : string
+
+    Name of the mask filename
         
     mass_fun : ndarray of floats
     It is a list that keeps the mass function of each tracer
@@ -177,6 +181,7 @@ class code_parameters:
             'use_theory_spectrum'  : False,
             'theory_spectrum_file' : "theory_spectrum_file.txt",
             'use_mask'             : False,
+            'mask_filename'        : "mask.hdf5",
             'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),
             'halo_bias'            : np.array([1.572, 1.906, 2.442]),
             'nhalos'               : 3,
@@ -224,6 +229,7 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
+        self.mask_filename = default_params['mask_filename']
         self.use_power_law = default_params['use_power_law']
         self.power_law = default_params['power_law']
         self.pk_power = default_params['pk_power']
