@@ -291,20 +291,20 @@ else:
     kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
     Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 
-# ############# Ended CAMB calculation #####################################
+############# Ended CAMB calculation #####################################
 
-# try:
-#     power_low
-# except:
-#     pass
-# else:
-#     Pk_camb = power_low*np.power(Pk_camb,pk_power)
+use_power_law = parameters_code['use_power_law']
+power_law = parameters_code['power_law']
+pk_power = parameters_code['pk_power']
+if use_power_law:
+    Pk_camb = power_low*np.power(Pk_camb, pk_power)
+else:
+    pass
 
-
-# # Construct spectrum that decays sufficiently rapidly, and interpolate, using an initial ansatz for power-law of P ~ k^(-1) [good for HaloFit]
-# k_interp = np.append(k_camb,np.array([2*k_camb[-1],4*k_camb[-1],8*k_camb[-1],16*k_camb[-1],32*k_camb[-1],64*k_camb[-1],128*k_camb[-1]]))
-# P_interp = np.append(Pk_camb,np.array([1./2.*Pk_camb[-1],1./4*Pk_camb[-1],1./8*Pk_camb[-1],1./16*Pk_camb[-1],1./32*Pk_camb[-1],1./64*Pk_camb[-1],1./128*Pk_camb[-1]]))
-# pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
+# Construct spectrum that decays sufficiently rapidly, and interpolate, using an initial ansatz for power-law of P ~ k^(-1) [good for HaloFit]
+k_interp = np.append(k_camb,np.array([2*k_camb[-1],4*k_camb[-1],8*k_camb[-1],16*k_camb[-1],32*k_camb[-1],64*k_camb[-1],128*k_camb[-1]]))
+P_interp = np.append(Pk_camb,np.array([1./2.*Pk_camb[-1],1./4*Pk_camb[-1],1./8*Pk_camb[-1],1./16*Pk_camb[-1],1./32*Pk_camb[-1],1./64*Pk_camb[-1],1./128*Pk_camb[-1]]))
+pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
 
 
 # #####################################################

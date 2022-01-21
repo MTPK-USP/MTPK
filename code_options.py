@@ -14,6 +14,17 @@ class code_parameters:
     All of these parameters are optional. If a parameter is not provided,
     the code will simply use the default parameter defined below
 
+    use_power_law : bool
+
+    True -> to use power_law to multiply CAMB's spectrum
+    False -> otherwise
+
+    power_law : integer
+    Number indicating the power law to multiply CAMB's spectrum
+
+    pk_power : integer
+    Number indicating the power of pk
+
     use_theory_spectrum : bool
 
     True -> to include pre-existing power spectrum in file
@@ -160,6 +171,9 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
+            'use_power_law'        : False,
+            'power_law'            : 1,
+            'pk_power'             : 1,
             'use_theory_spectrum'  : False,
             'theory_spectrum_file' : "theory_spectrum_file.txt",
             'use_mask'             : False,
@@ -210,6 +224,9 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
+        self.use_power_law = default_params['use_power_law']
+        self.power_law = default_params['power_law']
+        self.pk_power = default_params['pk_power']
         self.use_theory_spectrum = default_params['use_theory_spectrum']
         self.theory_spectrum_file = default_params['theory_spectrum_file']
         self.mass_fun = default_params['mass_fun']
