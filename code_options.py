@@ -14,6 +14,15 @@ class code_parameters:
     All of these parameters are optional. If a parameter is not provided,
     the code will simply use the default parameter defined below
 
+    use_theory_spectrum : bool
+
+    True -> to include pre-existing power spectrum in file
+    False -> to compute matter power spectrum for given cosmology
+
+    theory_spectrum_file : string
+
+    Name of the theory spectrum file
+
     use_mask : bool
 
     True -> to include a mask to data
@@ -151,6 +160,8 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
+            'use_theory_spectrum'  : False,
+            'theory_spectrum_file' : "theory_spectrum_file.txt"
             'use_mask'             : False,
             'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),
             'halo_bias'            : np.array([1.572, 1.906, 2.442]),
@@ -199,6 +210,8 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
+        self.use_theory_spectrum = default_params['use_theory_spectrum']
+        self.theory_spectrum_file = default_params['theory_spectrum_file']
         self.mass_fun = default_params['mass_fun']
         self.halo_bias = default_params['halo_bias']
         self.nhalos = default_params['nhalos']

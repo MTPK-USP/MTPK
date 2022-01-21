@@ -55,7 +55,7 @@ from camb_spec import camb_spectrum
 from cosmo_funcs import matgrow, H
 from analytical_selection_function import *
 import grid3D as gr
-#Te following two classes have the inttention to substitute the old program of inputs
+#The following two classes have the inttention to substitute the old program of inputs
 from cosmo import cosmo #class to cosmological parameter
 from code_options import code_parameters #class to code options
 
@@ -101,14 +101,16 @@ print(my_cosmology.cosmo_print())
 # print(my_cosmology.cosmo_print)
 
 print()
+
+
 # ##########################
 # '''
 # Local changes
 # '''
 # #Example of changing cosmology
 # physical_options['h'] = 0.72
-# # # 1) Using the method cosmo_print
-# # print(my_cosmology.cosmo_print())
+# # 1) Using the method cosmo_print
+# print(my_cosmology.cosmo_print())
 # # # 2) Using dictionary directly
 # # print(physical_options)
 # # # 3) Printing the cosmology without directly call for the method cosmo_print
@@ -146,6 +148,7 @@ print(my_code_options.parameters_print())
 # # 3) Printing the cosmology without directly call for the method parameters_print
 # print(my_code_options.parameters_print)
 print()
+
 # ##########################
 # '''
 # Local changes
@@ -183,15 +186,6 @@ print()
 print('Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates)
 print()
 
-# # Load those properties
-# input_filename = glob.glob('inputs/' + handle_estimates + '.py')
-# if (len(input_filename)==0) or (len(input_filename)>2) :
-#     print ('Input file not found!')
-#     print ('Check on /inputs.  Aborting now...')
-#     sys.exit(-1)
-
-# exec ("from " + handle_estimates + " import *")
-
 # Directory with data and simulated maps
 dir_maps = this_dir + '/maps/sims/' + handle_sims
 
@@ -208,7 +202,6 @@ if not os.path.exists(dir_specs):
     os.makedirs(dir_specs)
 if not os.path.exists(dir_figs):
     os.makedirs(dir_figs)
-
 
 # Save estimations for each assumed k_phys in subdirectories named after k_phys
 # strkph = str(kph_central)
@@ -238,39 +231,7 @@ else:
         print ('Aborting now...')
         sys.exit(-1)
 
-# ########################## Some other cosmological quantities ######################################
-# Omegam = Omegac + Omegab
-# OmegaDE = 1. - Omegam - Omegak
-# h = H0/100.
-# clight = 299792.46
-# cH = 299792.458*h/H(H0, Omegam, OmegaDE, w0, w1, zcentral)  # c/H(z) , in units of h^-1 Mpc
-
-# # Scalar amplitude may be defined by log
-# try:
-#     A_s
-# except:
-#     A_s = np.exp(ln10e10ASA)*1.e-10
-
-# try:
-#     gamma
-# except:
-#     gamma = 0.55
-
-# try:
-#     matgrowcentral
-# except:
-#     matgrowcentral = matgrow(Omegam,OmegaDE,w0,w1,zcentral,gamma)
-# else:
-#     print('ATTENTION: pre-defined (on input) matter growth rate =' , matgrowcentral)
-
-# # Velocity dispersion. vdisp is defined on inputs with units of km/s
-# vdisp = np.asarray(vdisp) #km/s
-# sigma_v = vdisp/H(100,Omegam,OmegaDE,-1,0.0,zcentral) #Mpc/h
-# a_vdisp = vdisp/clight #Adimensional vdisp
-
-# # Redshift errors. sigz_est is defined on inputs, and is adimensional
-# sigz_est = np.asarray(sigz_est)
-# sigma_z = sigz_est*clight/H(100,Omegam,OmegaDE,-1,0.0,zcentral) # Mpc/h
+########################## Some other cosmological quantities ######################################
 
 Omegam = physical_options['Omega0_m']
 OmegaDE = physical_options['Omega0_DE']
@@ -306,1085 +267,1092 @@ a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
 #############Calling CAMB for calculations of the spectra#################
 print('Beggining CAMB calculations\n')
 
-# It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
-k_min_camb = parameters_code['k_min_CAMB']
-k_max_camb = parameters_code['k_max_CAMB']
-# try:
-#     k_min_camb
-#     k_max_camb
-# except:
-#     k_min_camb = 1.0e-4
-#     k_max_camb = 1.0e1
-
-nklist = 1000
-k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
-
-kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
-Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
-############# Ended CAMB calculation #####################################
-
-try:
-    power_low
-except:
-    pass
+if use_theory_spectrum:
+    print('Using pre-existing power spectrum in file:',theory_spectrum_file)
+    kcpkc = np.loadtxt(theory_spectrum_file)
+    if kcpkc.shape[1] > kcpkc.shape[0]: 
+        k_camb=kcpkc[0]
+        Pk_camb=kcpkc[1]
+    else:
+        k_camb=kcpkc[:,0]
+        Pk_camb=kcpkc[:,1]
 else:
-    Pk_camb = power_low*np.power(Pk_camb,pk_power)
+    print('Computing matter power spectrum for given cosmology...\n')
 
+    # It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
+    k_min_camb = parameters_code['k_min_CAMB']
+    k_max_camb = parameters_code['k_max_CAMB']
 
-# Construct spectrum that decays sufficiently rapidly, and interpolate, using an initial ansatz for power-law of P ~ k^(-1) [good for HaloFit]
-k_interp = np.append(k_camb,np.array([2*k_camb[-1],4*k_camb[-1],8*k_camb[-1],16*k_camb[-1],32*k_camb[-1],64*k_camb[-1],128*k_camb[-1]]))
-P_interp = np.append(Pk_camb,np.array([1./2.*Pk_camb[-1],1./4*Pk_camb[-1],1./8*Pk_camb[-1],1./16*Pk_camb[-1],1./32*Pk_camb[-1],1./64*Pk_camb[-1],1./128*Pk_camb[-1]]))
-pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
+    nklist = 1000
+    k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
 
+    kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
+    Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 
-#####################################################
-#####################################################
-#####################################################
+# ############# Ended CAMB calculation #####################################
 
-gal_bias = my_code_options.bias_file
-adip = my_code_options.adip
 # try:
-#     gal_bias = np.loadtxt(input_dir + "/" + bias_file)
+#     power_low
 # except:
-#     print("Could not find bias file:", bias_file,". Please check your /inputs directory.")
-#     print("Aborting now...")
-#     sys.exit(-1)
+#     pass
+# else:
+#     Pk_camb = power_low*np.power(Pk_camb,pk_power)
 
-gal_adip = np.asarray(adip)
-gal_sigz_est = np.asarray(sigz_est)
-gal_vdisp = np.asarray(vdisp)
-a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
 
-#####################################################
-# Generate real- and Fourier-space grids for FFTs
-#####################################################
+# # Construct spectrum that decays sufficiently rapidly, and interpolate, using an initial ansatz for power-law of P ~ k^(-1) [good for HaloFit]
+# k_interp = np.append(k_camb,np.array([2*k_camb[-1],4*k_camb[-1],8*k_camb[-1],16*k_camb[-1],32*k_camb[-1],64*k_camb[-1],128*k_camb[-1]]))
+# P_interp = np.append(Pk_camb,np.array([1./2.*Pk_camb[-1],1./4*Pk_camb[-1],1./8*Pk_camb[-1],1./16*Pk_camb[-1],1./32*Pk_camb[-1],1./64*Pk_camb[-1],1./128*Pk_camb[-1]]))
+# pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
 
-print('Generating the k-space Grid...')
 
-n_x = parameters_code['n_x']
-n_y = parameters_code['n_y']
-n_z = parameters_code['n_z']
-cell_size = parameters_code['cell_size']
-ntracers = my_code_options.ntracers
-nbar = my_code_options.nbar
-ncentral = my_code_options.ncentral
-nsigma = my_code_options.nsigma
+# #####################################################
+# #####################################################
+# #####################################################
 
-L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size
-grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)
+# gal_bias = my_code_options.bias_file
+# adip = my_code_options.adip
+# # try:
+# #     gal_bias = np.loadtxt(input_dir + "/" + bias_file)
+# # except:
+# #     print("Could not find bias file:", bias_file,". Please check your /inputs directory.")
+# #     print("Aborting now...")
+# #     sys.exit(-1)
 
-# Selection function
-# If given by data
-if sel_fun_data:
-    try:
-        h5map = h5py.File(dir_data + '/' + sel_fun_file,'r')
-        h5data = h5map.get(list(h5map.keys())[0])
-        n_bar_matrix_fid = np.asarray(h5data,dtype='float32')
-        n_bar_matrix_fid = np.asarray(mult_sel_fun*(n_bar_matrix_fid + shift_sel_fun),dtype='float32')
-        h5map.close
-    except:
-        print ('Could not find file with data selection function!')
-        print ('Check your directory ', dir_data)
-        print ('Aborting now...')
-        sys.exit(-1)
-    if (np.shape(n_bar_matrix_fid)[1] != n_x) or (np.shape(n_bar_matrix_fid)[2] != n_y) or (np.shape(n_bar_matrix_fid)[3] != n_z):
-        print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
-        print ('Please correct/check input files and/or maps. Aborting now.')
-        sys.exit(-1)
-else:
-    try:
-        mass_fun = parameters_code['mass_fun']
-        mult_sel_fun = parameters_code['mult_sel_fun']
-        mass_fun = mult_sel_fun*mass_fun
-        nbar = mass_fun*cell_size**3
-        ncentral = 10.0*nbar**0
-        nsigma = 10000.0*nbar**0 
-    except:
-        print("Att.: using analytical selection function for galaxies (check parameters in input file).")
-        print("Using n_bar, n_central, n_sigma  from input file")
+# gal_adip = np.asarray(adip)
+# gal_sigz_est = np.asarray(sigz_est)
+# gal_vdisp = np.asarray(vdisp)
+# a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
 
-    n_bar_matrix_fid = np.zeros((ntracers,n_x,n_y,n_z),dtype='float32')
-    for nt in range(ntracers):
-        # Here you can choose how to call the selection function, using the different dependencies
-        # Exponential/Gaussian form:
-        try:
-            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar[nt],ncentral[nt],nsigma[nt])
-        except:  # If there is only one species of tracer, the nbar, ncentral etc. are not arrays
-            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar,ncentral,nsigma)
-        # Linear form:
-        #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
+# #####################################################
+# # Generate real- and Fourier-space grids for FFTs
+# #####################################################
+
+# print('Generating the k-space Grid...')
+
+# n_x = parameters_code['n_x']
+# n_y = parameters_code['n_y']
+# n_z = parameters_code['n_z']
+# cell_size = parameters_code['cell_size']
+# ntracers = my_code_options.ntracers
+# nbar = my_code_options.nbar
+# ncentral = my_code_options.ncentral
+# nsigma = my_code_options.nsigma
+
+# L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size
+# grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)
+
+# # Selection function
+# # If given by data
+# if sel_fun_data:
+#     try:
+#         h5map = h5py.File(dir_data + '/' + sel_fun_file,'r')
+#         h5data = h5map.get(list(h5map.keys())[0])
+#         n_bar_matrix_fid = np.asarray(h5data,dtype='float32')
+#         n_bar_matrix_fid = np.asarray(mult_sel_fun*(n_bar_matrix_fid + shift_sel_fun),dtype='float32')
+#         h5map.close
+#     except:
+#         print ('Could not find file with data selection function!')
+#         print ('Check your directory ', dir_data)
+#         print ('Aborting now...')
+#         sys.exit(-1)
+#     if (np.shape(n_bar_matrix_fid)[1] != n_x) or (np.shape(n_bar_matrix_fid)[2] != n_y) or (np.shape(n_bar_matrix_fid)[3] != n_z):
+#         print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
+#         print ('Please correct/check input files and/or maps. Aborting now.')
+#         sys.exit(-1)
+# else:
+#     try:
+#         mass_fun = parameters_code['mass_fun']
+#         mult_sel_fun = parameters_code['mult_sel_fun']
+#         mass_fun = mult_sel_fun*mass_fun
+#         nbar = mass_fun*cell_size**3
+#         ncentral = 10.0*nbar**0
+#         nsigma = 10000.0*nbar**0 
+#     except:
+#         print("Att.: using analytical selection function for galaxies (check parameters in input file).")
+#         print("Using n_bar, n_central, n_sigma  from input file")
+
+#     n_bar_matrix_fid = np.zeros((ntracers,n_x,n_y,n_z),dtype='float32')
+#     for nt in range(ntracers):
+#         # Here you can choose how to call the selection function, using the different dependencies
+#         # Exponential/Gaussian form:
+#         try:
+#             n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar[nt],ncentral[nt],nsigma[nt])
+#         except:  # If there is only one species of tracer, the nbar, ncentral etc. are not arrays
+#             n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar,ncentral,nsigma)
+#         # Linear form:
+#         #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
 
         
-if use_mask:
-    try:
-        h5map = h5py.File(dir_data + '/' + mask_filename,'r')
-        h5data = h5map.get(list(h5map.keys())[0])
-        mask = np.asarray(h5data,dtype='int32')
-        h5map.close
-    except:
-        print ('Could not find file with mask!')
-        print ('Check your directory ', dir_data)
-        print ('Aborting now...')
-        sys.exit(-1)
-    if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
-        print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
-        print ('Please correct/check input files and/or maps. Aborting now.')
-        sys.exit(-1)
-    n_bar_matrix_fid = n_bar_matrix_fid * mask
-
-n_maps = parameters_code['n_maps']
-mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
-if len(mapnames_sims)==0 :
-    print()
-    print ('Simulated map files not found! Check input simulation files.')
-    print ('Exiting program...')
-    print ()
-    sys.exit(-1)
-if len(mapnames_sims) != n_maps :
-    print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
-    answer = input('Continue anyway? y/n  ')
-    if answer!='y':
-        print ('Aborting now...')
-        sys.exit(-1)
-print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
-
-
-## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
-## We will treat this as an additional MASK (thresh_mask) for data and mocks
-try:
-    cell_low_count_thresh = parameters_code['cell_low_count_thresh']
-    # cell_low_count_thresh
-    thresh_mask = np.ones_like(n_bar_matrix_fid)
-    thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
-    n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
-except:
-    pass
-
-
-print ()
-print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
-
-
-print()
-if whichspec == 0:
-    print ('Using LINEAR power spectrum from CAMB')
-elif whichspec == 1:
-    print ('Using power spectrum from CAMB + HaloFit')
-else:
-    print ('Using power spectrum from CAMB + HaloFit with PkEqual')
-
-print()
-print ('----------------------------------')
-print()
-
-
-
-#####################################################
-# Start computing physical sizes of boxes
-#####################################################
-box_vol = L_x*L_y*L_z            # Box's volume
-L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)    
-
-
-##########################################
-#  Generating the Bins Matrix M^a_{ijl}
-#  The matrix MR maps the \vec{k}'s into bins (k,mu)
-#  The matrix MRk maps the \vec{k}'s into bins (k)
-##########################################
-
-#  Fundamental frequencies (NOT ANGULAR FREQUENCIES) of the grid
-#  Here nn, kk_bar, etc., are in units of the grid, for which cell size == 1
-
-#R NOTE ON CONVERSION OF k's (which here are FREQUENCIES) to PHYSICAL k:
-#R
-#R   k_phys = 2*pi/cell_size * frequency
-#R
-nn = int(np.sqrt(n_x**2 + n_y**2 + n_z**2))
-kk_bar = np.fft.fftfreq(nn)
-
-
-### K_MAX_MIN
-#  Maximum ***frequency*** allowed
-#  Nyquist frequency is 0.5 (in units of 1/cell)
-try:
-    kmax_phys = parameters_code['kmax_phys']
-    # kmax_phys
-    kmaxbar = min(0.5,kmax_phys*cell_size/2.0/np.pi)
-    kmax_phys = kmaxbar*2*np.pi/cell_size
-except:
-    kmaxbar = 0.5  # Use Nyquist frequency in cell units
-    kmax_phys = np.pi/cell_size
-
-# The number of bins should be set by the maximum k to be computed,
-# together with the minimum separation based on the physical volume.
-#
-# Typically, dk_phys =~ 1.4/L , where L is the typical physical size
-# of the survey (Abramo 2012)
-# For some particular applications (esp. large scales) we can use larger bins
-#dk0=1.4/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
-dk0 = 3.0/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
-dk_phys = 2.0*np.pi*dk0/cell_size
-
-# Ensure that the binning is at least a certain size
-dkph_bin = parameters_code['dkph_bin']
-dk_phys = max(dk_phys,dkph_bin)
-# Fourier bins in units of frequency
-dk0 = dk_phys*cell_size/2.0/np.pi
-
-#  Physically, the maximal useful k is perhaps k =~ 0.3 h/Mpc (non-linear scale)
-np.set_printoptions(precision=3)
-
-print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
-
-print()
-print ('----------------------------------')
-print()
-
-#R This line makes some np variables be printed with less digits
-np.set_printoptions(precision=6)
-
-
-#R Here are the k's that will be estimated (in grid units):
-kgrid = grid.grid_k
-kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
-
-### K_MAX_MIN
-try:
-    kmin_phys = parameters_code['kmin_phys']
-    # kmin_phys
-    kminbar = kmin_phys*cell_size/2.0/np.pi
-except:
-    pass
-
-### K_MAX_MIN
-num_binsk=np.int((kmaxbar-kminbar)/dk0)
-dk_bar = dk0*np.ones(num_binsk)
-k_bar = kminbar + dk0*np.arange(num_binsk)
-r_bar = 1/2.0 + ((1.0*n_x)/num_binsk)*np.arange(num_binsk)
-
-#
-# k in physical units
-#
-kph = k_bar*2*np.pi/cell_size
-
-
-
-##############################################
-# Define the "effective bias" as the amplitude of the monopole
-n_z_orig = my_code_options.n_z_orig
-try:
-    kdip_phys
-except:
-    kdip_phys = 1./(cell_size*(n_z_orig + n_z/2.))
-else:
-    print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
-
-try:
-    dip = np.asarray(gal_adip) * kdip_phys
-except:
-    dip = 0.0
-
-pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-
-monopoles = pk_mg.mono
-quadrupoles = pk_mg.quad
-
-try:
-    pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-    cross_monopoles = pk_mg_cross.monos
-    cross_quadrupoles = pk_mg_cross.quads
-except:
-    cross_monopoles = np.zeros((len(k_camb),1))
-    cross_quadrupoles = np.zeros((len(k_camb),1))
-
-
-# Compute effective dipole and bias of tracers
-kph_central = my_code_options.kph_central
-where_kph_central = np.argmin(np.abs(k_camb - kph_central))
-
-effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
-effbias = np.sqrt(monopoles[:,where_kph_central])
-
-try:
-    data_bias
-    #pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,len(data_bias)*[0],a_sig_tot,cH,zcentral)
-    pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-    monopoles_data = pk_mg_data.mono
-    effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
-except:
-    pass
-
-
-
-# Import correction factors for the lognormal halo simulations
-# Use these to correct the spectra of the lognormal sims
-# spec_corr are the corrections in REAL (not redshift) space
-dir_spec_corr_sims = this_dir + '/spectra/' + handle_sims
-try:
-    Pk_camb_sim = np.loadtxt(dir_spec_corr_sims + '/Pk_camb.dat')[:,1]
-    spec_corr = np.loadtxt(dir_spec_corr_sims + '/spec_corrections.dat')
-    print("Reading spectral corrections in:", dir_spec_corr_sims)
-    k_corr = spec_corr[:,0]
-    nks = len(k_corr)
-    try:
-        mono_model = np.loadtxt(dir_spec_corr_sims + '/monopole_model.dat')
-        quad_model = np.loadtxt(dir_spec_corr_sims + '/quadrupole_model.dat')
-        mono_theory = np.loadtxt(dir_spec_corr_sims + '/monopole_theory.dat')
-        quad_theory = np.loadtxt(dir_spec_corr_sims + '/quadrupole_theory.dat')
-        print("Using pre-computed theory/model multipoles in:", dir_spec_corr_sims)
-        print()
-        if(ntracers>1):
-            crossmono_model = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_model.dat')
-            crossquad_model = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_model.dat')
-            crossmono_theory = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_theory.dat')
-            crossquad_theory = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_theory.dat')
-            if len(crossmono_model.shape) == 1:
-                crossmono_model = np.reshape(crossmono_model, (nks, 1))
-                crossquad_model = np.reshape(crossquad_model, (nks, 1))
-                crossmono_theory = np.reshape(crossmono_theory, (nks, 1))
-                crossquad_theory = np.reshape(crossquad_theory, (nks, 1))
-    except:
-        print("Did not find pre-computed theory/model monopoles and/or quadrupoles.")
-        print("Assuming Kaiser model (+ Gaussian photo-zs + Gaussian veloc. disp.)")
-        print()
-        pk_mg2 = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_corr,a_gal_sig_tot,cH,zcentral)
-        monopoles2 = pk_mg2.mono
-        quadrupoles2 = pk_mg2.quad
-        try:
-            pk_mg_cross2 = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_corr,a_gal_sig_tot,cH,zcentral)
-            cross_monopoles2 = pk_mg_cross2.monos
-            cross_quadrupoles2 = pk_mg_cross2.quads
-        except:
-            cross_monopoles = np.zeros((len(k_corr),1))
-            cross_quadrupoles = np.zeros((len(k_corr),1))
-        mono_model = np.ones((nks,ntracers))
-        quad_model = np.ones((nks,ntracers))
-        mono_theory = np.ones((nks,ntracers))
-        quad_theory = np.ones((nks,ntracers))
-        if(ntracers>1):
-            crossmono_model = np.ones((nks,ntracers*(ntracers-1)//2))
-            crossquad_model = np.ones((nks,ntracers*(ntracers-1)//2))
-            crossmono_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-            crossquad_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-        index=0
-        for nt in range(ntracers):
-            mono_model[:,nt]= monopoles2[nt]*Pk_camb_sim
-            quad_model[:,nt]= quadrupoles2[nt]*Pk_camb_sim
-            mono_theory[:,nt]= monopoles2[nt]*Pk_camb_sim
-            quad_theory[:,nt]= quadrupoles2[nt]*Pk_camb_sim
-            for ntp in range(nt+1,ntracers):
-                crossmono_model[:,index] = cross_monopoles2[index]*Pk_camb_sim
-                crossmono_theory[:,index] = cross_monopoles2[index]*Pk_camb_sim
-                crossquad_model[:,index] = cross_quadrupoles2[index]*Pk_camb_sim
-                crossquad_theory[:,index] = cross_quadrupoles2[index]*Pk_camb_sim
-                index += 1
-except:
-    print()
-    print ("Did not find spectral corrections and theory spectra on directory:")
-    print (dir_spec_corr_sims)
-    print ("[Sometimes these files are created by the lognormal map-creating tool.]")
-    print ("Will assume spectral corrections are all unity, in the interval k_phys: [0,1],")
-    print ("and that monopoles and quadrupoles are from linear bias + RSD model, with CAMB spectrum.")
-    print()
-    k_corr = k_camb
-    nks = len(k_camb)
-    spec_corr = np.ones((nks,ntracers+1))
-    mono_model = np.ones((nks,ntracers))
-    quad_model = np.ones((nks,ntracers))
-    mono_theory = np.ones((nks,ntracers))
-    quad_theory = np.ones((nks,ntracers))
-    #mono_model[:,0]=k_camb
-    #quad_model[:,0]=k_camb
-    #mono_theory[:,0]=k_camb
-    #mono_theory[:,0]=k_camb
-    if(ntracers>1):
-        crossmono_model = np.ones((nks,ntracers*(ntracers-1)//2))
-        crossquad_model = np.ones((nks,ntracers*(ntracers-1)//2))
-        crossmono_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-        crossquad_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-
-    index=0
-    for nt in range(ntracers):
-        mono_model[:,nt]= monopoles[nt]*Pk_camb
-        quad_model[:,nt]= quadrupoles[nt]*Pk_camb
-        mono_theory[:,nt]= monopoles[nt]*Pk_camb
-        quad_theory[:,nt]= quadrupoles[nt]*Pk_camb
-        for ntp in range(nt+1,ntracers):
-            crossmono_model[:,index] = cross_monopoles[index]*Pk_camb
-            crossmono_theory[:,index] = cross_monopoles[index]*Pk_camb
-            crossquad_model[:,index] = cross_quadrupoles[index]*Pk_camb
-            crossquad_theory[:,index] = cross_quadrupoles[index]*Pk_camb
-            index += 1
-
-
-
-
-
-# Discard the first column of spec_corr, since it just gives the values of k
-spec_corr = spec_corr[:,1:]
-
-# NOW INCLUDING CROSS-CORRELATIONS
-all_mono_model = np.zeros((nks,ntracers,ntracers))
-all_quad_model = np.zeros((nks,ntracers,ntracers))
-all_mono_theory = np.zeros((nks,ntracers,ntracers))
-all_quad_theory = np.zeros((nks,ntracers,ntracers))
-
-index=0
-for i in range(ntracers):
-    all_mono_model[:,i,i] = mono_model[:,i]
-    all_mono_theory[:,i,i] = mono_theory[:,i]
-    all_quad_model[:,i,i] = quad_model[:,i]
-    all_quad_theory[:,i,i] = quad_theory[:,i]
-    for j in range(i+1,ntracers):
-        all_mono_model[:,i,j] = crossmono_model[:,index]
-        all_mono_theory[:,i,j] = crossmono_theory[:,index]
-        all_quad_model[:,i,j] = crossquad_model[:,index]
-        all_quad_theory[:,i,j] = crossquad_theory[:,index]
-        all_mono_model[:,j,i] = crossmono_model[:,index] 
-        all_mono_theory[:,j,i] = crossmono_theory[:,index] 
-        all_quad_model[:,j,i] = crossquad_model[:,index]
-        all_quad_theory[:,j,i] = crossquad_theory[:,index]
-        index += 1
-
-
-# Get effective bias (sqrt of monopoles) for final tracers
-pk_mg = pkmg.pkmg(gal_bias,gal_adip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-
-monopoles = pk_mg.mono
-quadrupoles = pk_mg.quad
-
-# Compute effective dipole and bias of tracers
-where_kph_central = np.argmin(np.abs(k_camb - kph_central))
-
-effadip = gal_adip*matgrowcentral/(0.00000000001 + kph_central)
-effbias = np.sqrt(monopoles[:,where_kph_central])
-
-try:
-    data_bias
-    #pk_mg_data = pkmg.pkmg(data_bias,gal_adip,matgrowcentral,k_camb,len(data_bias)*[0],a_gal_sig_tot,cH,zcentral)
-    pk_mg_data = pkmg.pkmg(data_bias,gal_adip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-    monopoles_data = pk_mg_data.mono
-    effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
-except:
-    pass
-
-
-
-k_spec_corr = np.append(np.append(0.,k_corr),k_corr[-1] + dkph_bin )
-pk_ln_spec_corr = np.vstack((np.vstack((np.asarray(spec_corr[0]),np.asarray(spec_corr))),spec_corr[-1]))
-
-pk_ln_mono_model = np.vstack((np.vstack((np.asarray(mono_model[0]),np.asarray(mono_model))),mono_model[-1]))
-pk_ln_quad_model = np.vstack((np.vstack((np.asarray(quad_model[0]),np.asarray(quad_model))),quad_model[-1]))
-
-pk_ln_mono_theory = np.vstack((np.vstack((np.asarray(mono_theory[0]),np.asarray(mono_theory))),mono_theory[-1]))
-pk_ln_quad_theory = np.vstack((np.vstack((np.asarray(quad_theory[0]),np.asarray(quad_theory))),quad_theory[-1]))
-
-if (ntracers>1):
-    pk_ln_crossmono_model = np.vstack((np.vstack((np.asarray(crossmono_model[0]),np.asarray(crossmono_model))),crossmono_model[-1]))
-    pk_ln_crossmono_theory = np.vstack((np.vstack((np.asarray(crossmono_theory[0]),np.asarray(crossmono_theory))),crossmono_theory[-1]))
-
-    pk_ln_crossquad_model = np.vstack((np.vstack((np.asarray(crossquad_model[0]),np.asarray(crossquad_model))),crossquad_model[-1]))
-    pk_ln_crossquad_theory = np.vstack((np.vstack((np.asarray(crossquad_theory[0]),np.asarray(crossquad_theory))),crossquad_theory[-1]))
-
-
-
-print()
-print ('----------------------------------')
-print()
-
-
-
-###############################
-#R
-#R  Now let's start the construction of the bin matrices, MR and MRk.
-#R
-#R  * MR accounts for the modes that should be averaged to obtain a bin in (k,\mu)
-#R  * MRk accounts for the modes that should be averaged to obtain a bin in (k)
-#R
-#R  Hence, MR gives the RSD bin matrix; MRk gives the bin matrix for the monopole P_0(k).
-#R
-#R  In order to minimize memory usage and computation time,
-#R  we employ sparse matrix methods.
-
-#R  First, construct the flattened array of |k|, kflat .
-#R  NOTICE THAT kflat is in GRID units -- must divide by cell_size eventually
-#R  (Remembering that 1/2 of the grid is redundant, since the maps are real-valued)
-#RR kflat=np.ndarray.flatten(grid.grid_k[:,:,:n_z/2-1])
-
-kflat=(np.ndarray.flatten(kgrid[:,:,:n_z//2+1]))
-lenkf=len(kflat)
-
-
-print ('Central physical k values where spectra will be estimated:', kph_central)
-
-# Get G(z)^2*P(k_central) for the central value of k and central value of z
-kcmin = kph_central - 2.0*np.pi*( 4.0*dk0 )/cell_size
-kcmax = kph_central + 2.0*np.pi*( 4.0*dk0 )/cell_size
-# This will be the value used in the FKP and MT weights
-powercentral = np.mean( Pk_camb[ (k_camb > kcmin) & (k_camb < kcmax) ] )
-
-# Theory power spectra, interpolated on the k_physical used for estimations
-powtrue = np.interp(kph,k_camb,Pk_camb)
-pow_bins = len(kph)
-
-
-
-
-################################################################
-#R   Initialize the sparse matrices MR and MRk
-################################################################
-#R
-#R Entries of these matrices are 0 or 1.
-#R Use dtype=int8 to keep size as small as possible.
-#R
-#R Each row of those matrices corresponds to a (k,mu) bin, or to a (k) bin
-#R The columns are the values of the flattened array kflat=|k|=|(kx,ky,kz)|
-#R
-#R The entries of the MR/MRk matrices are:
-#R   1 when the value of (k,mu)/(k) belongs to the bin
-#R   0 if it does not
-
-print ('Initializing the k-binning matrix...')
-tempor = time()
-
-#R Initialize first row of the M-matrices (vector of zeros)
-MRline = np.zeros(lenkf,dtype=np.int8)
-
-#R These are the sparse matrices, built in the fastest way:
-MRkl = coo_matrix([MRline] , dtype=np.int8)
-
-#R And these are the matrices in the final format (easiest to make computations):
-MRk = csc_matrix((num_binsk,lenkf),dtype=np.int8)
-
-#R Now build the M-matrix by stacking the rows for each bin in (mu,k)
-
-for ak in range(0,num_binsk):
-    #R Now for the M-matrix that applies only for k bins (not mu), and for r bins:
-    MRline[ np.where(  (kflat >= k_bar[ak] - dk0/2.00) & \
-                     (kflat < k_bar[ak] + dk0/2.00) ) ] = 1
-    MRline[ np.isnan(MRline) ] = 0
-    # stack the lines to construct the new M matrix
-    MRkl = vstack([MRkl,coo_matrix(MRline)], dtype=np.int8)
-    MRline = np.zeros(lenkf,dtype=np.int8)
-
-#R The way the matrix MRk was organized is such that
-#R each rows corresponds to the kflats that belong to the bins:
-#R (null), (k[0]), (k[1]), ... , (k[-1])
-#R
-######################################################################
-#R ATTENTION! The first lines of the matrix MRk is ALL ZEROS,
-#R and should be DISCARDED!
-######################################################################
-
-#R Convert MR and MRk matrices to csr format
-Mknew=MRkl.tocsr()
-MRklr=vstack(Mknew[1:,:])
-
-#R Now convert the matrix to csc format, which is fastest for computations
-MRk = MRklr.tocsc()
-
-# Delete the initial sparse matrices to save memory
-MRkl = None
-Mknew = None
-MRklr = None
-del MRkl
-del Mknew
-
-# Counts in each bin
-kkbar_counts = MRk.dot(np.ones(lenkf))
-
-print ('Done with k-binning matrices. Time cost: ', np.int((time()-tempor)*1000)/1000., 's')
-print ('Memory occupied by the binning matrix: ', MRk.nnz)
-
-#print('Bin counts in k, using M(k):')
-#print(kkbar_counts[10:15])
-
-#R We defined "target" k's , but <k> on bins may be slightly different
-kkav=(((MRk*kflat))/(kkbar_counts+0.00001))
-print ('Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ])
-print ('The true mean of k for each bin is:', [ "{:1.4f}".format(x) for x in kkav[10:16:2] ])
-print()
-print ('----------------------------------')
-print()
-print ('Now estimating the power spectra...')
-
-######################################################################
-#R    FKP of the data to get the P_data(k) -- using MR and MRk
-#R
-#R  N.B.: In this code, we do this n_maps times -- once for each map, independently.
-#R  Also, we make 4 estimates, for 4 "bandpower ranges" between k_min and k_max .
-######################################################################
-
-
-
-
-# Theory monopoles of spectra (as realized on the rectangular box)
-pk_ln_spec_corr_kbar=np.zeros((ntracers,pow_bins))
-P0_theory=np.zeros((ntracers,pow_bins))
-P2_theory=np.zeros((ntracers,pow_bins))
-P0_model=np.zeros((ntracers,pow_bins))
-P2_model=np.zeros((ntracers,pow_bins))
-
-Cross_P0_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-Cross_P2_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-Cross_P0_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-Cross_P2_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-
-index=0
-for i in range(ntracers):
-    pk_ln_spec_corr_kbar[i] = np.interp(kph,k_spec_corr,pk_ln_spec_corr[:,i])
-    P0_model[i] = np.interp(kph,k_spec_corr,pk_ln_mono_model[:,i])
-    P2_model[i] = np.interp(kph,k_spec_corr,pk_ln_quad_model[:,i])
-    P0_theory[i] = np.interp(kph,k_spec_corr,pk_ln_mono_theory[:,i])
-    P2_theory[i] = np.interp(kph,k_spec_corr,pk_ln_quad_theory[:,i])
-    for j in range(i+1,ntracers):
-        Cross_P0_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_model[:,index])
-        Cross_P2_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_model[:,index])
-        Cross_P0_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_theory[:,index])
-        Cross_P2_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_theory[:,index])
-        index += 1
-
-# Corrections for cross-spectra
-cross_pk_ln_spec_corr_kbar=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-index = 0
-for i in range(ntracers):
-    for j in range(i+1,ntracers):
-        cross_pk_ln_spec_corr_kbar[index] = np.sqrt(pk_ln_spec_corr_kbar[i]*pk_ln_spec_corr_kbar[j])
-        index +=1
-
-# These are the theory values for the total effective power spectrum
-nbarbar = np.zeros(ntracers)
-for nt in range(ntracers):
-    nbarbar[nt] = np.mean(n_bar_matrix_fid[nt][n_bar_matrix_fid[nt] != 0])/(cell_size)**3
-
-ntot = np.sum(nbarbar*effbias**2)
-P0tot_theory = np.sum(nbarbar*P0_theory.T,axis=1)/ntot
-P0tot_model = np.sum(nbarbar*P0_model.T,axis=1)/ntot
-
-
-
-########################################
-# ATTENTION: these are more like biases, not errors.
-# We include them in the computation of the covariance, with an
-# arbitrary ("fudge") factor that SHOULD BE UPDATED!
-# biaserr
-biaserr = 0.01
-#
-# Relative error due to angle averaging on square box
-dd_P0_rel_kbar = biaserr*np.abs(P0_model - P0_theory)/(small + np.abs(P0_model))
-dd_P2_rel_kbar = biaserr*np.abs(P2_model - P2_theory)/(small + np.abs(P2_model))
-# Relative error due to Gaussian/Lognormal correspondence
-dd_P_spec_kbar = biaserr*np.sqrt(np.var(pk_ln_spec_corr_kbar))*pk_ln_spec_corr_kbar
-########################################
-
-
-
-
-#############################################################################
-# BEGIN ESTIMATION
-print ('Starting power spectra estimation')
-
-
-# Initialize outputs
-
-# Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
-# Original (convolved) spectra:
-P0_data = np.zeros((n_maps,ntracers,num_binsk))
-P2_data = np.zeros((n_maps,ntracers,num_binsk))
-
-
-# Traditional (FKP) method
-P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
-P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
-Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-
-# Covariance
-ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
-
-
-# Range where we estimate some parameters
-myk_min = int(len(k_bar)/4.)
-myk_max = int(len(k_bar)*3./4.)
-myran = np.arange(myk_min,myk_max)
-
-
-
-#################################
-# Initialize the multi-tracer estimation class
-# We can assume many biases for the estimation of the power spectra:
-#
-# 1. Use the original bias
-#fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,bias,cell_size,n_x,n_y,n_z,MRk,powercentral)
-# 2. Use SQRT(monopole) for the bias. Now, we have two choices:
-#
-# 2a. Use the fiducial monopole as the MT bias
-#
-# 2b. Use the monopole estimated using the FKP technique
-#fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,fkpeffbias,cell_size,n_x,n_y,n_z,MRk,powercentral)
-
-# If shot noise is huge, then damp the effective bias of that species 
-# so that it doesn't end up biasing the multi-tracer estimator: 
-# nbar*b^2*P_0 > 0.01 , with P_0 = 2.10^4
-effbias_mt = np.copy(effbias)
-effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
-
-
-print( "Initializing multi-tracer estimation toolbox...")
-
-n_x_orig = parameters_code['n_x_orig']
-n_y_orig = parameters_code['n_y_orig']
-n_z_orig = parameters_code['n_z_orig']
-
-fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
-
-# If data bias is different from mocks
-try:
-    data_bias
-    effbias_mt_data = np.copy(effbias_mt)
-    effbias_mt_data[nbarbar*effbias_data**2 < 0.5e-6] = 0.01
-    fkp_mult_data = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt_data,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
-except:
-    pass
-
-##
-# UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-print( "Initializing traditional (FKP) estimation toolbox...")
-fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
-
-
-# If data bias is different from mocks
-try:
-    data_bias
-    fkp_many_data = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias_data, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
-except:
-    pass
-
-print ("... done. Starting computations for each map (box) now.")
-print()
-
-#################################
-
-
-est_bias_fkp = np.zeros(ntracers)
-est_bias_mt = np.zeros(ntracers)
-
-for nm in range(n_maps):
-    time_start=time()
-    print ('Loading simulated box #', nm)
-    h5map = h5py.File(mapnames_sims[nm],'r')
-    maps = np.asarray(h5map.get(list(h5map.keys())[0]))
-    if not maps.shape == (ntracers,n_x,n_y,n_z):
-        print()
-        print ('Unexpected shape of simulated maps! Found:', maps.shape)
-        print ('Check inputs and sims.  Aborting now...')
-        print()
-        sys.exit(-1)
-    h5map.close
-
-    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
-
-    ## !! NEW !! Additional mask from low-cell-count threshold
-    try:
-        cell_low_count_thresh
-        maps = thresh_mask*maps
-        #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
-    except:
-        pass
-
-    if use_mask:
-        maps = maps * mask
-    ##################################################
-    # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
-    # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
-    # Notice that this means that the output of the FKP quadrupole
-    # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
-    ##################################################
-
-    # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-    print ('  Estimating FKP power spectra...')
-    normsel = np.mean(n_bar_matrix_fid,axis=(1,2,3))/np.mean(maps,axis=(1,2,3))
-    if ( (normsel.any() > 2.0) | (normsel.any() < 0.5) ):
-        print("Attention! Your selection function and simulation have very different numbers of objects:")
-        print("Selecion function/map for all tracers:",np.around(normsel,3))
-        normsel[normsel > 2.0] = 2.0
-        normsel[normsel < 0.5] = 0.5
-        print(" Normalized selection function/map at:",np.around(normsel,3))
-    FKPmany = fkp_many.fkp((normsel*maps.T).T)
-    P0_fkp[nm] = np.abs(fkp_many.P_ret)
-    P2_fkp[nm] = fkp_many.P2a_ret
-    Cross0[nm] = fkp_many.cross_spec
-    Cross2[nm] = fkp_many.cross_spec2
-    ThCov_fkp[nm] = (fkp_many.sigma)**2
-
-    #################################
-    # Now, the multi-tracer method
-    print ('  Now estimating multi-tracer spectra...')
-    FKPmult = fkp_mult.fkp((normsel*maps.T).T)
-    P0_data[nm] = np.abs(fkp_mult.P0_mu_ret)
-    P2_data[nm] = fkp_mult.P2_mu_ret
-
-
-    est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-    est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-    print( "  Effective biases of these maps:")
-    print( "   Fiducial=", ["%.3f"%b for b in effbias])
-    print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
-    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-    dt = time() - time_start
-    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-    print()
-
-
-# Correct missing factor of 2 in definition
-Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
-
-#del maps
-#maps = None
-
-
-
-################################################################################
-################################################################################
-
-
-time_end=time()
-print ('Total time cost for estimation of spectra: ', time_end - time_start)
-
-################################################################################
-################################################################################
-
-tempor=time()
-
-################################################################################
-################################################################################
-
-
-
-
-print ('Applying mass assignement window function corrections...')
-
-################################################################################
-#############################################################################
-# 1) Jing (cells) corrections
-
-jing_dec_sims = my_code_options.jing_dec_sims
-power_jing_sims = my_code_options.power_jing_sims
-power_jing_data = my_code_options.power_jing_data
-
-# Here we prepare to apply the Jing (2005) deconvolution of the mass assignement function
-# For the situations when this is necessary, see the input file
-
-# First, compute the mean power spectra -- I will use the MTOE 
-P0_mean = np.mean(P0_data,axis=0)
-
-# For k smaller than the smallest k_phys, we use the Planck power spectrum.
-# For k larger than the highest k_phys value, we extrapolate using the power law at k_N/2 -- or the highest value of k_phys in the range, whichever is smaller
-kph_min = kph[0]
-kN = np.pi/cell_size  # Nyquist frequency
-ikNhalf = np.argsort(np.abs(kph-kN/2))[0]
-
-# Take the mean of two differences to improve accuracy
-power_spec1 = (P0_mean[:,ikNhalf-1]/P0_mean[:,ikNhalf-2]-1)*(kph[ikNhalf-1]+kph[ikNhalf-2])/dk_phys/2
-power_spec2 = (P0_mean[:,ikNhalf]/P0_mean[:,ikNhalf-1]-1)*(kph[ikNhalf]+kph[ikNhalf-1])/dk_phys/2
-power_spec = 0.5*(power_spec1 + power_spec2)
-
-# Now extend the estimated power spectra
-
-
-
-# If mass assign. funct. is different for sims and for data...
-winmass0_sims=np.ones(pow_bins)
-winmass0_data=np.ones(pow_bins)
-
-winmass_sims=np.ones((ntracers,pow_bins))
-winmass_data=np.ones((ntracers,pow_bins))
-
-#winmass_pshot = np.ones(pow_bins)
-
-# Let's also define a function that decays fast enough for high k's, to compute 
-# the shot noise parte of the mass deconvolution -- C_1 in Jing's paper
-#def fdecay_interp(k):
-#    return np.exp(-(k/2./kN)**2)
-
-# Now start the computation of the deconvolution kernel
-if (jing_dec_sims):
-    print ('Preparing to apply Jing deconvolution of mass assignement window function...')
-
-    #nxyz = np.arange(-4,5)
-    nxyz = np.arange(-6,7)
-    idxyz= np.ones_like(nxyz)
-    nx_xyz = np.einsum('i,j,k', nxyz,idxyz,idxyz)
-    ny_xyz = np.einsum('i,j,k', idxyz,nxyz,idxyz)
-    nz_xyz = np.einsum('i,j,k', idxyz,idxyz,nxyz)
-    nxyz2 = nx_xyz**2 + ny_xyz**2 + nz_xyz**2
-
-    #nvec_xyz = np.meshgrid(nxyz,nxyz,nxyz)
-    dmu_phi=0.02
-    dmu_th=0.04
-    # With these options for nxyz, dmu_phi and dmu_th, the WF is accurate to ~1% up to k~0.3 h/Mpc
-    phi_xyz=np.arange(0.+dmu_phi/2.,1.,dmu_phi)*2*np.pi
-    cosphi_xyz=np.cos(phi_xyz)
-    sinphi_xyz=np.sin(phi_xyz)
-    costheta_xyz=np.arange(-1.+dmu_th/2.,1.,dmu_th)
-    sintheta_xyz=np.sqrt(1-costheta_xyz**2)
-
-    # More or less randomly placed unit vectors
-    unitxyz=np.zeros((len(phi_xyz),len(costheta_xyz),3))
-    for iphi in range(len(phi_xyz)):
-        for jth in range(len(costheta_xyz)):
-            unitxyz[iphi,jth] = np.array([sintheta_xyz[jth]*cosphi_xyz[iphi],sintheta_xyz[jth]*sinphi_xyz[iphi],costheta_xyz[jth]])
-
-    Nangles=len(phi_xyz)*len(costheta_xyz)
-    unitxyz_flat = np.reshape(unitxyz,(Nangles,3))
-
-    def wj02(ki,ni,power_jing):
-        return np.abs(np.power(np.abs(special.j0(np.pi*(ki/kN/2. + ni))),power_jing))
-
-    # This is the first guess for the window function
-    for i_k in range(pow_bins):
-        kxyz = kph[i_k]*unitxyz_flat
-        sum_sims=0.0
-        sum_data=0.0
-        sum_pshot=0.0
-        for iang in range(Nangles):
-            kdotk = 2*kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
-            kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
-            sum_sims  += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp(kprime))
-            sum_data  += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp(kprime))
-            #sum_pshot += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*fdecay_interp(kprime))
-
-        winmass0_sims[i_k] = sum_sims/Nangles/pow_interp(kph[i_k])
-        winmass0_data[i_k] = sum_data/Nangles/pow_interp(kph[i_k])
-        #winmass_pshot[i_k] = sum_pshot/Nangles
-
-    print ('... OK, computed first estimation of Jing de-aliasing. Iterating now...')
-
-    P0_jing = P0_mean/winmass0_sims
-
-    power_spec1 = (P0_jing[:,ikNhalf-1]/P0_jing[:,ikNhalf-2]-1)*(kph[ikNhalf-1]+kph[ikNhalf-2])/dk_phys/2
-    power_spec2 = (P0_jing[:,ikNhalf]/P0_jing[:,ikNhalf-1]-1)*(kph[ikNhalf]+kph[ikNhalf-1])/dk_phys/2
-    power_spec = 0.5*(power_spec1 + power_spec2)
-
-    # Now create extrapolated function to represent power spectrum at all scales
-    norm_prior = np.mean(P0_jing[:,1:4] / powtrue[1:4],axis=1)   # This is supposed to be basically eff_bias^2
-    k_prior = np.arange(kph[0]/20.,kph[0],kph[0]/10.)
-    pk_prior= np.outer(norm_prior,pow_interp(k_prior))
-
-    new_k = np.concatenate((k_prior,kph))
-    new_P0 = np.vstack((pk_prior.T,P0_jing.T)).T
-
-    norm_aft = np.mean(P0_jing[:,-3:] ,axis=1)   # This is supposed to be basically eff_bias^2
-    knorm_aft = np.mean(kph[-3:])   # This is the mean value of k for the norm above
-    k_aft = np.arange(kph[-1]+dk_phys,100*kN,kN)
-    pk_aft = np.zeros((ntracers,len(k_aft)))
-    for nt in range(ntracers):
-        pk_aft[nt] = norm_aft[nt]*np.power( (k_aft/knorm_aft) , power_spec[nt] )
-
-    nnew_k = np.concatenate((new_k,k_aft))
-    nnew_P0 = np.vstack((new_P0.T,pk_aft.T,)).T
-    # This function may present some "edges" and "bumps", so we smooth it here
-    nnew_P0 = gaussian_filter(nnew_P0,sigma=(1.0,0.0))
-
-    # This is the first guess for the window function
-    for nt in range(ntracers):
-        pow_interp2 = interpolate.PchipInterpolator(nnew_k,nnew_P0[nt])
-        for i_k in range(pow_bins):
-            kxyz = kph[i_k]*unitxyz_flat
-            sum_sims=0.0
-            sum_data=0.0
-            for iang in range(Nangles):
-                kdotk = 2*kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
-                kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
-                sum_sims += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp2(kprime))
-                sum_data += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp2(kprime))
-
-            winmass_sims[nt,i_k] = sum_sims/Nangles/pow_interp2(kph[i_k])
-            winmass_data[nt,i_k] = sum_data/Nangles/pow_interp2(kph[i_k])
-    # Now iterate one time
-
-    print('... OK, computed Jing deconvolution; de-aliasing completed.')
-    print()
-
-
-
-# Now apply ln correction and/or Jing deconvolution
-P0_fkp = (P0_fkp)/winmass_sims
-P2_fkp = (P2_fkp)/winmass_sims
-P0_data = (P0_data)/winmass_sims
-P2_data = (P2_data)/winmass_sims
-
-index=0
-for nt in range(ntracers):
-    for ntp in range(nt+1,ntracers):
-        Cross0[:,index] = Cross0[:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
-        Cross2[:,index] = Cross2[:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
-        index += 1
-
-# Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
-# We can easily put back the bias by multiplying:
-# CrossX = cross_effbias**2 * CrossX
-cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
-index=0
-for nt in range(ntracers):
-    for ntp in range(nt+1,ntracers):
-        cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
-        index += 1
-
-# FKP and Cross measurements need to have the bias returned in their definitions
-P0_fkp_save = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
-P2_fkp_save = np.transpose((effbias**2*np.transpose(P2_fkp,axes=(0,2,1))),axes=(0,2,1))
-
-C0_fkp_save = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
-C2_fkp_save = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
-
-
-# Means
-P0_mean = np.mean(P0_data,axis=0)
-P2_mean = np.mean(P2_data,axis=0)
-P0_fkp_mean = np.mean(P0_fkp_save,axis=0)
-P2_fkp_mean = np.mean(P2_fkp_save,axis=0)
-Cross0_mean = np.mean(C0_fkp_save,axis=0)
-Cross2_mean = np.mean(C2_fkp_save,axis=0)
-
-
-
-################################################################################
-################################################################################
-################################################################################
-################################################################################
-#
-#   SAVE these spectra
-#
-################################################################################
-################################################################################
-################################################################################
-################################################################################
-
-
-P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
-P0_fkp_save=np.reshape(P0_fkp_save,(n_maps,ntracers*pow_bins))
-
-P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
-P2_fkp_save=np.reshape(P2_fkp_save,(n_maps,ntracers*pow_bins))
-
-C0_fkp_save=np.reshape(C0_fkp_save,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-C2_fkp_save=np.reshape(C2_fkp_save,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-
-
-# Export data
-np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-
-np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-
-np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
-
-np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
-
-np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+# if use_mask:
+#     try:
+#         h5map = h5py.File(dir_data + '/' + mask_filename,'r')
+#         h5data = h5map.get(list(h5map.keys())[0])
+#         mask = np.asarray(h5data,dtype='int32')
+#         h5map.close
+#     except:
+#         print ('Could not find file with mask!')
+#         print ('Check your directory ', dir_data)
+#         print ('Aborting now...')
+#         sys.exit(-1)
+#     if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
+#         print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
+#         print ('Please correct/check input files and/or maps. Aborting now.')
+#         sys.exit(-1)
+#     n_bar_matrix_fid = n_bar_matrix_fid * mask
+
+# n_maps = parameters_code['n_maps']
+# mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
+# if len(mapnames_sims)==0 :
+#     print()
+#     print ('Simulated map files not found! Check input simulation files.')
+#     print ('Exiting program...')
+#     print ()
+#     sys.exit(-1)
+# if len(mapnames_sims) != n_maps :
+#     print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
+#     answer = input('Continue anyway? y/n  ')
+#     if answer!='y':
+#         print ('Aborting now...')
+#         sys.exit(-1)
+# print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
+
+
+# ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
+# ## We will treat this as an additional MASK (thresh_mask) for data and mocks
+# try:
+#     cell_low_count_thresh = parameters_code['cell_low_count_thresh']
+#     # cell_low_count_thresh
+#     thresh_mask = np.ones_like(n_bar_matrix_fid)
+#     thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
+#     n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
+# except:
+#     pass
+
+
+# print ()
+# print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
+
+
+# print()
+# if whichspec == 0:
+#     print ('Using LINEAR power spectrum from CAMB')
+# elif whichspec == 1:
+#     print ('Using power spectrum from CAMB + HaloFit')
+# else:
+#     print ('Using power spectrum from CAMB + HaloFit with PkEqual')
+
+# print()
+# print ('----------------------------------')
+# print()
+
+
+
+# #####################################################
+# # Start computing physical sizes of boxes
+# #####################################################
+# box_vol = L_x*L_y*L_z            # Box's volume
+# L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)    
+
+
+# ##########################################
+# #  Generating the Bins Matrix M^a_{ijl}
+# #  The matrix MR maps the \vec{k}'s into bins (k,mu)
+# #  The matrix MRk maps the \vec{k}'s into bins (k)
+# ##########################################
+
+# #  Fundamental frequencies (NOT ANGULAR FREQUENCIES) of the grid
+# #  Here nn, kk_bar, etc., are in units of the grid, for which cell size == 1
+
+# #R NOTE ON CONVERSION OF k's (which here are FREQUENCIES) to PHYSICAL k:
+# #R
+# #R   k_phys = 2*pi/cell_size * frequency
+# #R
+# nn = int(np.sqrt(n_x**2 + n_y**2 + n_z**2))
+# kk_bar = np.fft.fftfreq(nn)
+
+
+# ### K_MAX_MIN
+# #  Maximum ***frequency*** allowed
+# #  Nyquist frequency is 0.5 (in units of 1/cell)
+# try:
+#     kmax_phys = parameters_code['kmax_phys']
+#     # kmax_phys
+#     kmaxbar = min(0.5,kmax_phys*cell_size/2.0/np.pi)
+#     kmax_phys = kmaxbar*2*np.pi/cell_size
+# except:
+#     kmaxbar = 0.5  # Use Nyquist frequency in cell units
+#     kmax_phys = np.pi/cell_size
+
+# # The number of bins should be set by the maximum k to be computed,
+# # together with the minimum separation based on the physical volume.
+# #
+# # Typically, dk_phys =~ 1.4/L , where L is the typical physical size
+# # of the survey (Abramo 2012)
+# # For some particular applications (esp. large scales) we can use larger bins
+# #dk0=1.4/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
+# dk0 = 3.0/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
+# dk_phys = 2.0*np.pi*dk0/cell_size
+
+# # Ensure that the binning is at least a certain size
+# dkph_bin = parameters_code['dkph_bin']
+# dk_phys = max(dk_phys,dkph_bin)
+# # Fourier bins in units of frequency
+# dk0 = dk_phys*cell_size/2.0/np.pi
+
+# #  Physically, the maximal useful k is perhaps k =~ 0.3 h/Mpc (non-linear scale)
+# np.set_printoptions(precision=3)
+
+# print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
+
+# print()
+# print ('----------------------------------')
+# print()
+
+# #R This line makes some np variables be printed with less digits
+# np.set_printoptions(precision=6)
+
+
+# #R Here are the k's that will be estimated (in grid units):
+# kgrid = grid.grid_k
+# kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
+
+# ### K_MAX_MIN
+# try:
+#     kmin_phys = parameters_code['kmin_phys']
+#     # kmin_phys
+#     kminbar = kmin_phys*cell_size/2.0/np.pi
+# except:
+#     pass
+
+# ### K_MAX_MIN
+# num_binsk=np.int((kmaxbar-kminbar)/dk0)
+# dk_bar = dk0*np.ones(num_binsk)
+# k_bar = kminbar + dk0*np.arange(num_binsk)
+# r_bar = 1/2.0 + ((1.0*n_x)/num_binsk)*np.arange(num_binsk)
+
+# #
+# # k in physical units
+# #
+# kph = k_bar*2*np.pi/cell_size
+
+
+
+# ##############################################
+# # Define the "effective bias" as the amplitude of the monopole
+# n_z_orig = my_code_options.n_z_orig
+# try:
+#     kdip_phys
+# except:
+#     kdip_phys = 1./(cell_size*(n_z_orig + n_z/2.))
+# else:
+#     print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
+
+# try:
+#     dip = np.asarray(gal_adip) * kdip_phys
+# except:
+#     dip = 0.0
+
+# pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+
+# monopoles = pk_mg.mono
+# quadrupoles = pk_mg.quad
+
+# try:
+#     pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+#     cross_monopoles = pk_mg_cross.monos
+#     cross_quadrupoles = pk_mg_cross.quads
+# except:
+#     cross_monopoles = np.zeros((len(k_camb),1))
+#     cross_quadrupoles = np.zeros((len(k_camb),1))
+
+
+# # Compute effective dipole and bias of tracers
+# kph_central = my_code_options.kph_central
+# where_kph_central = np.argmin(np.abs(k_camb - kph_central))
+
+# effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
+# effbias = np.sqrt(monopoles[:,where_kph_central])
+
+# try:
+#     data_bias
+#     #pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,len(data_bias)*[0],a_sig_tot,cH,zcentral)
+#     pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+#     monopoles_data = pk_mg_data.mono
+#     effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
+# except:
+#     pass
+
+
+
+# # Import correction factors for the lognormal halo simulations
+# # Use these to correct the spectra of the lognormal sims
+# # spec_corr are the corrections in REAL (not redshift) space
+# dir_spec_corr_sims = this_dir + '/spectra/' + handle_sims
+# try:
+#     Pk_camb_sim = np.loadtxt(dir_spec_corr_sims + '/Pk_camb.dat')[:,1]
+#     spec_corr = np.loadtxt(dir_spec_corr_sims + '/spec_corrections.dat')
+#     print("Reading spectral corrections in:", dir_spec_corr_sims)
+#     k_corr = spec_corr[:,0]
+#     nks = len(k_corr)
+#     try:
+#         mono_model = np.loadtxt(dir_spec_corr_sims + '/monopole_model.dat')
+#         quad_model = np.loadtxt(dir_spec_corr_sims + '/quadrupole_model.dat')
+#         mono_theory = np.loadtxt(dir_spec_corr_sims + '/monopole_theory.dat')
+#         quad_theory = np.loadtxt(dir_spec_corr_sims + '/quadrupole_theory.dat')
+#         print("Using pre-computed theory/model multipoles in:", dir_spec_corr_sims)
+#         print()
+#         if(ntracers>1):
+#             crossmono_model = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_model.dat')
+#             crossquad_model = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_model.dat')
+#             crossmono_theory = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_theory.dat')
+#             crossquad_theory = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_theory.dat')
+#             if len(crossmono_model.shape) == 1:
+#                 crossmono_model = np.reshape(crossmono_model, (nks, 1))
+#                 crossquad_model = np.reshape(crossquad_model, (nks, 1))
+#                 crossmono_theory = np.reshape(crossmono_theory, (nks, 1))
+#                 crossquad_theory = np.reshape(crossquad_theory, (nks, 1))
+#     except:
+#         print("Did not find pre-computed theory/model monopoles and/or quadrupoles.")
+#         print("Assuming Kaiser model (+ Gaussian photo-zs + Gaussian veloc. disp.)")
+#         print()
+#         pk_mg2 = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_corr,a_gal_sig_tot,cH,zcentral)
+#         monopoles2 = pk_mg2.mono
+#         quadrupoles2 = pk_mg2.quad
+#         try:
+#             pk_mg_cross2 = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_corr,a_gal_sig_tot,cH,zcentral)
+#             cross_monopoles2 = pk_mg_cross2.monos
+#             cross_quadrupoles2 = pk_mg_cross2.quads
+#         except:
+#             cross_monopoles = np.zeros((len(k_corr),1))
+#             cross_quadrupoles = np.zeros((len(k_corr),1))
+#         mono_model = np.ones((nks,ntracers))
+#         quad_model = np.ones((nks,ntracers))
+#         mono_theory = np.ones((nks,ntracers))
+#         quad_theory = np.ones((nks,ntracers))
+#         if(ntracers>1):
+#             crossmono_model = np.ones((nks,ntracers*(ntracers-1)//2))
+#             crossquad_model = np.ones((nks,ntracers*(ntracers-1)//2))
+#             crossmono_theory = np.ones((nks,ntracers*(ntracers-1)//2))
+#             crossquad_theory = np.ones((nks,ntracers*(ntracers-1)//2))
+#         index=0
+#         for nt in range(ntracers):
+#             mono_model[:,nt]= monopoles2[nt]*Pk_camb_sim
+#             quad_model[:,nt]= quadrupoles2[nt]*Pk_camb_sim
+#             mono_theory[:,nt]= monopoles2[nt]*Pk_camb_sim
+#             quad_theory[:,nt]= quadrupoles2[nt]*Pk_camb_sim
+#             for ntp in range(nt+1,ntracers):
+#                 crossmono_model[:,index] = cross_monopoles2[index]*Pk_camb_sim
+#                 crossmono_theory[:,index] = cross_monopoles2[index]*Pk_camb_sim
+#                 crossquad_model[:,index] = cross_quadrupoles2[index]*Pk_camb_sim
+#                 crossquad_theory[:,index] = cross_quadrupoles2[index]*Pk_camb_sim
+#                 index += 1
+# except:
+#     print()
+#     print ("Did not find spectral corrections and theory spectra on directory:")
+#     print (dir_spec_corr_sims)
+#     print ("[Sometimes these files are created by the lognormal map-creating tool.]")
+#     print ("Will assume spectral corrections are all unity, in the interval k_phys: [0,1],")
+#     print ("and that monopoles and quadrupoles are from linear bias + RSD model, with CAMB spectrum.")
+#     print()
+#     k_corr = k_camb
+#     nks = len(k_camb)
+#     spec_corr = np.ones((nks,ntracers+1))
+#     mono_model = np.ones((nks,ntracers))
+#     quad_model = np.ones((nks,ntracers))
+#     mono_theory = np.ones((nks,ntracers))
+#     quad_theory = np.ones((nks,ntracers))
+#     #mono_model[:,0]=k_camb
+#     #quad_model[:,0]=k_camb
+#     #mono_theory[:,0]=k_camb
+#     #mono_theory[:,0]=k_camb
+#     if(ntracers>1):
+#         crossmono_model = np.ones((nks,ntracers*(ntracers-1)//2))
+#         crossquad_model = np.ones((nks,ntracers*(ntracers-1)//2))
+#         crossmono_theory = np.ones((nks,ntracers*(ntracers-1)//2))
+#         crossquad_theory = np.ones((nks,ntracers*(ntracers-1)//2))
+
+#     index=0
+#     for nt in range(ntracers):
+#         mono_model[:,nt]= monopoles[nt]*Pk_camb
+#         quad_model[:,nt]= quadrupoles[nt]*Pk_camb
+#         mono_theory[:,nt]= monopoles[nt]*Pk_camb
+#         quad_theory[:,nt]= quadrupoles[nt]*Pk_camb
+#         for ntp in range(nt+1,ntracers):
+#             crossmono_model[:,index] = cross_monopoles[index]*Pk_camb
+#             crossmono_theory[:,index] = cross_monopoles[index]*Pk_camb
+#             crossquad_model[:,index] = cross_quadrupoles[index]*Pk_camb
+#             crossquad_theory[:,index] = cross_quadrupoles[index]*Pk_camb
+#             index += 1
+
+
+
+
+
+# # Discard the first column of spec_corr, since it just gives the values of k
+# spec_corr = spec_corr[:,1:]
+
+# # NOW INCLUDING CROSS-CORRELATIONS
+# all_mono_model = np.zeros((nks,ntracers,ntracers))
+# all_quad_model = np.zeros((nks,ntracers,ntracers))
+# all_mono_theory = np.zeros((nks,ntracers,ntracers))
+# all_quad_theory = np.zeros((nks,ntracers,ntracers))
+
+# index=0
+# for i in range(ntracers):
+#     all_mono_model[:,i,i] = mono_model[:,i]
+#     all_mono_theory[:,i,i] = mono_theory[:,i]
+#     all_quad_model[:,i,i] = quad_model[:,i]
+#     all_quad_theory[:,i,i] = quad_theory[:,i]
+#     for j in range(i+1,ntracers):
+#         all_mono_model[:,i,j] = crossmono_model[:,index]
+#         all_mono_theory[:,i,j] = crossmono_theory[:,index]
+#         all_quad_model[:,i,j] = crossquad_model[:,index]
+#         all_quad_theory[:,i,j] = crossquad_theory[:,index]
+#         all_mono_model[:,j,i] = crossmono_model[:,index] 
+#         all_mono_theory[:,j,i] = crossmono_theory[:,index] 
+#         all_quad_model[:,j,i] = crossquad_model[:,index]
+#         all_quad_theory[:,j,i] = crossquad_theory[:,index]
+#         index += 1
+
+
+# # Get effective bias (sqrt of monopoles) for final tracers
+# pk_mg = pkmg.pkmg(gal_bias,gal_adip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+
+# monopoles = pk_mg.mono
+# quadrupoles = pk_mg.quad
+
+# # Compute effective dipole and bias of tracers
+# where_kph_central = np.argmin(np.abs(k_camb - kph_central))
+
+# effadip = gal_adip*matgrowcentral/(0.00000000001 + kph_central)
+# effbias = np.sqrt(monopoles[:,where_kph_central])
+
+# try:
+#     data_bias
+#     #pk_mg_data = pkmg.pkmg(data_bias,gal_adip,matgrowcentral,k_camb,len(data_bias)*[0],a_gal_sig_tot,cH,zcentral)
+#     pk_mg_data = pkmg.pkmg(data_bias,gal_adip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+#     monopoles_data = pk_mg_data.mono
+#     effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
+# except:
+#     pass
+
+
+
+# k_spec_corr = np.append(np.append(0.,k_corr),k_corr[-1] + dkph_bin )
+# pk_ln_spec_corr = np.vstack((np.vstack((np.asarray(spec_corr[0]),np.asarray(spec_corr))),spec_corr[-1]))
+
+# pk_ln_mono_model = np.vstack((np.vstack((np.asarray(mono_model[0]),np.asarray(mono_model))),mono_model[-1]))
+# pk_ln_quad_model = np.vstack((np.vstack((np.asarray(quad_model[0]),np.asarray(quad_model))),quad_model[-1]))
+
+# pk_ln_mono_theory = np.vstack((np.vstack((np.asarray(mono_theory[0]),np.asarray(mono_theory))),mono_theory[-1]))
+# pk_ln_quad_theory = np.vstack((np.vstack((np.asarray(quad_theory[0]),np.asarray(quad_theory))),quad_theory[-1]))
+
+# if (ntracers>1):
+#     pk_ln_crossmono_model = np.vstack((np.vstack((np.asarray(crossmono_model[0]),np.asarray(crossmono_model))),crossmono_model[-1]))
+#     pk_ln_crossmono_theory = np.vstack((np.vstack((np.asarray(crossmono_theory[0]),np.asarray(crossmono_theory))),crossmono_theory[-1]))
+
+#     pk_ln_crossquad_model = np.vstack((np.vstack((np.asarray(crossquad_model[0]),np.asarray(crossquad_model))),crossquad_model[-1]))
+#     pk_ln_crossquad_theory = np.vstack((np.vstack((np.asarray(crossquad_theory[0]),np.asarray(crossquad_theory))),crossquad_theory[-1]))
+
+
+
+# print()
+# print ('----------------------------------')
+# print()
+
+
+
+# ###############################
+# #R
+# #R  Now let's start the construction of the bin matrices, MR and MRk.
+# #R
+# #R  * MR accounts for the modes that should be averaged to obtain a bin in (k,\mu)
+# #R  * MRk accounts for the modes that should be averaged to obtain a bin in (k)
+# #R
+# #R  Hence, MR gives the RSD bin matrix; MRk gives the bin matrix for the monopole P_0(k).
+# #R
+# #R  In order to minimize memory usage and computation time,
+# #R  we employ sparse matrix methods.
+
+# #R  First, construct the flattened array of |k|, kflat .
+# #R  NOTICE THAT kflat is in GRID units -- must divide by cell_size eventually
+# #R  (Remembering that 1/2 of the grid is redundant, since the maps are real-valued)
+# #RR kflat=np.ndarray.flatten(grid.grid_k[:,:,:n_z/2-1])
+
+# kflat=(np.ndarray.flatten(kgrid[:,:,:n_z//2+1]))
+# lenkf=len(kflat)
+
+
+# print ('Central physical k values where spectra will be estimated:', kph_central)
+
+# # Get G(z)^2*P(k_central) for the central value of k and central value of z
+# kcmin = kph_central - 2.0*np.pi*( 4.0*dk0 )/cell_size
+# kcmax = kph_central + 2.0*np.pi*( 4.0*dk0 )/cell_size
+# # This will be the value used in the FKP and MT weights
+# powercentral = np.mean( Pk_camb[ (k_camb > kcmin) & (k_camb < kcmax) ] )
+
+# # Theory power spectra, interpolated on the k_physical used for estimations
+# powtrue = np.interp(kph,k_camb,Pk_camb)
+# pow_bins = len(kph)
+
+
+
+
+# ################################################################
+# #R   Initialize the sparse matrices MR and MRk
+# ################################################################
+# #R
+# #R Entries of these matrices are 0 or 1.
+# #R Use dtype=int8 to keep size as small as possible.
+# #R
+# #R Each row of those matrices corresponds to a (k,mu) bin, or to a (k) bin
+# #R The columns are the values of the flattened array kflat=|k|=|(kx,ky,kz)|
+# #R
+# #R The entries of the MR/MRk matrices are:
+# #R   1 when the value of (k,mu)/(k) belongs to the bin
+# #R   0 if it does not
+
+# print ('Initializing the k-binning matrix...')
+# tempor = time()
+
+# #R Initialize first row of the M-matrices (vector of zeros)
+# MRline = np.zeros(lenkf,dtype=np.int8)
+
+# #R These are the sparse matrices, built in the fastest way:
+# MRkl = coo_matrix([MRline] , dtype=np.int8)
+
+# #R And these are the matrices in the final format (easiest to make computations):
+# MRk = csc_matrix((num_binsk,lenkf),dtype=np.int8)
+
+# #R Now build the M-matrix by stacking the rows for each bin in (mu,k)
+
+# for ak in range(0,num_binsk):
+#     #R Now for the M-matrix that applies only for k bins (not mu), and for r bins:
+#     MRline[ np.where(  (kflat >= k_bar[ak] - dk0/2.00) & \
+#                      (kflat < k_bar[ak] + dk0/2.00) ) ] = 1
+#     MRline[ np.isnan(MRline) ] = 0
+#     # stack the lines to construct the new M matrix
+#     MRkl = vstack([MRkl,coo_matrix(MRline)], dtype=np.int8)
+#     MRline = np.zeros(lenkf,dtype=np.int8)
+
+# #R The way the matrix MRk was organized is such that
+# #R each rows corresponds to the kflats that belong to the bins:
+# #R (null), (k[0]), (k[1]), ... , (k[-1])
+# #R
+# ######################################################################
+# #R ATTENTION! The first lines of the matrix MRk is ALL ZEROS,
+# #R and should be DISCARDED!
+# ######################################################################
+
+# #R Convert MR and MRk matrices to csr format
+# Mknew=MRkl.tocsr()
+# MRklr=vstack(Mknew[1:,:])
+
+# #R Now convert the matrix to csc format, which is fastest for computations
+# MRk = MRklr.tocsc()
+
+# # Delete the initial sparse matrices to save memory
+# MRkl = None
+# Mknew = None
+# MRklr = None
+# del MRkl
+# del Mknew
+
+# # Counts in each bin
+# kkbar_counts = MRk.dot(np.ones(lenkf))
+
+# print ('Done with k-binning matrices. Time cost: ', np.int((time()-tempor)*1000)/1000., 's')
+# print ('Memory occupied by the binning matrix: ', MRk.nnz)
+
+# #print('Bin counts in k, using M(k):')
+# #print(kkbar_counts[10:15])
+
+# #R We defined "target" k's , but <k> on bins may be slightly different
+# kkav=(((MRk*kflat))/(kkbar_counts+0.00001))
+# print ('Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ])
+# print ('The true mean of k for each bin is:', [ "{:1.4f}".format(x) for x in kkav[10:16:2] ])
+# print()
+# print ('----------------------------------')
+# print()
+# print ('Now estimating the power spectra...')
+
+# ######################################################################
+# #R    FKP of the data to get the P_data(k) -- using MR and MRk
+# #R
+# #R  N.B.: In this code, we do this n_maps times -- once for each map, independently.
+# #R  Also, we make 4 estimates, for 4 "bandpower ranges" between k_min and k_max .
+# ######################################################################
+
+
+
+
+# # Theory monopoles of spectra (as realized on the rectangular box)
+# pk_ln_spec_corr_kbar=np.zeros((ntracers,pow_bins))
+# P0_theory=np.zeros((ntracers,pow_bins))
+# P2_theory=np.zeros((ntracers,pow_bins))
+# P0_model=np.zeros((ntracers,pow_bins))
+# P2_model=np.zeros((ntracers,pow_bins))
+
+# Cross_P0_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+# Cross_P2_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+# Cross_P0_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+# Cross_P2_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+
+# index=0
+# for i in range(ntracers):
+#     pk_ln_spec_corr_kbar[i] = np.interp(kph,k_spec_corr,pk_ln_spec_corr[:,i])
+#     P0_model[i] = np.interp(kph,k_spec_corr,pk_ln_mono_model[:,i])
+#     P2_model[i] = np.interp(kph,k_spec_corr,pk_ln_quad_model[:,i])
+#     P0_theory[i] = np.interp(kph,k_spec_corr,pk_ln_mono_theory[:,i])
+#     P2_theory[i] = np.interp(kph,k_spec_corr,pk_ln_quad_theory[:,i])
+#     for j in range(i+1,ntracers):
+#         Cross_P0_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_model[:,index])
+#         Cross_P2_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_model[:,index])
+#         Cross_P0_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_theory[:,index])
+#         Cross_P2_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_theory[:,index])
+#         index += 1
+
+# # Corrections for cross-spectra
+# cross_pk_ln_spec_corr_kbar=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+# index = 0
+# for i in range(ntracers):
+#     for j in range(i+1,ntracers):
+#         cross_pk_ln_spec_corr_kbar[index] = np.sqrt(pk_ln_spec_corr_kbar[i]*pk_ln_spec_corr_kbar[j])
+#         index +=1
+
+# # These are the theory values for the total effective power spectrum
+# nbarbar = np.zeros(ntracers)
+# for nt in range(ntracers):
+#     nbarbar[nt] = np.mean(n_bar_matrix_fid[nt][n_bar_matrix_fid[nt] != 0])/(cell_size)**3
+
+# ntot = np.sum(nbarbar*effbias**2)
+# P0tot_theory = np.sum(nbarbar*P0_theory.T,axis=1)/ntot
+# P0tot_model = np.sum(nbarbar*P0_model.T,axis=1)/ntot
+
+
+
+# ########################################
+# # ATTENTION: these are more like biases, not errors.
+# # We include them in the computation of the covariance, with an
+# # arbitrary ("fudge") factor that SHOULD BE UPDATED!
+# # biaserr
+# biaserr = 0.01
+# #
+# # Relative error due to angle averaging on square box
+# dd_P0_rel_kbar = biaserr*np.abs(P0_model - P0_theory)/(small + np.abs(P0_model))
+# dd_P2_rel_kbar = biaserr*np.abs(P2_model - P2_theory)/(small + np.abs(P2_model))
+# # Relative error due to Gaussian/Lognormal correspondence
+# dd_P_spec_kbar = biaserr*np.sqrt(np.var(pk_ln_spec_corr_kbar))*pk_ln_spec_corr_kbar
+# ########################################
+
+
+
+
+# #############################################################################
+# # BEGIN ESTIMATION
+# print ('Starting power spectra estimation')
+
+
+# # Initialize outputs
+
+# # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
+# # Original (convolved) spectra:
+# P0_data = np.zeros((n_maps,ntracers,num_binsk))
+# P2_data = np.zeros((n_maps,ntracers,num_binsk))
+
+
+# # Traditional (FKP) method
+# P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
+# P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
+# Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+# Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+
+# # Covariance
+# ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
+
+
+# # Range where we estimate some parameters
+# myk_min = int(len(k_bar)/4.)
+# myk_max = int(len(k_bar)*3./4.)
+# myran = np.arange(myk_min,myk_max)
+
+
+
+# #################################
+# # Initialize the multi-tracer estimation class
+# # We can assume many biases for the estimation of the power spectra:
+# #
+# # 1. Use the original bias
+# #fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,bias,cell_size,n_x,n_y,n_z,MRk,powercentral)
+# # 2. Use SQRT(monopole) for the bias. Now, we have two choices:
+# #
+# # 2a. Use the fiducial monopole as the MT bias
+# #
+# # 2b. Use the monopole estimated using the FKP technique
+# #fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,fkpeffbias,cell_size,n_x,n_y,n_z,MRk,powercentral)
+
+# # If shot noise is huge, then damp the effective bias of that species 
+# # so that it doesn't end up biasing the multi-tracer estimator: 
+# # nbar*b^2*P_0 > 0.01 , with P_0 = 2.10^4
+# effbias_mt = np.copy(effbias)
+# effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
+
+
+# print( "Initializing multi-tracer estimation toolbox...")
+
+# n_x_orig = parameters_code['n_x_orig']
+# n_y_orig = parameters_code['n_y_orig']
+# n_z_orig = parameters_code['n_z_orig']
+
+# fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
+
+# # If data bias is different from mocks
+# try:
+#     data_bias
+#     effbias_mt_data = np.copy(effbias_mt)
+#     effbias_mt_data[nbarbar*effbias_data**2 < 0.5e-6] = 0.01
+#     fkp_mult_data = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt_data,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
+# except:
+#     pass
+
+# ##
+# # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
+# print( "Initializing traditional (FKP) estimation toolbox...")
+# fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
+
+
+# # If data bias is different from mocks
+# try:
+#     data_bias
+#     fkp_many_data = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias_data, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
+# except:
+#     pass
+
+# print ("... done. Starting computations for each map (box) now.")
+# print()
+
+# #################################
+
+
+# est_bias_fkp = np.zeros(ntracers)
+# est_bias_mt = np.zeros(ntracers)
+
+# for nm in range(n_maps):
+#     time_start=time()
+#     print ('Loading simulated box #', nm)
+#     h5map = h5py.File(mapnames_sims[nm],'r')
+#     maps = np.asarray(h5map.get(list(h5map.keys())[0]))
+#     if not maps.shape == (ntracers,n_x,n_y,n_z):
+#         print()
+#         print ('Unexpected shape of simulated maps! Found:', maps.shape)
+#         print ('Check inputs and sims.  Aborting now...')
+#         print()
+#         sys.exit(-1)
+#     h5map.close
+
+#     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+
+#     ## !! NEW !! Additional mask from low-cell-count threshold
+#     try:
+#         cell_low_count_thresh
+#         maps = thresh_mask*maps
+#         #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
+#     except:
+#         pass
+
+#     if use_mask:
+#         maps = maps * mask
+#     ##################################################
+#     # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
+#     # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
+#     # Notice that this means that the output of the FKP quadrupole
+#     # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
+#     ##################################################
+
+#     # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
+#     print ('  Estimating FKP power spectra...')
+#     normsel = np.mean(n_bar_matrix_fid,axis=(1,2,3))/np.mean(maps,axis=(1,2,3))
+#     if ( (normsel.any() > 2.0) | (normsel.any() < 0.5) ):
+#         print("Attention! Your selection function and simulation have very different numbers of objects:")
+#         print("Selecion function/map for all tracers:",np.around(normsel,3))
+#         normsel[normsel > 2.0] = 2.0
+#         normsel[normsel < 0.5] = 0.5
+#         print(" Normalized selection function/map at:",np.around(normsel,3))
+#     FKPmany = fkp_many.fkp((normsel*maps.T).T)
+#     P0_fkp[nm] = np.abs(fkp_many.P_ret)
+#     P2_fkp[nm] = fkp_many.P2a_ret
+#     Cross0[nm] = fkp_many.cross_spec
+#     Cross2[nm] = fkp_many.cross_spec2
+#     ThCov_fkp[nm] = (fkp_many.sigma)**2
+
+#     #################################
+#     # Now, the multi-tracer method
+#     print ('  Now estimating multi-tracer spectra...')
+#     FKPmult = fkp_mult.fkp((normsel*maps.T).T)
+#     P0_data[nm] = np.abs(fkp_mult.P0_mu_ret)
+#     P2_data[nm] = fkp_mult.P2_mu_ret
+
+
+#     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+#     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+#     print( "  Effective biases of these maps:")
+#     print( "   Fiducial=", ["%.3f"%b for b in effbias])
+#     print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+#     print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+#     dt = time() - time_start
+#     print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+#     print()
+
+
+# # Correct missing factor of 2 in definition
+# Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
+
+# #del maps
+# #maps = None
+
+
+
+# ################################################################################
+# ################################################################################
+
+
+# time_end=time()
+# print ('Total time cost for estimation of spectra: ', time_end - time_start)
+
+# ################################################################################
+# ################################################################################
+
+# tempor=time()
+
+# ################################################################################
+# ################################################################################
+
+
+
+
+# print ('Applying mass assignement window function corrections...')
+
+# ################################################################################
+# #############################################################################
+# # 1) Jing (cells) corrections
+
+# jing_dec_sims = my_code_options.jing_dec_sims
+# power_jing_sims = my_code_options.power_jing_sims
+# power_jing_data = my_code_options.power_jing_data
+
+# # Here we prepare to apply the Jing (2005) deconvolution of the mass assignement function
+# # For the situations when this is necessary, see the input file
+
+# # First, compute the mean power spectra -- I will use the MTOE 
+# P0_mean = np.mean(P0_data,axis=0)
+
+# # For k smaller than the smallest k_phys, we use the Planck power spectrum.
+# # For k larger than the highest k_phys value, we extrapolate using the power law at k_N/2 -- or the highest value of k_phys in the range, whichever is smaller
+# kph_min = kph[0]
+# kN = np.pi/cell_size  # Nyquist frequency
+# ikNhalf = np.argsort(np.abs(kph-kN/2))[0]
+
+# # Take the mean of two differences to improve accuracy
+# power_spec1 = (P0_mean[:,ikNhalf-1]/P0_mean[:,ikNhalf-2]-1)*(kph[ikNhalf-1]+kph[ikNhalf-2])/dk_phys/2
+# power_spec2 = (P0_mean[:,ikNhalf]/P0_mean[:,ikNhalf-1]-1)*(kph[ikNhalf]+kph[ikNhalf-1])/dk_phys/2
+# power_spec = 0.5*(power_spec1 + power_spec2)
+
+# # Now extend the estimated power spectra
+
+
+
+# # If mass assign. funct. is different for sims and for data...
+# winmass0_sims=np.ones(pow_bins)
+# winmass0_data=np.ones(pow_bins)
+
+# winmass_sims=np.ones((ntracers,pow_bins))
+# winmass_data=np.ones((ntracers,pow_bins))
+
+# #winmass_pshot = np.ones(pow_bins)
+
+# # Let's also define a function that decays fast enough for high k's, to compute 
+# # the shot noise parte of the mass deconvolution -- C_1 in Jing's paper
+# #def fdecay_interp(k):
+# #    return np.exp(-(k/2./kN)**2)
+
+# # Now start the computation of the deconvolution kernel
+# if (jing_dec_sims):
+#     print ('Preparing to apply Jing deconvolution of mass assignement window function...')
+
+#     #nxyz = np.arange(-4,5)
+#     nxyz = np.arange(-6,7)
+#     idxyz= np.ones_like(nxyz)
+#     nx_xyz = np.einsum('i,j,k', nxyz,idxyz,idxyz)
+#     ny_xyz = np.einsum('i,j,k', idxyz,nxyz,idxyz)
+#     nz_xyz = np.einsum('i,j,k', idxyz,idxyz,nxyz)
+#     nxyz2 = nx_xyz**2 + ny_xyz**2 + nz_xyz**2
+
+#     #nvec_xyz = np.meshgrid(nxyz,nxyz,nxyz)
+#     dmu_phi=0.02
+#     dmu_th=0.04
+#     # With these options for nxyz, dmu_phi and dmu_th, the WF is accurate to ~1% up to k~0.3 h/Mpc
+#     phi_xyz=np.arange(0.+dmu_phi/2.,1.,dmu_phi)*2*np.pi
+#     cosphi_xyz=np.cos(phi_xyz)
+#     sinphi_xyz=np.sin(phi_xyz)
+#     costheta_xyz=np.arange(-1.+dmu_th/2.,1.,dmu_th)
+#     sintheta_xyz=np.sqrt(1-costheta_xyz**2)
+
+#     # More or less randomly placed unit vectors
+#     unitxyz=np.zeros((len(phi_xyz),len(costheta_xyz),3))
+#     for iphi in range(len(phi_xyz)):
+#         for jth in range(len(costheta_xyz)):
+#             unitxyz[iphi,jth] = np.array([sintheta_xyz[jth]*cosphi_xyz[iphi],sintheta_xyz[jth]*sinphi_xyz[iphi],costheta_xyz[jth]])
+
+#     Nangles=len(phi_xyz)*len(costheta_xyz)
+#     unitxyz_flat = np.reshape(unitxyz,(Nangles,3))
+
+#     def wj02(ki,ni,power_jing):
+#         return np.abs(np.power(np.abs(special.j0(np.pi*(ki/kN/2. + ni))),power_jing))
+
+#     # This is the first guess for the window function
+#     for i_k in range(pow_bins):
+#         kxyz = kph[i_k]*unitxyz_flat
+#         sum_sims=0.0
+#         sum_data=0.0
+#         sum_pshot=0.0
+#         for iang in range(Nangles):
+#             kdotk = 2*kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
+#             kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
+#             sum_sims  += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp(kprime))
+#             sum_data  += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp(kprime))
+#             #sum_pshot += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*fdecay_interp(kprime))
+
+#         winmass0_sims[i_k] = sum_sims/Nangles/pow_interp(kph[i_k])
+#         winmass0_data[i_k] = sum_data/Nangles/pow_interp(kph[i_k])
+#         #winmass_pshot[i_k] = sum_pshot/Nangles
+
+#     print ('... OK, computed first estimation of Jing de-aliasing. Iterating now...')
+
+#     P0_jing = P0_mean/winmass0_sims
+
+#     power_spec1 = (P0_jing[:,ikNhalf-1]/P0_jing[:,ikNhalf-2]-1)*(kph[ikNhalf-1]+kph[ikNhalf-2])/dk_phys/2
+#     power_spec2 = (P0_jing[:,ikNhalf]/P0_jing[:,ikNhalf-1]-1)*(kph[ikNhalf]+kph[ikNhalf-1])/dk_phys/2
+#     power_spec = 0.5*(power_spec1 + power_spec2)
+
+#     # Now create extrapolated function to represent power spectrum at all scales
+#     norm_prior = np.mean(P0_jing[:,1:4] / powtrue[1:4],axis=1)   # This is supposed to be basically eff_bias^2
+#     k_prior = np.arange(kph[0]/20.,kph[0],kph[0]/10.)
+#     pk_prior= np.outer(norm_prior,pow_interp(k_prior))
+
+#     new_k = np.concatenate((k_prior,kph))
+#     new_P0 = np.vstack((pk_prior.T,P0_jing.T)).T
+
+#     norm_aft = np.mean(P0_jing[:,-3:] ,axis=1)   # This is supposed to be basically eff_bias^2
+#     knorm_aft = np.mean(kph[-3:])   # This is the mean value of k for the norm above
+#     k_aft = np.arange(kph[-1]+dk_phys,100*kN,kN)
+#     pk_aft = np.zeros((ntracers,len(k_aft)))
+#     for nt in range(ntracers):
+#         pk_aft[nt] = norm_aft[nt]*np.power( (k_aft/knorm_aft) , power_spec[nt] )
+
+#     nnew_k = np.concatenate((new_k,k_aft))
+#     nnew_P0 = np.vstack((new_P0.T,pk_aft.T,)).T
+#     # This function may present some "edges" and "bumps", so we smooth it here
+#     nnew_P0 = gaussian_filter(nnew_P0,sigma=(1.0,0.0))
+
+#     # This is the first guess for the window function
+#     for nt in range(ntracers):
+#         pow_interp2 = interpolate.PchipInterpolator(nnew_k,nnew_P0[nt])
+#         for i_k in range(pow_bins):
+#             kxyz = kph[i_k]*unitxyz_flat
+#             sum_sims=0.0
+#             sum_data=0.0
+#             for iang in range(Nangles):
+#                 kdotk = 2*kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
+#                 kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
+#                 sum_sims += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp2(kprime))
+#                 sum_data += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp2(kprime))
+
+#             winmass_sims[nt,i_k] = sum_sims/Nangles/pow_interp2(kph[i_k])
+#             winmass_data[nt,i_k] = sum_data/Nangles/pow_interp2(kph[i_k])
+#     # Now iterate one time
+
+#     print('... OK, computed Jing deconvolution; de-aliasing completed.')
+#     print()
+
+
+
+# # Now apply ln correction and/or Jing deconvolution
+# P0_fkp = (P0_fkp)/winmass_sims
+# P2_fkp = (P2_fkp)/winmass_sims
+# P0_data = (P0_data)/winmass_sims
+# P2_data = (P2_data)/winmass_sims
+
+# index=0
+# for nt in range(ntracers):
+#     for ntp in range(nt+1,ntracers):
+#         Cross0[:,index] = Cross0[:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
+#         Cross2[:,index] = Cross2[:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
+#         index += 1
+
+# # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
+# # We can easily put back the bias by multiplying:
+# # CrossX = cross_effbias**2 * CrossX
+# cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+# index=0
+# for nt in range(ntracers):
+#     for ntp in range(nt+1,ntracers):
+#         cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
+#         index += 1
+
+# # FKP and Cross measurements need to have the bias returned in their definitions
+# P0_fkp_save = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
+# P2_fkp_save = np.transpose((effbias**2*np.transpose(P2_fkp,axes=(0,2,1))),axes=(0,2,1))
+
+# C0_fkp_save = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+# C2_fkp_save = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
+
+
+# # Means
+# P0_mean = np.mean(P0_data,axis=0)
+# P2_mean = np.mean(P2_data,axis=0)
+# P0_fkp_mean = np.mean(P0_fkp_save,axis=0)
+# P2_fkp_mean = np.mean(P2_fkp_save,axis=0)
+# Cross0_mean = np.mean(C0_fkp_save,axis=0)
+# Cross2_mean = np.mean(C2_fkp_save,axis=0)
+
+
+
+# ################################################################################
+# ################################################################################
+# ################################################################################
+# ################################################################################
+# #
+# #   SAVE these spectra
+# #
+# ################################################################################
+# ################################################################################
+# ################################################################################
+# ################################################################################
+
+
+# P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
+# P0_fkp_save=np.reshape(P0_fkp_save,(n_maps,ntracers*pow_bins))
+
+# P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
+# P2_fkp_save=np.reshape(P2_fkp_save,(n_maps,ntracers*pow_bins))
+
+# C0_fkp_save=np.reshape(C0_fkp_save,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+# C2_fkp_save=np.reshape(C2_fkp_save,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+
+
+# # Export data
+# np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
 
