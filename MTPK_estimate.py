@@ -328,14 +328,34 @@ print('Generating the k-space Grid...')
 n_x = parameters_code['n_x']
 n_y = parameters_code['n_y']
 n_z = parameters_code['n_z']
+n_x_orig = parameters_code['n_x_orig']
+n_y_orig = parameters_code['n_y_orig']
+n_z_orig = parameters_code['n_z_orig']
+
+use_padding = parameters_code['use_padding']
+padding_length = parameters_code['padding_length']
+if use_padding:
+    n_x_box = n_x + 2*padding_length[0]
+    n_y_box = n_y + 2*padding_length[1]
+    n_z_box = n_z + 2*padding_length[2]
+    n_x_orig = n_x_orig - padding_length[0]
+    n_y_orig = n_y_orig - padding_length[1]
+    n_z_orig = n_z_orig - padding_length[2]
+else:
+    n_x_box = n_x
+    n_y_box = n_y
+    n_z_box = n_z
+
 cell_size = parameters_code['cell_size']
 ntracers = my_code_options.ntracers
 nbar = my_code_options.nbar
 ncentral = my_code_options.ncentral
 nsigma = my_code_options.nsigma
 
-L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size
-grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)
+L_x = n_x_box*cell_size ; L_y = n_y_box*cell_size ; L_z = n_z_box*cell_size
+grid = gr.grid3d(n_x_box,n_y_box,n_z_box,L_x,L_y,L_z)
+
+grid_orig = gr.grid3d(n_x,n_y,n_z,n_x*cell_size,n_y*cell_size,n_z*cell_size)
 
 sel_fun_file = parameters_code['sel_fun_file']
 
@@ -386,30 +406,40 @@ else:
         # Here you can choose how to call the selection function, using the different dependencies
         # Exponential/Gaussian form:
         try:
-            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar[nt],ncentral[nt],nsigma[nt])
+            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid_orig.grid_r, nbar[nt],ncentral[nt],nsigma[nt])
         except:  # If there is only one species of tracer, the nbar, ncentral etc. are not arrays
-            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar,ncentral,nsigma)
+            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid_orig.grid_r, nbar,ncentral,nsigma)
         # Linear form:
         #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
 
         
-# if use_mask:
-#     try:
-#         h5map = h5py.File(dir_data + '/' + mask_filename,'r')
-#         h5data = h5map.get(list(h5map.keys())[0])
-#         mask = np.asarray(h5data,dtype='int32')
-#         h5map.close
-#     except:
-#         print ('Could not find file with mask!')
-#         print ('Check your directory ', dir_data)
-#         print ('Aborting now...')
-#         sys.exit(-1)
-#     if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
-#         print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
-#         print ('Please correct/check input files and/or maps. Aborting now.')
-#         sys.exit(-1)
-#     n_bar_matrix_fid = n_bar_matrix_fid * mask
+if use_mask:
+    try:
+        h5map = h5py.File(dir_data + '/' + mask_filename,'r')
+        h5data = h5map.get(list(h5map.keys())[0])
+        mask = np.asarray(h5data,dtype='int32')
+        h5map.close
+    except:
+        print ('Could not find file with mask!')
+        print ('Check your directory ', dir_data)
+        print ('Aborting now...')
+        sys.exit(-1)
+    if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
+        print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
+        print ('Please correct/check input files and/or maps. Aborting now.')
+        sys.exit(-1)
+    n_bar_matrix_fid = n_bar_matrix_fid * mask
 
+# Apply padding, if it exists
+try:
+    n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
+    n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = n_bar_matrix_fid
+    n_bar_matrix_fid = np.copy(n_box)
+    n_box = None
+    del n_box
+except:
+    pass
+    
 # n_maps = parameters_code['n_maps']
 # mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
 # if len(mapnames_sims)==0 :
@@ -1009,10 +1039,6 @@ else:
 
 
 # print( "Initializing multi-tracer estimation toolbox...")
-
-# n_x_orig = parameters_code['n_x_orig']
-# n_y_orig = parameters_code['n_y_orig']
-# n_z_orig = parameters_code['n_z_orig']
 
 # fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
 

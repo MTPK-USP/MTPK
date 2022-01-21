@@ -14,6 +14,14 @@ class code_parameters:
     All of these parameters are optional. If a parameter is not provided,
     the code will simply use the default parameter defined below
 
+    use_padding : bool
+
+    True -> do padding
+    False -> otherwise
+
+    padding_length : list of integer
+    List to indicating how much padding in each direction
+
     use_power_law : bool
 
     True -> to use power_law to multiply CAMB's spectrum
@@ -175,6 +183,8 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
+            'use_padding'          : False,
+            'padding_length'       : [1, 1, 1],
             'use_power_law'        : False,
             'power_law'            : 1,
             'pk_power'             : 1,
@@ -229,6 +239,8 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
+        self.use_padding = default_params['use_padding']
+        self.padding_length = default_params['padding_length']
         self.mask_filename = default_params['mask_filename']
         self.use_power_law = default_params['use_power_law']
         self.power_law = default_params['power_law']
