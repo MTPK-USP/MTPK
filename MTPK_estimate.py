@@ -579,41 +579,41 @@ kph = k_bar*2*np.pi/cell_size
 
 
 
-# ##############################################
-# # Define the "effective bias" as the amplitude of the monopole
-# n_z_orig = my_code_options.n_z_orig
-# try:
-#     kdip_phys
-# except:
-#     kdip_phys = 1./(cell_size*(n_z_orig + n_z/2.))
-# else:
-#     print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
+##############################################
+# Define the "effective bias" as the amplitude of the monopole
+use_kdip_phys = parameters_code['use_kdip_phys']
+kdip_phys = parameters_code['kdip_phys']
+if use_kdip_phys:
+    print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
+    pass
+else:
+    kdip_phys = 1./(cell_size*(n_z_orig + n_z/2.))    
+    
+try:
+    dip = np.asarray(gal_adip) * kdip_phys
+except:
+    dip = 0.0
 
-# try:
-#     dip = np.asarray(gal_adip) * kdip_phys
-# except:
-#     dip = 0.0
+pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
 
-# pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+monopoles = pk_mg.mono
+quadrupoles = pk_mg.quad
 
-# monopoles = pk_mg.mono
-# quadrupoles = pk_mg.quad
-
-# try:
-#     pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-#     cross_monopoles = pk_mg_cross.monos
-#     cross_quadrupoles = pk_mg_cross.quads
-# except:
-#     cross_monopoles = np.zeros((len(k_camb),1))
-#     cross_quadrupoles = np.zeros((len(k_camb),1))
+try:
+    pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+    cross_monopoles = pk_mg_cross.monos
+    cross_quadrupoles = pk_mg_cross.quads
+except:
+    cross_monopoles = np.zeros((len(k_camb),1))
+    cross_quadrupoles = np.zeros((len(k_camb),1))
 
 
-# # Compute effective dipole and bias of tracers
-# kph_central = my_code_options.kph_central
-# where_kph_central = np.argmin(np.abs(k_camb - kph_central))
+# Compute effective dipole and bias of tracers
+kph_central = my_code_options.kph_central
+where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 
-# effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
-# effbias = np.sqrt(monopoles[:,where_kph_central])
+effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
+effbias = np.sqrt(monopoles[:,where_kph_central])
 
 # try:
 #     data_bias

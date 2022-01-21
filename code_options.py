@@ -14,6 +14,15 @@ class code_parameters:
     All of these parameters are optional. If a parameter is not provided,
     the code will simply use the default parameter defined below
 
+    use_kdip_phys : bool
+
+    True -> use kdip_phys
+    False -> otherwise
+
+    kdip_phys : float
+
+    Alpha-dipole k_dip [h/Mpc]
+
     use_padding : bool
 
     True -> do padding
@@ -183,6 +192,8 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
+            'use_kdip_phys'        : False,
+            'kdip_phys'            : 0.005,
             'use_padding'          : False,
             'padding_length'       : [1, 1, 1],
             'use_power_law'        : False,
@@ -239,6 +250,8 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
+        self.use_kdip_phys = default_params['use_kdip_phys']
+        self.kdip_phys = default_params['kdip_phys']
         self.use_padding = default_params['use_padding']
         self.padding_length = default_params['padding_length']
         self.mask_filename = default_params['mask_filename']
