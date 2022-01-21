@@ -307,82 +307,80 @@ P_interp = np.append(Pk_camb,np.array([1./2.*Pk_camb[-1],1./4*Pk_camb[-1],1./8*P
 pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
 
 
-# #####################################################
-# #####################################################
-# #####################################################
+#####################################################
+#####################################################
+#####################################################
 
-# gal_bias = my_code_options.bias_file
-# adip = my_code_options.adip
-# # try:
-# #     gal_bias = np.loadtxt(input_dir + "/" + bias_file)
-# # except:
-# #     print("Could not find bias file:", bias_file,". Please check your /inputs directory.")
-# #     print("Aborting now...")
-# #     sys.exit(-1)
+gal_bias = my_code_options.bias_file
+adip = my_code_options.adip
 
-# gal_adip = np.asarray(adip)
-# gal_sigz_est = np.asarray(sigz_est)
-# gal_vdisp = np.asarray(vdisp)
-# a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
+gal_adip = np.asarray(adip)
+gal_sigz_est = np.asarray(sigz_est)
+gal_vdisp = np.asarray(vdisp)
+a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
 
-# #####################################################
-# # Generate real- and Fourier-space grids for FFTs
-# #####################################################
+#####################################################
+# Generate real- and Fourier-space grids for FFTs
+#####################################################
 
-# print('Generating the k-space Grid...')
+print('Generating the k-space Grid...')
 
-# n_x = parameters_code['n_x']
-# n_y = parameters_code['n_y']
-# n_z = parameters_code['n_z']
-# cell_size = parameters_code['cell_size']
-# ntracers = my_code_options.ntracers
-# nbar = my_code_options.nbar
-# ncentral = my_code_options.ncentral
-# nsigma = my_code_options.nsigma
+n_x = parameters_code['n_x']
+n_y = parameters_code['n_y']
+n_z = parameters_code['n_z']
+cell_size = parameters_code['cell_size']
+ntracers = my_code_options.ntracers
+nbar = my_code_options.nbar
+ncentral = my_code_options.ncentral
+nsigma = my_code_options.nsigma
 
-# L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size
-# grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)
+L_x = n_x*cell_size ; L_y = n_y*cell_size ; L_z = n_z*cell_size
+grid = gr.grid3d(n_x,n_y,n_z,L_x,L_y,L_z)
 
-# # Selection function
-# # If given by data
-# if sel_fun_data:
-#     try:
-#         h5map = h5py.File(dir_data + '/' + sel_fun_file,'r')
-#         h5data = h5map.get(list(h5map.keys())[0])
-#         n_bar_matrix_fid = np.asarray(h5data,dtype='float32')
-#         n_bar_matrix_fid = np.asarray(mult_sel_fun*(n_bar_matrix_fid + shift_sel_fun),dtype='float32')
-#         h5map.close
-#     except:
-#         print ('Could not find file with data selection function!')
-#         print ('Check your directory ', dir_data)
-#         print ('Aborting now...')
-#         sys.exit(-1)
-#     if (np.shape(n_bar_matrix_fid)[1] != n_x) or (np.shape(n_bar_matrix_fid)[2] != n_y) or (np.shape(n_bar_matrix_fid)[3] != n_z):
-#         print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
-#         print ('Please correct/check input files and/or maps. Aborting now.')
-#         sys.exit(-1)
-# else:
-#     try:
-#         mass_fun = parameters_code['mass_fun']
-#         mult_sel_fun = parameters_code['mult_sel_fun']
-#         mass_fun = mult_sel_fun*mass_fun
-#         nbar = mass_fun*cell_size**3
-#         ncentral = 10.0*nbar**0
-#         nsigma = 10000.0*nbar**0 
-#     except:
-#         print("Att.: using analytical selection function for galaxies (check parameters in input file).")
-#         print("Using n_bar, n_central, n_sigma  from input file")
+sel_fun_file = parameters_code['sel_fun_file']
 
-#     n_bar_matrix_fid = np.zeros((ntracers,n_x,n_y,n_z),dtype='float32')
-#     for nt in range(ntracers):
-#         # Here you can choose how to call the selection function, using the different dependencies
-#         # Exponential/Gaussian form:
-#         try:
-#             n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar[nt],ncentral[nt],nsigma[nt])
-#         except:  # If there is only one species of tracer, the nbar, ncentral etc. are not arrays
-#             n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar,ncentral,nsigma)
-#         # Linear form:
-#         #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
+# Selection function
+# If given by data
+if sel_fun_data:
+    try:
+        h5map = h5py.File(dir_data + '/' + sel_fun_file,'r')
+        h5data = h5map.get(list(h5map.keys())[0])
+        n_bar_matrix_fid = np.asarray(h5data,dtype='float32')
+        mult_sel_fun = parameters_code['mult_sel_fun']
+        shift_sel_fun = parameters_code['shift_sel_fun']
+        n_bar_matrix_fid = np.asarray(mult_sel_fun*(n_bar_matrix_fid + shift_sel_fun),dtype='float32')
+        h5map.close
+    except:
+        print ('Could not find file with data selection function!')
+        print ('Check your directory ', dir_data)
+        print ('Aborting now...')
+        sys.exit(-1)
+    if (np.shape(n_bar_matrix_fid)[1] != n_x) or (np.shape(n_bar_matrix_fid)[2] != n_y) or (np.shape(n_bar_matrix_fid)[3] != n_z):
+        print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
+        print ('Please correct/check input files and/or maps. Aborting now.')
+        sys.exit(-1)
+else:
+    try:
+        mass_fun = parameters_code['mass_fun']
+        mult_sel_fun = parameters_code['mult_sel_fun']
+        mass_fun = mult_sel_fun*mass_fun
+        nbar = mass_fun*cell_size**3
+        ncentral = 10.0*nbar**0
+        nsigma = 10000.0*nbar**0 
+    except:
+        print("Att.: using analytical selection function for galaxies (check parameters in input file).")
+        print("Using n_bar, n_central, n_sigma  from input file")
+
+    n_bar_matrix_fid = np.zeros((ntracers,n_x,n_y,n_z),dtype='float32')
+    for nt in range(ntracers):
+        # Here you can choose how to call the selection function, using the different dependencies
+        # Exponential/Gaussian form:
+        try:
+            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar[nt],ncentral[nt],nsigma[nt])
+        except:  # If there is only one species of tracer, the nbar, ncentral etc. are not arrays
+            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid.grid_r, nbar,ncentral,nsigma)
+        # Linear form:
+        #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
 
         
 # if use_mask:
