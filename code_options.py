@@ -161,7 +161,7 @@ class code_parameters:
     def __init__(self, **kwargs):
         default_params = {
             'use_theory_spectrum'  : False,
-            'theory_spectrum_file' : "theory_spectrum_file.txt"
+            'theory_spectrum_file' : "theory_spectrum_file.txt",
             'use_mask'             : False,
             'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),
             'halo_bias'            : np.array([1.572, 1.906, 2.442]),

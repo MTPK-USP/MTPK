@@ -267,6 +267,8 @@ a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
 #############Calling CAMB for calculations of the spectra#################
 print('Beggining CAMB calculations\n')
 
+use_theory_spectrum = parameters_code['use_theory_spectrum']
+theory_spectrum_file = parameters_code['theory_spectrum_file']
 if use_theory_spectrum:
     print('Using pre-existing power spectrum in file:',theory_spectrum_file)
     kcpkc = np.loadtxt(theory_spectrum_file)
