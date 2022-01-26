@@ -919,58 +919,59 @@ Pk_flat_camb = None
 del Pk_flat_camb
 ###
 
-# ######################################################################
-# #R    FKP of the data to get the P_data(k) -- using MR and MRk
-# #R
-# #R  N.B.: In this code, we do this n_maps times -- once for each map, independently.
-# #R  Also, we make 4 estimates, for 4 "bandpower ranges" between k_min and k_max .
-# ######################################################################
+######################################################################
+#R    FKP of the data to get the P_data(k) -- using MR and MRk
+#R
+#R  N.B.: In this code, we do this n_maps times -- once for each map, independently.
+#R  Also, we make 4 estimates, for 4 "bandpower ranges" between k_min and k_max .
+######################################################################
 
 
 
 
-# # Theory monopoles of spectra (as realized on the rectangular box)
-# pk_ln_spec_corr_kbar=np.zeros((ntracers,pow_bins))
-# P0_theory=np.zeros((ntracers,pow_bins))
-# P2_theory=np.zeros((ntracers,pow_bins))
-# P0_model=np.zeros((ntracers,pow_bins))
-# P2_model=np.zeros((ntracers,pow_bins))
+# Theory monopoles of spectra (as realized on the rectangular box)
+pk_ln_spec_corr_kbar=np.zeros((ntracers,pow_bins))
+P0_theory=np.zeros((ntracers,pow_bins))
+P2_theory=np.zeros((ntracers,pow_bins))
+P0_model=np.zeros((ntracers,pow_bins))
+P2_model=np.zeros((ntracers,pow_bins))
 
-# Cross_P0_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-# Cross_P2_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-# Cross_P0_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-# Cross_P2_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P0_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P2_model=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P0_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+Cross_P2_theory=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
 
-# index=0
-# for i in range(ntracers):
-#     pk_ln_spec_corr_kbar[i] = np.interp(kph,k_spec_corr,pk_ln_spec_corr[:,i])
-#     P0_model[i] = np.interp(kph,k_spec_corr,pk_ln_mono_model[:,i])
-#     P2_model[i] = np.interp(kph,k_spec_corr,pk_ln_quad_model[:,i])
-#     P0_theory[i] = np.interp(kph,k_spec_corr,pk_ln_mono_theory[:,i])
-#     P2_theory[i] = np.interp(kph,k_spec_corr,pk_ln_quad_theory[:,i])
-#     for j in range(i+1,ntracers):
-#         Cross_P0_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_model[:,index])
-#         Cross_P2_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_model[:,index])
-#         Cross_P0_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_theory[:,index])
-#         Cross_P2_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_theory[:,index])
-#         index += 1
+index=0
+for i in range(ntracers):
+    pk_ln_spec_corr_kbar[i] = np.interp(kph,k_spec_corr,pk_ln_spec_corr[:,i])
+    P0_model[i] = np.interp(kph,k_spec_corr,pk_ln_mono_model[:,i])
+    P2_model[i] = np.interp(kph,k_spec_corr,pk_ln_quad_model[:,i])
+    P0_theory[i] = np.interp(kph,k_spec_corr,pk_ln_mono_theory[:,i])
+    P2_theory[i] = np.interp(kph,k_spec_corr,pk_ln_quad_theory[:,i])
+    for j in range(i+1,ntracers):
+        Cross_P0_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_model[:,index])
+        Cross_P2_model[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_model[:,index])
+        Cross_P0_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossmono_theory[:,index])
+        Cross_P2_theory[index] = np.interp(kph,k_spec_corr,pk_ln_crossquad_theory[:,index])
+        index += 1
 
-# # Corrections for cross-spectra
-# cross_pk_ln_spec_corr_kbar=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
-# index = 0
-# for i in range(ntracers):
-#     for j in range(i+1,ntracers):
-#         cross_pk_ln_spec_corr_kbar[index] = np.sqrt(pk_ln_spec_corr_kbar[i]*pk_ln_spec_corr_kbar[j])
-#         index +=1
+# Corrections for cross-spectra
+cross_pk_ln_spec_corr_kbar=np.zeros((ntracers*(ntracers-1)//2,pow_bins))
+index = 0
+for i in range(ntracers):
+    for j in range(i+1,ntracers):
+        cross_pk_ln_spec_corr_kbar[index] = np.sqrt(pk_ln_spec_corr_kbar[i]*pk_ln_spec_corr_kbar[j])
+        index +=1
 
-# # These are the theory values for the total effective power spectrum
-# nbarbar = np.zeros(ntracers)
-# for nt in range(ntracers):
-#     nbarbar[nt] = np.mean(n_bar_matrix_fid[nt][n_bar_matrix_fid[nt] != 0])/(cell_size)**3
+# These are the theory values for the total effective power spectrum
+# updated nbar_bar to compute mean on cells with n > small=1.e-9
+nbarbar = np.zeros(ntracers)
+for nt in range(ntracers):
+    nbarbar[nt] = np.mean(n_bar_matrix_fid[nt][n_bar_matrix_fid[nt] > small])/(cell_size)**3
 
-# ntot = np.sum(nbarbar*effbias**2)
-# P0tot_theory = np.sum(nbarbar*P0_theory.T,axis=1)/ntot
-# P0tot_model = np.sum(nbarbar*P0_model.T,axis=1)/ntot
+ntot = np.sum(nbarbar*effbias**2)
+P0tot_theory = np.sum(nbarbar*P0_theory.T,axis=1)/ntot
+P0tot_model = np.sum(nbarbar*P0_model.T,axis=1)/ntot
 
 
 
