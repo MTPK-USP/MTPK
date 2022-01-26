@@ -1066,6 +1066,13 @@ if use_data_bias:
 else:
     pass
 
+'''
+Because of the very sensitive nature of shot noise subtraction 
+in the Jing de-aliasing, it may be better to normalize the counts of the 
+selection function to each map, and not to the mean of the maps.
+''' 
+normsel = np.zeros((n_maps,ntracers))
+
 print ("... done. Starting computations for each map (box) now.")
 print()
 
