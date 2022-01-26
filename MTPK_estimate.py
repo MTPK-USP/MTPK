@@ -1053,29 +1053,21 @@ if use_data_bias:
     fkp_mult_data = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt_data,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
 else:
     pass
-# try:
-#     data_bias
-#     effbias_mt_data = np.copy(effbias_mt)
-#     effbias_mt_data[nbarbar*effbias_data**2 < 0.5e-6] = 0.01
-#     fkp_mult_data = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt_data,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
-# except:
-#     pass
 
-# ##
-# # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-# print( "Initializing traditional (FKP) estimation toolbox...")
-# fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
+##
+# UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
+print( "Initializing traditional (FKP) estimation toolbox...")
+fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
 
 
-# # If data bias is different from mocks
-# try:
-#     data_bias
-#     fkp_many_data = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias_data, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
-# except:
-#     pass
+# If data bias is different from mocks
+if use_data_bias:
+    fkp_many_data = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias_data, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
+else:
+    pass
 
-# print ("... done. Starting computations for each map (box) now.")
-# print()
+print ("... done. Starting computations for each map (box) now.")
+print()
 
 # #################################
 
