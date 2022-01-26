@@ -615,15 +615,14 @@ where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
 effbias = np.sqrt(monopoles[:,where_kph_central])
 
-# try:
-#     data_bias
-#     #pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,len(data_bias)*[0],a_sig_tot,cH,zcentral)
-#     pk_mg_data = pkmg.pkmg(data_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-#     monopoles_data = pk_mg_data.mono
-#     effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
-# except:
-#     pass
-
+use_data_bias = parameters_code['use_data_bias']
+data_bias = parameters_code['data_bias']
+if use_data_bias:
+    pk_mg_data = pkmg.pkmg(data_bias, dip, matgrowcentral, k_camb, a_gal_sig_tot, cH, zcentral)
+    monopoles_data = pk_mg_data.mono
+    effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
+else:
+    pass
 
 
 # # Import correction factors for the lognormal halo simulations

@@ -14,6 +14,16 @@ class code_parameters:
     All of these parameters are optional. If a parameter is not provided,
     the code will simply use the default parameter defined below
 
+    use_data_bias : bool
+
+    True -> use a different bias from the mocks
+    False -> otherwise
+
+    data_bias : ndarray of floats
+
+    It is a fiducial value for the bias in the power spectrum estimation.
+    If you specify it, this will SUPERSEDE the bias from the HOD calculation
+
     use_kdip_phys : bool
 
     True -> use kdip_phys
@@ -192,6 +202,8 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
+            'use_data_bias'        : False,
+            'data_bias'            : np.array([1.4, 1.8, 2.6]),
             'use_kdip_phys'        : False,
             'kdip_phys'            : 0.005,
             'use_padding'          : False,
@@ -250,6 +262,8 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
+        self.use_data_bias = default_params['use_data_bias']
+        self.data_bias = default_params['data_bias']
         self.use_kdip_phys = default_params['use_kdip_phys']
         self.kdip_phys = default_params['kdip_phys']
         self.use_padding = default_params['use_padding']
