@@ -1484,48 +1484,53 @@ if (jing_dec_sims) or (not sims_only):
     print('... OK, computed Jing deconvolution; de-aliasing completed.')
     print(".")
 
-#
+print('Saving data to /spectra now...')
 
-# # Now apply ln correction and/or Jing deconvolution
-# P0_fkp = (P0_fkp)/winmass_sims
-# P2_fkp = (P2_fkp)/winmass_sims
-# P0_data = (P0_data)/winmass_sims
-# P2_data = (P2_data)/winmass_sims
+P0_data_Jing = np.copy(P0_data)
+P2_data_Jing = np.copy(P2_data)
+P0_fkp_Jing = np.copy(P0_fkp)
+P2_fkp_Jing = np.copy(P2_fkp)
+Cross0_Jing = np.copy(Cross0)
+Cross2_Jing = np.copy(Cross2)
 
-# index=0
-# for nt in range(ntracers):
-#     for ntp in range(nt+1,ntracers):
-#         Cross0[:,index] = Cross0[:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
-#         Cross2[:,index] = Cross2[:,index] / np.sqrt(winmass_sims[nt]*winmass_sims[ntp]) 
-#         index += 1
+# Now apply ln correction and/or Jing deconvolution
+P0_fkp_Jing = (P0_fkp_ps)/winmass_sims_fkp
+P2_fkp_Jing = (P2_fkp)/winmass_sims_fkp
+P0_data_Jing = (P0_data_ps)/winmass_sims_mt
+P2_data_Jing = (P2_data)/winmass_sims_mt
 
-# # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
-# # We can easily put back the bias by multiplying:
-# # CrossX = cross_effbias**2 * CrossX
-# cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
-# index=0
-# for nt in range(ntracers):
-#     for ntp in range(nt+1,ntracers):
-#         cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
-#         index += 1
+index=0
+for nt in range(ntracers):
+        for ntp in range(nt+1,ntracers):
+            Cross0_Jing[:,index] = Cross0[:,index] / np.sqrt(np.abs(winmass_sims_fkp[nt]*winmass_sims_fkp[ntp])) 
+            Cross2_Jing[:,index] = Cross2[:,index] / np.sqrt(np.abs(winmass_sims_fkp[nt]*winmass_sims_fkp[ntp]))
+            index += 1
 
-# # FKP and Cross measurements need to have the bias returned in their definitions
-# P0_fkp_save = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
-# P2_fkp_save = np.transpose((effbias**2*np.transpose(P2_fkp,axes=(0,2,1))),axes=(0,2,1))
+# Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
+# We can easily put back the bias by multiplying:
+# CrossX = cross_effbias**2 * CrossX
+cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+index=0
+for nt in range(ntracers):
+    for ntp in range(nt+1,ntracers):
+        cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
+        index += 1
 
-# C0_fkp_save = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
-# C2_fkp_save = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
+# FKP and Cross measurements need to have the bias returned in their definitions
+P0_fkp_Jing = np.transpose((effbias**2*np.transpose(P0_fkp_Jing,axes=(0,2,1))),axes=(0,2,1))
+P2_fkp_Jing = np.transpose((effbias**2*np.transpose(P2_fkp_Jing,axes=(0,2,1))),axes=(0,2,1))
 
-
-# # Means
-# P0_mean = np.mean(P0_data,axis=0)
-# P2_mean = np.mean(P2_data,axis=0)
-# P0_fkp_mean = np.mean(P0_fkp_save,axis=0)
-# P2_fkp_mean = np.mean(P2_fkp_save,axis=0)
-# Cross0_mean = np.mean(C0_fkp_save,axis=0)
-# Cross2_mean = np.mean(C2_fkp_save,axis=0)
+C0_fkp_Jing = np.transpose((cross_effbias**2*np.transpose(Cross0_Jing,axes=(0,2,1))),axes=(0,2,1))
+C2_fkp_Jing = np.transpose((cross_effbias**2*np.transpose(Cross2_Jing,axes=(0,2,1))),axes=(0,2,1))
 
 
+# Means
+P0_mean_Jing = np.mean(P0_data_Jing,axis=0)
+P2_mean_Jing = np.mean(P2_data_Jing,axis=0)
+P0_fkp_mean_Jing = np.mean(P0_fkp_Jing,axis=0)
+P2_fkp_mean_Jing = np.mean(P2_fkp_Jing,axis=0)
+Cross0_mean_Jing = np.mean(C0_fkp_Jing,axis=0)
+Cross2_mean_Jing = np.mean(C2_fkp_Jing,axis=0)
 
 # ################################################################################
 # ################################################################################
