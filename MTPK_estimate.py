@@ -1190,22 +1190,46 @@ for nm in range(n_maps):
     Cross0[nm] = Cross0[nm]/k_av_corr
     Cross2[nm] = Cross2[nm]/k_av_corr
 
-#     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-#     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-#     print( "  Effective biases of these maps:")
-#     print( "   Fiducial=", ["%.3f"%b for b in effbias])
-#     print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
-#     print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-#     dt = time() - time_start
-#     print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-#     print()
+    if nm==0:
+        if use_data_bias:
+            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+            print ("  Effective biases of the data maps:")
+            print ("   Fiducial=", ["%.3f"%b for b in effbias])
+            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+            dt = time() - time_start
+            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+            print(".")
+        else:
+            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+            print ("  Effective biases of the simulated maps:")
+            print ("   Fiducial=", ["%.3f"%b for b in effbias])
+            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+            dt = time() - time_start
+            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+            print(".")
+    else:
+        est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+        est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+        print( "  Effective biases of these maps:")
+        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+        dt = time() - time_start
+        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+        print(".")
 
+#Update nbarbar to reflect actual
+nbarbar = nbarbar/np.mean(normsel,axis=0)
 
-# # Correct missing factor of 2 in definition
-# Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
+# Correct missing factor of 2 in definition
+Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
 
-# #del maps
-# #maps = None
+#del maps
+#maps = None
 
 
 
