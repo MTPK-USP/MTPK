@@ -132,9 +132,6 @@ class code_parameters:
 
     zcentral : float
     Central (mean, or median) redshift of the catalog or simulated data
-
-    zbinwidth : float
-    The width of the central redshift in the simulated data
     
     whichspec : integer
     Which spectrum to use in the ln sims and estimation:
@@ -146,9 +143,6 @@ class code_parameters:
 
     power_jing_sims : float
     Power used for deconvolution window function of sims
-
-    power_jing_data : float
-    Power used for data window function
 
     plot_all_cov : bool
     True -> To plot the 2D covariances (FKP v. MT)
@@ -237,17 +231,11 @@ class code_parameters:
             'kmax_bias'            : 0.15,
             'kph_central'          : 0.1,
             'dkph_bin'             : 0.01,
-            #Verificar o que é o parâmetro 'dkph_phys'
-            'dkph_phys'            : 0.6, #=> What is this?
             'kmin_phys'            : 0.05,
             'kmax_phys'            : 0.6,
-            #Tirar o 'zbinwidth'
-            'zbinwidth'            : 0.1, #=> Eliminate this!
             'whichspec'            : 1,
             'jing_dec_sims'        : True,
             'power_jing_sims'      : 2.0,
-            #Tirar a o 'power_jing_data'
-            'power_jing_data'      : 2.0, #=> Eliminate
             'plot_all_cov'         : False,
             'use_cell_low_count_thresh': False,
             'cell_low_count_thresh': 0.0,
@@ -300,14 +288,11 @@ class code_parameters:
         self.kmin_bias = default_params['kmin_bias']
         self.kmax_bias = default_params['kmax_bias']
         self.kph_central = default_params['kph_central']
-        self.dkph_phys = default_params['dkph_phys']
         self.kmin_phys = default_params['kmin_phys']
         self.kmax_phys = default_params['kmax_phys']
-        self.zbinwidth = default_params['zbinwidth']
         self.whichspec = default_params['whichspec']
         self.jing_dec_sims = default_params['jing_dec_sims']
         self.power_jing_sims = default_params['power_jing_sims']
-        self.power_jing_data = default_params['power_jing_data']
         self.plot_all_cov = default_params['plot_all_cov']
         self.fudge = default_params['fudge']
 

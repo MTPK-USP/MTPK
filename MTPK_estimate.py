@@ -1407,8 +1407,6 @@ if (jing_dec_sims) or (not sims_only):
             kdotk = 2*kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
             kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
             sum_sims  += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp(kprime))
-            #sum_data  += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp(kprime))
-            #sum_pshot += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*fdecay_interp(kprime))
 
         winmass0_sims[i_k] = sum_sims/Nangles/pow_interp(kph[i_k])
         #winmass0_data[i_k] = sum_data/Nangles/pow_interp(kph[i_k])
@@ -1473,9 +1471,7 @@ if (jing_dec_sims) or (not sims_only):
                 kdotk = 2*kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
                 kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
                 sum_sims_mt += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp2_mt(kprime))
-                #sum_data_mt += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp2_mt(kprime))
                 sum_sims_fkp += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp2_fkp(kprime))
-                #sum_data_fkp += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp2_fkp(kprime))
 
             winmass_sims_mt[nt,i_k] = sum_sims_mt/Nangles/pow_interp2_mt(kph[i_k])
             #winmass_data_mt[nt,i_k] = sum_data_mt/Nangles/pow_interp2_mt(kph[i_k])
