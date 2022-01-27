@@ -292,7 +292,7 @@ else:
     kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
     Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 
-############# Ended CAMB calculation #####################################
+# Ended CAMB calculation #####################################
 
 use_power_law = parameters_code['use_power_law']
 power_law = parameters_code['power_law']
@@ -324,7 +324,9 @@ a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
 # Generate real- and Fourier-space grids for FFTs
 #####################################################
 
+print('.')
 print('Generating the k-space Grid...')
+print('.')
 
 n_x = parameters_code['n_x']
 n_y = parameters_code['n_y']
@@ -890,7 +892,7 @@ del Mknew
 # Counts in each bin
 kkbar_counts = MRk.dot(np.ones(lenkf))
 
-print ('Done with k-binning matrices. Time cost: ', np.int((time()-tempor)*1000)/1000., 's')
+print ('Done with k-binning matrices. Time cost: ', np.int32((time()-tempor)*1000)/1000., 's')
 print ('Memory occupied by the binning matrix: ', MRk.nnz)
 
 #print('Bin counts in k, using M(k):')
@@ -1692,3 +1694,4 @@ pl.xlim(xlim)
 pl.ylim(ylim2)
 pl.savefig(dir_figs + "/P2_data.png",dpi=200)
 pl.close('all')
+#
