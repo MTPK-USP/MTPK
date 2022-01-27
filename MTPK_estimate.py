@@ -585,8 +585,8 @@ kph = k_bar*2*np.pi/cell_size
 ##############################################
 # Define the "effective bias" as the amplitude of the monopole
 use_kdip_phys = parameters_code['use_kdip_phys']
-kdip_phys = parameters_code['kdip_phys']
 if use_kdip_phys:
+    kdip_phys = parameters_code['kdip_phys']
     print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
     pass
 else:

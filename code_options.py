@@ -27,7 +27,7 @@ class code_parameters:
     use_kdip_phys : bool
 
     True -> use kdip_phys
-    False -> otherwise
+    False -> the code will compute it
 
     kdip_phys : float
 
