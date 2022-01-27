@@ -1233,169 +1233,258 @@ Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
 
 
 
-# ################################################################################
-# ################################################################################
+################################################################################
+################################################################################
 
 
-# time_end=time()
-# print ('Total time cost for estimation of spectra: ', time_end - time_start)
+time_end=time()
+print ('Total time cost for estimation of spectra: ', time_end - time_start)
 
-# ################################################################################
-# ################################################################################
+################################################################################
+################################################################################
 
-# tempor=time()
+tempor=time()
 
-# ################################################################################
-# ################################################################################
-
-
-
-
-# print ('Applying mass assignement window function corrections...')
-
-# ################################################################################
-# #############################################################################
-# # 1) Jing (cells) corrections
-
-# jing_dec_sims = my_code_options.jing_dec_sims
-# power_jing_sims = my_code_options.power_jing_sims
-# power_jing_data = my_code_options.power_jing_data
-
-# # Here we prepare to apply the Jing (2005) deconvolution of the mass assignement function
-# # For the situations when this is necessary, see the input file
-
-# # First, compute the mean power spectra -- I will use the MTOE 
-# P0_mean = np.mean(P0_data,axis=0)
-
-# # For k smaller than the smallest k_phys, we use the Planck power spectrum.
-# # For k larger than the highest k_phys value, we extrapolate using the power law at k_N/2 -- or the highest value of k_phys in the range, whichever is smaller
-# kph_min = kph[0]
-# kN = np.pi/cell_size  # Nyquist frequency
-# ikNhalf = np.argsort(np.abs(kph-kN/2))[0]
-
-# # Take the mean of two differences to improve accuracy
-# power_spec1 = (P0_mean[:,ikNhalf-1]/P0_mean[:,ikNhalf-2]-1)*(kph[ikNhalf-1]+kph[ikNhalf-2])/dk_phys/2
-# power_spec2 = (P0_mean[:,ikNhalf]/P0_mean[:,ikNhalf-1]-1)*(kph[ikNhalf]+kph[ikNhalf-1])/dk_phys/2
-# power_spec = 0.5*(power_spec1 + power_spec2)
-
-# # Now extend the estimated power spectra
+################################################################################
+################################################################################
 
 
 
-# # If mass assign. funct. is different for sims and for data...
-# winmass0_sims=np.ones(pow_bins)
-# winmass0_data=np.ones(pow_bins)
 
-# winmass_sims=np.ones((ntracers,pow_bins))
-# winmass_data=np.ones((ntracers,pow_bins))
+print ('Applying mass assignement window function corrections...')
 
-# #winmass_pshot = np.ones(pow_bins)
+################################################################################
+#############################################################################
+# 1) Jing (cells) corrections
 
-# # Let's also define a function that decays fast enough for high k's, to compute 
-# # the shot noise parte of the mass deconvolution -- C_1 in Jing's paper
-# #def fdecay_interp(k):
-# #    return np.exp(-(k/2./kN)**2)
+# For k smaller than the smallest k_phys, we use the Planck power spectrum.
+# For k larger than the highest k_phys value, we extrapolate using the power law at k_N/2 -- or the highest value of k_phys in the range, whichever is smaller
+kph_min = kph[0]
+kN = np.pi/cell_size  # Nyquist frequency
+ikN2 = np.argsort(np.abs(kph-kN/2.))[0]
+ikN3 = np.argsort(np.abs(kph-kN/2.5))[0]
 
-# # Now start the computation of the deconvolution kernel
-# if (jing_dec_sims):
-#     print ('Preparing to apply Jing deconvolution of mass assignement window function...')
+# If kph stops before Nyquist frequency, use last values of
+if (ikN3 == len(kph) - 1):
+    print()
+    print("Warning: your range of k stops well before the Nyquist freq.; will use the last 5 bins to compute Jing de-aliasing.")
+    ikN2 = len(kph) -1
+    ikN3 = ikN2 - 5
+    
+# Here we prepare to apply the Jing (2005) deconvolution of the mass assignement function
+# For the situations when this is necessary, see the input file
 
-#     #nxyz = np.arange(-4,5)
-#     nxyz = np.arange(-6,7)
-#     idxyz= np.ones_like(nxyz)
-#     nx_xyz = np.einsum('i,j,k', nxyz,idxyz,idxyz)
-#     ny_xyz = np.einsum('i,j,k', idxyz,nxyz,idxyz)
-#     nz_xyz = np.einsum('i,j,k', idxyz,idxyz,nxyz)
-#     nxyz2 = nx_xyz**2 + ny_xyz**2 + nz_xyz**2
+# Compute the mean power spectra -- I will use the MTOE for the iteration
 
-#     #nvec_xyz = np.meshgrid(nxyz,nxyz,nxyz)
-#     dmu_phi=0.02
-#     dmu_th=0.04
-#     # With these options for nxyz, dmu_phi and dmu_th, the WF is accurate to ~1% up to k~0.3 h/Mpc
-#     phi_xyz=np.arange(0.+dmu_phi/2.,1.,dmu_phi)*2*np.pi
-#     cosphi_xyz=np.cos(phi_xyz)
-#     sinphi_xyz=np.sin(phi_xyz)
-#     costheta_xyz=np.arange(-1.+dmu_th/2.,1.,dmu_th)
-#     sintheta_xyz=np.sqrt(1-costheta_xyz**2)
+P0_mean = np.mean(P0_data,axis=0)
+P0_fkp_mean = np.mean(P0_fkp,axis=0)
 
-#     # More or less randomly placed unit vectors
-#     unitxyz=np.zeros((len(phi_xyz),len(costheta_xyz),3))
-#     for iphi in range(len(phi_xyz)):
-#         for jth in range(len(costheta_xyz)):
-#             unitxyz[iphi,jth] = np.array([sintheta_xyz[jth]*cosphi_xyz[iphi],sintheta_xyz[jth]*sinphi_xyz[iphi],costheta_xyz[jth]])
+Cross0_mean = np.mean(Cross0,axis=0)
 
-#     Nangles=len(phi_xyz)*len(costheta_xyz)
-#     unitxyz_flat = np.reshape(unitxyz,(Nangles,3))
+# This is the extra shot noise from the CiC MAS:
+#PS_CiC = 0.6666*np.sin(np.pi*kph/2/kN)**2
 
-#     def wj02(ki,ni,power_jing):
-#         return np.abs(np.power(np.abs(special.j0(np.pi*(ki/kN/2. + ni))),power_jing))
+kx=2*np.pi*grid.KX[:,:,:n_z//2+1]/cell_size
+ky=2*np.pi*grid.KY[:,:,:n_z//2+1]/cell_size
+kz=2*np.pi*grid.KZ[:,:,:n_z//2+1]/cell_size
 
-#     # This is the first guess for the window function
-#     for i_k in range(pow_bins):
-#         kxyz = kph[i_k]*unitxyz_flat
-#         sum_sims=0.0
-#         sum_data=0.0
-#         sum_pshot=0.0
-#         for iang in range(Nangles):
-#             kdotk = 2*kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
-#             kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
-#             sum_sims  += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp(kprime))
-#             sum_data  += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp(kprime))
-#             #sum_pshot += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*fdecay_interp(kprime))
+PS_CiC_grid = (1-0.66666*np.sin(np.pi*kx/2/kN)**2)*(1-0.66666*np.sin(np.pi*ky/2/kN)**2)*(1-0.66666*np.sin(np.pi*ky/2/kN)**2) - 1.0
+PS_CiC_flat = PS_CiC_grid.flatten()
 
-#         winmass0_sims[i_k] = sum_sims/Nangles/pow_interp(kph[i_k])
-#         winmass0_data[i_k] = sum_data/Nangles/pow_interp(kph[i_k])
-#         #winmass_pshot[i_k] = sum_pshot/Nangles
+PS_CiC = - (MRk*PS_CiC_flat)/(kkbar_counts+0.000001)
 
-#     print ('... OK, computed first estimation of Jing de-aliasing. Iterating now...')
+# First, if we are using Clouds in Cells, shot noise subtraction is slightly different. Here we compensate for that.
+power_jing_sims = parameters_code['power_jing_sims']
+if power_jing_sims == 3.0:
+    P_shot_Jing_fkp = np.outer(1./nbarbar/effbias**2,PS_CiC)
+    shot_prefac_mt = effbias**2/np.sum(nbarbar*effbias**2)
+    P_shot_Jing_mt = np.outer(shot_prefac_mt,PS_CiC)
 
-#     P0_jing = P0_mean/winmass0_sims
+    # Check if spectrum is negative after adding this shot noise correction
+    corr_fkp = P0_fkp_mean[:,-1] + P_shot_Jing_fkp[:,-1]
+    corr_mt  = P0_mean[:,-1] + P_shot_Jing_mt[:,-1]
 
-#     power_spec1 = (P0_jing[:,ikNhalf-1]/P0_jing[:,ikNhalf-2]-1)*(kph[ikNhalf-1]+kph[ikNhalf-2])/dk_phys/2
-#     power_spec2 = (P0_jing[:,ikNhalf]/P0_jing[:,ikNhalf-1]-1)*(kph[ikNhalf]+kph[ikNhalf-1])/dk_phys/2
-#     power_spec = 0.5*(power_spec1 + power_spec2)
+    # if corr_X < 0 then we will boost P_shot_Jing_X in order to bring the spectrum back to a positive value
+    for nt in range(ntracers):
+        if corr_fkp[nt] >= 0 :
+            corr_fkp[nt] = 0
+        else:
+            corr_fkp[nt] = - corr_fkp[nt] + 0*powtrue[-1]/2.
+        if corr_mt[nt] >= 0 :
+            corr_mt[nt] = 0
+        else:
+            corr_mt[nt] = - corr_mt[nt] + 0*effbias[nt]**2*powtrue[-1]/2. 
 
-#     # Now create extrapolated function to represent power spectrum at all scales
-#     norm_prior = np.mean(P0_jing[:,1:4] / powtrue[1:4],axis=1)   # This is supposed to be basically eff_bias^2
-#     k_prior = np.arange(kph[0]/20.,kph[0],kph[0]/10.)
-#     pk_prior= np.outer(norm_prior,pow_interp(k_prior))
+    P_shot_Jing_mt += np.outer(corr_mt/PS_CiC[-1]**1,PS_CiC**1)
+    P_shot_Jing_fkp += np.outer(corr_fkp/PS_CiC[-1]**1,PS_CiC**1)
 
-#     new_k = np.concatenate((k_prior,kph))
-#     new_P0 = np.vstack((pk_prior.T,P0_jing.T)).T
+    #P0_data_ps = P0_data + 0.5*np.outer(1./nbarbar,PS_CiC)
+    P0_data_ps = P0_data + P_shot_Jing_mt
+    P0_fkp_ps = P0_fkp + P_shot_Jing_fkp
 
-#     norm_aft = np.mean(P0_jing[:,-3:] ,axis=1)   # This is supposed to be basically eff_bias^2
-#     knorm_aft = np.mean(kph[-3:])   # This is the mean value of k for the norm above
-#     k_aft = np.arange(kph[-1]+dk_phys,100*kN,kN)
-#     pk_aft = np.zeros((ntracers,len(k_aft)))
-#     for nt in range(ntracers):
-#         pk_aft[nt] = norm_aft[nt]*np.power( (k_aft/knorm_aft) , power_spec[nt] )
+else:
+    P_shot_Jing_fkp = 0*np.outer(effbias**0,PS_CiC)
+    P_shot_Jing_mt = 0*np.outer(effbias**0,PS_CiC)
+    P0_data_ps = P0_data
+    P0_fkp_ps = P0_fkp
 
-#     nnew_k = np.concatenate((new_k,k_aft))
-#     nnew_P0 = np.vstack((new_P0.T,pk_aft.T,)).T
-#     # This function may present some "edges" and "bumps", so we smooth it here
-#     nnew_P0 = gaussian_filter(nnew_P0,sigma=(1.0,0.0))
+P0_fkp_mean_ps = np.mean(P0_fkp_ps,axis=0)
+P0_mean_ps = np.mean(P0_data_ps,axis=0)
 
-#     # This is the first guess for the window function
-#     for nt in range(ntracers):
-#         pow_interp2 = interpolate.PchipInterpolator(nnew_k,nnew_P0[nt])
-#         for i_k in range(pow_bins):
-#             kxyz = kph[i_k]*unitxyz_flat
-#             sum_sims=0.0
-#             sum_data=0.0
-#             for iang in range(Nangles):
-#                 kdotk = 2*kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
-#                 kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
-#                 sum_sims += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp2(kprime))
-#                 sum_data += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp2(kprime))
+# Take the mean of two differences to improve accuracy
+dps=np.diff(P0_fkp_mean_ps,axis=1)
+power_spec_fkp = np.mean ( dps[:,ikN3:ikN2]/P0_fkp_mean_ps[:,ikN3:ikN2]*kph[ikN3:ikN2]/dk_phys , axis=1)
 
-#             winmass_sims[nt,i_k] = sum_sims/Nangles/pow_interp2(kph[i_k])
-#             winmass_data[nt,i_k] = sum_data/Nangles/pow_interp2(kph[i_k])
-#     # Now iterate one time
+dps=np.diff(P0_mean_ps,axis=1)
+power_spec_mt = np.mean ( dps[:,ikN3:ikN2]/P0_mean_ps[:,ikN3:ikN2]*kph[ikN3:ikN2]/dk_phys , axis=1)
 
-#     print('... OK, computed Jing deconvolution; de-aliasing completed.')
-#     print()
+# If mass assign. funct. is different for sims and for data...
+winmass0_sims=np.ones(pow_bins)
+winmass0_data=np.ones(pow_bins)
 
+winmass_sims=np.ones((ntracers,pow_bins))
+winmass_data=np.ones((ntracers,pow_bins))
 
+winmass_sims_fkp=np.ones((ntracers,pow_bins))
+winmass_data_fkp=np.ones((ntracers,pow_bins))
+
+winmass_sims_mt=np.ones((ntracers,pow_bins))
+winmass_data_mt=np.ones((ntracers,pow_bins))
+
+#winmass_pshot = np.ones(pow_bins)
+
+# Let's also define a function that decays fast enough for high k's, to compute
+# the shot noise parte of the mass deconvolution -- C_1 in Jing's paper
+#def fdecay_interp(k):
+#    return np.exp(-(k/2./kN)**2)
+print(".")
+
+# Now start the computation of the deconvolution kernel
+
+jing_dec_sims = parameters_code['jing_dec_sims']
+if (jing_dec_sims) or (not sims_only):
+    print ('Preparing to apply Jing deconvolution of mass assignement window function...')
+
+    #nxyz = np.arange(-4,5)
+    nxyz = np.arange(-5,6)
+    idxyz= np.ones_like(nxyz)
+    nx_xyz = np.einsum('i,j,k', nxyz,idxyz,idxyz)
+    ny_xyz = np.einsum('i,j,k', idxyz,nxyz,idxyz)
+    nz_xyz = np.einsum('i,j,k', idxyz,idxyz,nxyz)
+    nxyz2 = nx_xyz**2 + ny_xyz**2 + nz_xyz**2
+
+    #nvec_xyz = np.meshgrid(nxyz,nxyz,nxyz)
+    dmu_phi=0.04
+    dmu_th=0.04
+    # With these options for nxyz, dmu_phi and dmu_th, the WF is accurate to ~1% up to k~0.3 h/Mpc
+    phi_xyz=np.arange(0.+dmu_phi/2.,1.,dmu_phi)*2*np.pi
+    cosphi_xyz=np.cos(phi_xyz)
+    sinphi_xyz=np.sin(phi_xyz)
+    costheta_xyz=np.arange(-1.+dmu_th/2.,1.,dmu_th)
+    sintheta_xyz=np.sqrt(1-costheta_xyz**2)
+
+    # More or less randomly placed unit vectors
+    unitxyz=np.zeros((len(phi_xyz),len(costheta_xyz),3))
+    for iphi in range(len(phi_xyz)):
+        for jth in range(len(costheta_xyz)):
+            unitxyz[iphi,jth] = np.array([sintheta_xyz[jth]*cosphi_xyz[iphi],sintheta_xyz[jth]*sinphi_xyz[iphi],costheta_xyz[jth]])
+
+    Nangles=len(phi_xyz)*len(costheta_xyz)
+    unitxyz_flat = np.reshape(unitxyz,(Nangles,3))
+
+    def wj02(ki,ni,power_jing):
+        return np.abs(np.power(np.abs(special.j0(np.pi*(ki/kN/2. + ni))),power_jing))
+
+    # This is the first guess for the window function
+    for i_k in range(pow_bins):
+        kxyz = kph[i_k]*unitxyz_flat
+        sum_sims=0.0
+        sum_data=0.0
+        sum_pshot=0.0
+        for iang in range(Nangles):
+            kdotk = 2*kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
+            kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
+            sum_sims  += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp(kprime))
+            #sum_data  += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp(kprime))
+            #sum_pshot += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*fdecay_interp(kprime))
+
+        winmass0_sims[i_k] = sum_sims/Nangles/pow_interp(kph[i_k])
+        #winmass0_data[i_k] = sum_data/Nangles/pow_interp(kph[i_k])
+        #winmass_pshot[i_k] = sum_pshot/Nangles
+
+    print ('... OK, computed first estimation of Jing de-aliasing. Iterating now...')
+
+    P0_interp_mt  = P0_mean_ps/winmass0_sims
+    P0_interp_fkp = P0_fkp_mean_ps/winmass0_sims
+
+    dps=np.diff(P0_interp_fkp,axis=1)
+    power_spec_fkp = np.mean ( dps[:,ikN3:ikN2]/P0_interp_fkp[:,ikN3:ikN2]*kph[ikN3:ikN2]/dk_phys , axis=1)
+
+    dps=np.diff(P0_interp_mt,axis=1)
+    power_spec_mt = np.mean ( dps[:,ikN3:ikN2]/P0_interp_mt[:,ikN3:ikN2]*kph[ikN3:ikN2]/dk_phys , axis=1)
+
+    # Now create extrapolated function to represent power spectrum at all scales
+    k_prior = np.arange(kph[0]/20.,kph[0],kph[0]/10.)
+
+    norm_prior = np.mean(P0_interp_mt[:,1:4] / powtrue[1:4],axis=1)   # This is supposed to be basically eff_bias^2
+    pk_prior_mt= np.outer(norm_prior,pow_interp(k_prior))
+
+    norm_prior_fkp = np.mean(P0_interp_fkp[:,1:4] / powtrue[1:4],axis=1)   # This is supposed to be basically eff_bias^2
+    pk_prior_fkp = np.outer(norm_prior_fkp,pow_interp(k_prior))
+
+    new_k = np.concatenate((k_prior,kph))
+    new_P0_mt = np.vstack((pk_prior_mt.T,P0_interp_mt.T)).T
+    new_P0_fkp = np.vstack((pk_prior_fkp.T,P0_interp_fkp.T)).T
+
+    knorm_aft = np.mean(kph[-3:])   # This is the mean value of k for the norm above
+    k_aft = np.arange(kph[-1]+dk_phys,100*kN,kN)
+
+    norm_aft_mt = np.mean(P0_interp_mt[:,-3:] ,axis=1)   # This is supposed to be basically eff_bias^2
+    norm_aft_fkp = np.mean(P0_interp_fkp[:,-3:] ,axis=1)   # This is supposed to be basically eff_bias^2
+
+    pk_aft_mt = np.zeros((ntracers,len(k_aft)))
+    pk_aft_fkp = np.zeros((ntracers,len(k_aft)))
+
+    for nt in range(ntracers):
+        pk_aft_mt[nt] = norm_aft_mt[nt]*np.power( (k_aft/knorm_aft) , power_spec_mt[nt] )
+        pk_aft_fkp[nt] = norm_aft_fkp[nt]*np.power( (k_aft/knorm_aft) , power_spec_fkp[nt] )
+
+    nnew_k = np.concatenate((new_k,k_aft))
+    nnew_P0_mt = np.vstack((new_P0_mt.T,pk_aft_mt.T)).T
+    nnew_P0_fkp = np.vstack((new_P0_fkp.T,pk_aft_fkp.T)).T
+
+    # This function may present some "edges" and "bumps", so we smooth it here
+    nnew_P0_mt = gaussian_filter(nnew_P0_mt,sigma=(0.0,1.0))
+    nnew_P0_fkp = gaussian_filter(nnew_P0_fkp,sigma=(0.0,1.0))
+
+    # This is the first guess for the window function
+    for nt in range(ntracers):
+        pow_interp2_mt = interpolate.PchipInterpolator(nnew_k,nnew_P0_mt[nt])
+        pow_interp2_fkp = interpolate.PchipInterpolator(nnew_k,nnew_P0_fkp[nt])
+        for i_k in range(pow_bins):
+            kxyz = kph[i_k]*unitxyz_flat
+            sum_sims_mt=0.0
+            #sum_data_mt=0.0
+            sum_sims_fkp=0.0
+            #sum_data_fkp=0.0
+            for iang in range(Nangles):
+                kdotk = 2*kN*(kxyz[iang,0]*nx_xyz + kxyz[iang,1]*ny_xyz + kxyz[iang,2]*nz_xyz)
+                kprime = np.sqrt( kph[i_k]**2 + 4*kN**2*nxyz2 + 2*kdotk )
+                sum_sims_mt += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp2_mt(kprime))
+                #sum_data_mt += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp2_mt(kprime))
+                sum_sims_fkp += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_sims)*wj02(kxyz[iang,1],ny_xyz,power_jing_sims)*wj02(kxyz[iang,2],nz_xyz,power_jing_sims)*pow_interp2_fkp(kprime))
+                #sum_data_fkp += np.sum(wj02(kxyz[iang,0],nx_xyz,power_jing_data)*wj02(kxyz[iang,1],ny_xyz,power_jing_data)*wj02(kxyz[iang,2],nz_xyz,power_jing_data)*pow_interp2_fkp(kprime))
+
+            winmass_sims_mt[nt,i_k] = sum_sims_mt/Nangles/pow_interp2_mt(kph[i_k])
+            #winmass_data_mt[nt,i_k] = sum_data_mt/Nangles/pow_interp2_mt(kph[i_k])
+            winmass_sims_fkp[nt,i_k] = sum_sims_fkp/Nangles/pow_interp2_fkp(kph[i_k])
+            #winmass_data_fkp[nt,i_k] = sum_data_fkp/Nangles/pow_interp2_fkp(kph[i_k])
+    # Now iterate one time
+
+    print('... OK, computed Jing deconvolution; de-aliasing completed.')
+    print(".")
+
+#
 
 # # Now apply ln correction and/or Jing deconvolution
 # P0_fkp = (P0_fkp)/winmass_sims
