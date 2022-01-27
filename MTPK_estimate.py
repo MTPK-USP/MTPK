@@ -1134,26 +1134,61 @@ for nm in range(n_maps):
     normsel[nm,np.isinf(normsel[nm])]=1.0
     normsel[nm,np.isnan(normsel[nm])]=1.0
     
-#     if ( (normsel.any() > 2.0) | (normsel.any() < 0.5) ):
-#         print("Attention! Your selection function and simulation have very different numbers of objects:")
-#         print("Selecion function/map for all tracers:",np.around(normsel,3))
-#         normsel[normsel > 2.0] = 2.0
-#         normsel[normsel < 0.5] = 0.5
-#         print(" Normalized selection function/map at:",np.around(normsel,3))
-#     FKPmany = fkp_many.fkp((normsel*maps.T).T)
-#     P0_fkp[nm] = np.abs(fkp_many.P_ret)
-#     P2_fkp[nm] = fkp_many.P2a_ret
-#     Cross0[nm] = fkp_many.cross_spec
-#     Cross2[nm] = fkp_many.cross_spec2
-#     ThCov_fkp[nm] = (fkp_many.sigma)**2
+    if ( (normsel[nm].any() > 2.0) | (normsel[nm].any() < 0.5) ):
+        print("Attention! Your selection function and simulation have very different numbers of objects:")
+        print("Selecion function/map for all tracers:",np.around(normsel[nm],3))
+        normsel[normsel > 2.0] = 2.0
+        normsel[normsel < 0.5] = 0.5
+        print(" Normalized selection function/map at:",np.around(normsel[nm],3))
+    if nm==0:
+        # If data bias is different from mocks
+        if use_data_bias:
+            FKPmany = fkp_many_data.fkp((normsel[nm]*maps.T).T)
+            P0_fkp[nm] = fkp_many_data.P_ret
+            P2_fkp[nm] = fkp_many_data.P2a_ret
+            Cross0[nm] = fkp_many_data.cross_spec
+            Cross2[nm] = fkp_many_data.cross_spec2
+            ThCov_fkp[nm] = (fkp_many_data.sigma)**2
+        else:
+            FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
+            P0_fkp[nm] = fkp_many.P_ret
+            P2_fkp[nm] = fkp_many.P2a_ret
+            Cross0[nm] = fkp_many.cross_spec
+            Cross2[nm] = fkp_many.cross_spec2
+            ThCov_fkp[nm] = (fkp_many.sigma)**2
+    else:
+        FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
+        P0_fkp[nm] = fkp_many.P_ret
+        P2_fkp[nm] = fkp_many.P2a_ret
+        Cross0[nm] = fkp_many.cross_spec
+        Cross2[nm] = fkp_many.cross_spec2
+        ThCov_fkp[nm] = (fkp_many.sigma)**2
+        
+    #################################
+    # Now, the multi-tracer method
+    print ('  Now estimating multi-tracer spectra...')
+    if nm==0:
+        # If data bias is different from mocks
+        if use_data_bias:
+            FKPmult = fkp_mult_data.fkp((normsel[nm]*maps.T).T)
+            P0_data[nm] = fkp_mult_data.P0_mu_ret
+            P2_data[nm] = fkp_mult_data.P2_mu_ret
+        else:
+            FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
+            P0_data[nm] = fkp_mult.P0_mu_ret
+            P2_data[nm] = fkp_mult.P2_mu_ret
+    else:
+        FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
+        P0_data[nm] = fkp_mult.P0_mu_ret
+        P2_data[nm] = fkp_mult.P2_mu_ret
 
-#     #################################
-#     # Now, the multi-tracer method
-#     print ('  Now estimating multi-tracer spectra...')
-#     FKPmult = fkp_mult.fkp((normsel*maps.T).T)
-#     P0_data[nm] = np.abs(fkp_mult.P0_mu_ret)
-#     P2_data[nm] = fkp_mult.P2_mu_ret
-
+    #CORRECT FOR BIN AVERAGING
+    P0_data[nm] = P0_data[nm]/k_av_corr
+    P2_data[nm] = P2_data[nm]/k_av_corr
+    P0_fkp[nm] = P0_fkp[nm]/k_av_corr
+    P2_fkp[nm] = P2_fkp[nm]/k_av_corr
+    Cross0[nm] = Cross0[nm]/k_av_corr
+    Cross2[nm] = Cross2[nm]/k_av_corr
 
 #     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
 #     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
