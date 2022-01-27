@@ -460,12 +460,14 @@ print ('Will use the N =', n_maps, ' simulation-only maps contained in directory
 
 ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
 ## We will treat this as an additional MASK (thresh_mask) for data and mocks
-try:
+use_cell_low_count_thresh = parameters_code['use_cell_low_count_thresh']
+cell_low_count_thresh = parameters_code['cell_low_count_thresh']
+if use_cell_low_count_thresh:
     cell_low_count_thresh = parameters_code['cell_low_count_thresh']
     thresh_mask = np.ones_like(n_bar_matrix_fid)
     thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
     n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
-except:
+else:
     pass
 
 
@@ -1076,11 +1078,11 @@ normsel = np.zeros((n_maps,ntracers))
 print ("... done. Starting computations for each map (box) now.")
 print()
 
-# #################################
+#################################
 
 
-# est_bias_fkp = np.zeros(ntracers)
-# est_bias_mt = np.zeros(ntracers)
+est_bias_fkp = np.zeros(ntracers)
+est_bias_mt = np.zeros(ntracers)
 
 # for nm in range(n_maps):
 #     time_start=time()

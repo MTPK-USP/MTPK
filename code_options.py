@@ -98,6 +98,10 @@ class code_parameters:
     sel_fun_file : string
     Name of the map of the selection function
                         
+    use_cell_low_count_thresh : bool
+    True -> to use the cell low count threshold
+    False -> otherwise
+
     cell_low_count_thresh : float
     If low-count cells must be masked out, then cells with counts below this threshold will be eliminated from the mocks AND from the data
 
@@ -245,6 +249,7 @@ class code_parameters:
             #Tirar a o 'power_jing_data'
             'power_jing_data'      : 2.0, #=> Eliminate
             'plot_all_cov'         : False,
+            'use_cell_low_count_thresh': False,
             'cell_low_count_thresh': 0.0,
             'mult_sel_fun'         : 1.0,
             'shift_sel_fun'        : 0.0,
@@ -288,6 +293,7 @@ class code_parameters:
         self.n_z_orig = default_params['n_z_orig']
         self.sel_fun_data = default_params['sel_fun_data']
         self.sel_fun_file = default_params['sel_fun_file']
+        self.use_cell_low_count_thresh = default_params['use_cell_low_count_thresh']
         self.cell_low_count_thresh = default_params['cell_low_count_thresh']
         self.mult_sel_fun = default_params['mult_sel_fun']
         self.shift_sel_fun = default_params['shift_sel_fun']
