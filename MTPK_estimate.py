@@ -1048,78 +1048,76 @@ print( "Initializing multi-tracer estimation toolbox...")
 
 fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
 
-# # If data bias is different from mocks
-# if use_data_bias:
-#     effbias_mt_data = np.copy(effbias_mt)
-#     effbias_mt_data[nbarbar*effbias_data**2 < 0.5e-6] = 0.01
-#     fkp_mult_data = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt_data,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
-# else:
-#     pass
+# If data bias is different from mocks
+if use_data_bias:
+    effbias_mt_data = np.copy(effbias_mt)
+    effbias_mt_data[nbarbar*effbias_data**2 < 0.5e-6] = 0.01
+    fkp_mult_data = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt_data,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
+else:
+    pass
 
-# ##
-# # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-# print( "Initializing traditional (FKP) estimation toolbox...")
-# fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
+##
+# UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
+print( "Initializing traditional (FKP) estimation toolbox...")
+fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
+
+# If data bias is different from mocks
+if use_data_bias:
+    fkp_many_data = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias_data, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
+else:
+    pass
+
+'''
+Because of the very sensitive nature of shot noise subtraction 
+in the Jing de-aliasing, it may be better to normalize the counts of the 
+selection function to each map, and not to the mean of the maps.
+''' 
+normsel = np.zeros((n_maps,ntracers))
+
+print ("... done. Starting computations for each map (box) now.")
+print()
+
+#################################
 
 
-# # If data bias is different from mocks
-# if use_data_bias:
-#     fkp_many_data = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias_data, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
-# else:
-#     pass
+est_bias_fkp = np.zeros(ntracers)
+est_bias_mt = np.zeros(ntracers)
 
-# '''
-# Because of the very sensitive nature of shot noise subtraction 
-# in the Jing de-aliasing, it may be better to normalize the counts of the 
-# selection function to each map, and not to the mean of the maps.
-# ''' 
-# normsel = np.zeros((n_maps,ntracers))
+for nm in range(n_maps):
+    time_start=time()
+    print ('Loading simulated box #', nm)
+    h5map = h5py.File(mapnames_sims[nm],'r')
+    maps = np.asarray(h5map.get(list(h5map.keys())[0]))
+    if not maps.shape == (ntracers,n_x,n_y,n_z):
+        print()
+        print ('Unexpected shape of simulated maps! Found:', maps.shape)
+        print ('Check inputs and sims.  Aborting now...')
+        print()
+        sys.exit(-1)
+    h5map.close
 
-# print ("... done. Starting computations for each map (box) now.")
-# print()
+    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
 
-# #################################
+    ## !! NEW !! Additional mask from low-cell-count threshold
+    if use_cell_low_count_thresh:
+        maps = thresh_mask*maps
+        #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
+    else:
+        pass
 
-
-# est_bias_fkp = np.zeros(ntracers)
-# est_bias_mt = np.zeros(ntracers)
-
-# for nm in range(n_maps):
-#     time_start=time()
-#     print ('Loading simulated box #', nm)
-#     h5map = h5py.File(mapnames_sims[nm],'r')
-#     maps = np.asarray(h5map.get(list(h5map.keys())[0]))
-#     if not maps.shape == (ntracers,n_x,n_y,n_z):
-#         print()
-#         print ('Unexpected shape of simulated maps! Found:', maps.shape)
-#         print ('Check inputs and sims.  Aborting now...')
-#         print()
-#         sys.exit(-1)
-#     h5map.close
-
-#     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
-
-#     ## !! NEW !! Additional mask from low-cell-count threshold
-#     if use_cell_low_count_thresh:
-#         maps = thresh_mask*maps
-#         #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
-#     else:
-#         pass
-
-#     if use_mask:
-#         maps = maps * mask
+    if use_mask:
+        maps = maps * mask
 
 
     # Apply padding, if it exists
-    # if use_padding:
-        # n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
-        # print('n_box', n_box)
-        # n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = maps
-        # maps = np.copy(n_box)
-        # n_box = None
-        # del n_box
-    # else:
-    #     pass
+    if use_padding:
+        n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
+        n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = maps
+        maps = np.copy(n_box)
+        n_box = None
+        del n_box
+    else:
+        pass
         
 #     ##################################################
 #     # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.

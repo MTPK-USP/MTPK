@@ -210,7 +210,7 @@ class code_parameters:
             'data_bias'            : np.array([1.4, 1.8, 2.6]),
             'use_kdip_phys'        : False,
             'kdip_phys'            : 0.005,
-            'use_padding'          : False,
+            'use_padding'          : True,
             'padding_length'       : [1, 1, 1],
             'use_power_law'        : False,
             'power_law'            : 1,
