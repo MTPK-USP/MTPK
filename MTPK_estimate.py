@@ -1119,16 +1119,21 @@ for nm in range(n_maps):
     else:
         pass
         
-#     ##################################################
-#     # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
-#     # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
-#     # Notice that this means that the output of the FKP quadrupole
-#     # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
-#     ##################################################
+    ##################################################
+    # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
+    # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
+    # Notice that this means that the output of the FKP quadrupole
+    # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
+    ##################################################
 
-#     # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-#     print ('  Estimating FKP power spectra...')
-#     normsel = np.mean(n_bar_matrix_fid,axis=(1,2,3))/np.mean(maps,axis=(1,2,3))
+    # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
+    print ('  Estimating FKP power spectra...')
+    # Use sum instead of mean to take care of empty cells
+    normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
+    # Updated definition of normsel to avoid raising a NaN when there are zero tracers
+    normsel[nm,np.isinf(normsel[nm])]=1.0
+    normsel[nm,np.isnan(normsel[nm])]=1.0
+    
 #     if ( (normsel.any() > 2.0) | (normsel.any() < 0.5) ):
 #         print("Attention! Your selection function and simulation have very different numbers of objects:")
 #         print("Selecion function/map for all tracers:",np.around(normsel,3))
