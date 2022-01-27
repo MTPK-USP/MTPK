@@ -1532,42 +1532,163 @@ P2_fkp_mean_Jing = np.mean(P2_fkp_Jing,axis=0)
 Cross0_mean_Jing = np.mean(C0_fkp_Jing,axis=0)
 Cross2_mean_Jing = np.mean(C2_fkp_Jing,axis=0)
 
-# ################################################################################
-# ################################################################################
-# ################################################################################
-# ################################################################################
-# #
-# #   SAVE these spectra
-# #
-# ################################################################################
-# ################################################################################
-# ################################################################################
-# ################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+#
+#   SAVE these spectra
+#
+################################################################################
+################################################################################
+################################################################################
+################################################################################
 
 
-# P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
-# P0_fkp_save=np.reshape(P0_fkp_save,(n_maps,ntracers*pow_bins))
+P0_save=np.reshape(P0_data_Jing,(n_maps,ntracers*pow_bins))
+P0_fkp_save=np.reshape(P0_fkp_Jing,(n_maps,ntracers*pow_bins))
 
-# P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
-# P2_fkp_save=np.reshape(P2_fkp_save,(n_maps,ntracers*pow_bins))
+P2_save=np.reshape(P2_data_Jing,(n_maps,ntracers*pow_bins))
+P2_fkp_save=np.reshape(P2_fkp_Jing,(n_maps,ntracers*pow_bins))
 
-# C0_fkp_save=np.reshape(C0_fkp_save,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-# C2_fkp_save=np.reshape(C2_fkp_save,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+C0_fkp_save=np.reshape(C0_fkp_Jing,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+C2_fkp_save=np.reshape(C2_fkp_Jing,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+
+# Export data
+np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+
+np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+
+np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+
+np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+
+np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
 
 
-# # Export data
-# np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean_Jing,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean_Jing,fmt="%6.4f")
 
-# np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-# np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean_Jing,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean_Jing,fmt="%6.4f")
 
-# np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
-# np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean_Jing,fmt="%6.4f")
+np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean_Jing,fmt="%6.4f")
 
-# np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-# np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+#UPDATED SOME PLOT DEFINITIONS
+ikN9 = np.argsort(np.abs(kph-kN))[0]
 
-# np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-# np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-# np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+xlim = [0.9*kph[0],1.1*kph[ikN9]]
+ylim = [np.min(effbias**2)*np.min(powtrue)/10.,np.max(effbias**2)*np.max(powtrue)*2]
 
+print(".")
+print("Now just a couple of plots to /figs...")
+
+index=0
+pl.loglog(kph,powtrue,'k')
+for nt in range(ntracers):
+    pl.loglog(kph,P0_fkp_mean_Jing[nt],'b',linewidth=0.5)
+    pl.loglog(kph,-P0_fkp_mean_Jing[nt],'b--',linewidth=0.5)
+    pl.loglog(kph,P2_fkp_mean_Jing[nt],'c',linewidth=0.5)
+    pl.loglog(kph,-P2_fkp_mean_Jing[nt],'c--',linewidth=0.5)
+    pl.loglog(kph,effbias[nt]**2*P_shot_Jing_fkp[nt],'g-.',linewidth=0.5)
+    for ntp in range(nt+1,ntracers):
+        pl.loglog(kph,Cross0_mean_Jing[index],'r--',linewidth=0.5)
+        index += 1
+
+pl.xlim(xlim)
+pl.ylim(ylim)
+pl.savefig(dir_figs + "/Mean_spec_fkp.png",dpi=200)
+pl.close('all')
+
+index=0
+pl.loglog(kph,powtrue,'k')
+for nt in range(ntracers):
+    pl.loglog(kph,P0_mean_Jing[nt],'b',linewidth=0.5)
+    pl.loglog(kph,-P0_mean_Jing[nt],'b--',linewidth=0.5)
+    pl.loglog(kph,P2_mean_Jing[nt],'c',linewidth=0.5)
+    pl.loglog(kph,-P2_mean_Jing[nt],'c--',linewidth=0.5)
+    pl.loglog(kph,P_shot_Jing_mt[nt],'g-.',linewidth=0.5)
+    for ntp in range(nt+1,ntracers):
+        pl.loglog(kph,Cross0_mean_Jing[index],'r--',linewidth=0.5)
+        index += 1
+pl.xlim(xlim)
+pl.ylim(ylim)
+pl.savefig(dir_figs + "/Mean_spec_mt.png",dpi=200)
+pl.close('all')
+
+# You may add some plots here such as this
+pl.loglog(kph,powtrue,'k')
+for nt in range(ntracers):
+    pl.loglog(kph,effbias[nt]**2*P0_fkp_mean[nt],'c',linewidth=0.5)
+    pl.loglog(kph,-effbias[nt]**2*P0_fkp_mean[nt],'c--',linewidth=0.5)
+    pl.loglog(kph,P0_fkp_mean_Jing[nt],'b',linewidth=0.5)
+    pl.loglog(kph,-P0_fkp_mean_Jing[nt],'b--',linewidth=0.5)
+    pl.loglog(kph,effbias[nt]**2*P_shot_Jing_fkp[nt],'g-.',linewidth=0.5)
+pl.xlim(xlim)
+pl.ylim(ylim)
+pl.savefig(dir_figs + "/P0_Jing_fkp.png",dpi=200)
+pl.close('all')
+
+pl.loglog(kph,powtrue,'k')
+for nt in range(ntracers):
+    pl.loglog(kph,P0_mean[nt],'c',linewidth=0.5)
+    pl.loglog(kph,-P0_mean[nt],'c--',linewidth=0.5)
+    pl.loglog(kph,P0_mean_Jing[nt],'b',linewidth=0.5)
+    pl.loglog(kph,-P0_mean_Jing[nt],'b',linewidth=0.5)
+    pl.loglog(kph,P_shot_Jing_mt[nt],'g-.',linewidth=0.5)
+pl.xlim(xlim)
+pl.ylim(ylim)
+pl.savefig(dir_figs + "/P0_Jing_mt.png",dpi=200)
+pl.close('all')
+
+pl.loglog(kph,powtrue,'k')
+for nt in range(ntracers):
+    pl.loglog(kph,P0_mean[nt],'c',linewidth=0.5)
+    pl.loglog(kph,P_shot_Jing_mt[nt],'g',linewidth=0.5)
+    pl.loglog(kph,P0_mean[nt] + P_shot_Jing_mt[nt],'r',linewidth=0.5)
+pl.xlim(xlim)
+pl.ylim(ylim)
+pl.savefig(dir_figs + "/P0_Pshot_mt.png",dpi=200)
+pl.close('all')
+
+print(".")
+print(".")
+print()
+print("Done!")
+print()
+
+sys.exit(-1)
+
+#### Some extra plots if needed
+
+mycolor=['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9']
+pl.loglog(kph,powtrue,'k')
+for nt in range(ntracers):
+    pl.loglog(kph,P0_mean_Jing[nt],'b',linewidth=0.5)
+    pl.loglog(kph,-P0_mean_Jing[nt],'b',linewidth=0.5)
+    pl.loglog(kph,P0_data_Jing[0,nt],marker='o',color=mycolor[nt],markersize=4,linewidth=0.2)
+    pl.loglog(kph,P0_fkp_Jing[0,nt],marker='x',color=mycolor[nt],markersize=4,linewidth=0.2)
+pl.xlim(xlim)
+pl.ylim(ylim)
+pl.savefig(dir_figs + "/P0_data.png",dpi=200)
+pl.close('all')
+
+ylim2 = [np.min(effbias**2)*np.min(powtrue)/100.,np.max(effbias**2)*np.max(powtrue)]
+pl.loglog(kph,powtrue,'k')
+for nt in range(ntracers):
+    pl.loglog(kph,P2_mean_Jing[nt],'b',linewidth=0.5)
+    pl.loglog(kph,-P2_mean_Jing[nt],'b',linewidth=0.5)
+    pl.loglog(kph,P2_data_Jing[0,nt],marker='o',color=mycolor[nt],markersize=4,linewidth=0.2)
+    pl.loglog(kph,P2_fkp_Jing[0,nt],marker='x',color=mycolor[nt],markersize=4,linewidth=0.2)
+    pl.loglog(kph,-P2_data_Jing[0,nt],marker='o',color=mycolor[nt],markersize=2,linewidth=0.2)
+    pl.loglog(kph,-P2_fkp_Jing[0,nt],marker='x',color=mycolor[nt],markersize=2,linewidth=0.2)
+pl.xlim(xlim)
+pl.ylim(ylim2)
+pl.savefig(dir_figs + "/P2_data.png",dpi=200)
+pl.close('all')
