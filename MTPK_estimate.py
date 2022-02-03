@@ -674,135 +674,135 @@ print()
 
 
 
-# ###############################
-# #R
-# #R  Now let's start the construction of the bin matrices, MR and MRk.
-# #R
-# #R  * MR accounts for the modes that should be averaged to obtain a bin in (k,\mu)
-# #R  * MRk accounts for the modes that should be averaged to obtain a bin in (k)
-# #R
-# #R  Hence, MR gives the RSD bin matrix; MRk gives the bin matrix for the monopole P_0(k).
-# #R
-# #R  In order to minimize memory usage and computation time,
-# #R  we employ sparse matrix methods.
+###############################
+#R
+#R  Now let's start the construction of the bin matrices, MR and MRk.
+#R
+#R  * MR accounts for the modes that should be averaged to obtain a bin in (k,\mu)
+#R  * MRk accounts for the modes that should be averaged to obtain a bin in (k)
+#R
+#R  Hence, MR gives the RSD bin matrix; MRk gives the bin matrix for the monopole P_0(k).
+#R
+#R  In order to minimize memory usage and computation time,
+#R  we employ sparse matrix methods.
 
-# #R  First, construct the flattened array of |k|, kflat .
-# #R  NOTICE THAT kflat is in GRID units -- must divide by cell_size eventually
-# #R  (Remembering that 1/2 of the grid is redundant, since the maps are real-valued)
-# #RR kflat=np.ndarray.flatten(grid.grid_k[:,:,:n_z/2-1])
+#R  First, construct the flattened array of |k|, kflat .
+#R  NOTICE THAT kflat is in GRID units -- must divide by cell_size eventually
+#R  (Remembering that 1/2 of the grid is redundant, since the maps are real-valued)
+#RR kflat=np.ndarray.flatten(grid.grid_k[:,:,:n_z/2-1])
 
-# kflat=(np.ndarray.flatten(kgrid[:,:,:n_z//2+1]))
-# lenkf=len(kflat)
-
-
-# print ('Central physical k values where spectra will be estimated:', kph_central)
-
-# # Get G(z)^2*P(k_central) for the central value of k and central value of z
-# kcmin = kph_central - 2.0*np.pi*( 4.0*dk0 )/cell_size
-# kcmax = kph_central + 2.0*np.pi*( 4.0*dk0 )/cell_size
-# # This will be the value used in the FKP and MT weights
-# powercentral = np.mean( Pk_camb[ (k_camb > kcmin) & (k_camb < kcmax) ] )
-
-# # Theory power spectra, interpolated on the k_physical used for estimations
-# powtrue = np.interp(kph,k_camb,Pk_camb)
-# pow_bins = len(kph)
+kflat=(np.ndarray.flatten(kgrid[:,:,:n_z//2+1]))
+lenkf=len(kflat)
 
 
+print ('Central physical k values where spectra will be estimated:', kph_central)
+
+# Get G(z)^2*P(k_central) for the central value of k and central value of z
+kcmin = kph_central - 2.0*np.pi*( 4.0*dk0 )/cell_size
+kcmax = kph_central + 2.0*np.pi*( 4.0*dk0 )/cell_size
+# This will be the value used in the FKP and MT weights
+powercentral = np.mean( Pk_camb[ (k_camb > kcmin) & (k_camb < kcmax) ] )
+
+# Theory power spectra, interpolated on the k_physical used for estimations
+powtrue = np.interp(kph,k_camb,Pk_camb)
+pow_bins = len(kph)
 
 
-# ################################################################
-# #R   Initialize the sparse matrices MR and MRk
-# ################################################################
-# #R
-# #R Entries of these matrices are 0 or 1.
-# #R Use dtype=int8 to keep size as small as possible.
-# #R
-# #R Each row of those matrices corresponds to a (k,mu) bin, or to a (k) bin
-# #R The columns are the values of the flattened array kflat=|k|=|(kx,ky,kz)|
-# #R
-# #R The entries of the MR/MRk matrices are:
-# #R   1 when the value of (k,mu)/(k) belongs to the bin
-# #R   0 if it does not
 
-# print ('Initializing the k-binning matrix...')
-# tempor = time()
 
-# #R Initialize first row of the M-matrices (vector of zeros)
-# MRline = np.zeros(lenkf,dtype=np.int8)
+################################################################
+#R   Initialize the sparse matrices MR and MRk
+################################################################
+#R
+#R Entries of these matrices are 0 or 1.
+#R Use dtype=int8 to keep size as small as possible.
+#R
+#R Each row of those matrices corresponds to a (k,mu) bin, or to a (k) bin
+#R The columns are the values of the flattened array kflat=|k|=|(kx,ky,kz)|
+#R
+#R The entries of the MR/MRk matrices are:
+#R   1 when the value of (k,mu)/(k) belongs to the bin
+#R   0 if it does not
 
-# #R These are the sparse matrices, built in the fastest way:
-# MRkl = coo_matrix([MRline] , dtype=np.int8)
+print ('Initializing the k-binning matrix...')
+tempor = time()
 
-# #R And these are the matrices in the final format (easiest to make computations):
-# MRk = csc_matrix((num_binsk,lenkf),dtype=np.int8)
+#R Initialize first row of the M-matrices (vector of zeros)
+MRline = np.zeros(lenkf,dtype=np.int8)
 
-# #R Now build the M-matrix by stacking the rows for each bin in (mu,k)
+#R These are the sparse matrices, built in the fastest way:
+MRkl = coo_matrix([MRline] , dtype=np.int8)
 
-# for ak in range(0,num_binsk):
-#     #R Now for the M-matrix that applies only for k bins (not mu), and for r bins:
-#     MRline[ np.where(  (kflat >= k_bar[ak] - dk0/2.00) & \
-#                      (kflat < k_bar[ak] + dk0/2.00) ) ] = 1
-#     MRline[ np.isnan(MRline) ] = 0
-#     # stack the lines to construct the new M matrix
-#     MRkl = vstack([MRkl,coo_matrix(MRline)], dtype=np.int8)
-#     MRline = np.zeros(lenkf,dtype=np.int8)
+#R And these are the matrices in the final format (easiest to make computations):
+MRk = csc_matrix((num_binsk,lenkf),dtype=np.int8)
 
-# #R The way the matrix MRk was organized is such that
-# #R each rows corresponds to the kflats that belong to the bins:
-# #R (null), (k[0]), (k[1]), ... , (k[-1])
-# #R
-# ######################################################################
-# #R ATTENTION! The first lines of the matrix MRk is ALL ZEROS,
-# #R and should be DISCARDED!
-# ######################################################################
+#R Now build the M-matrix by stacking the rows for each bin in (mu,k)
 
-# #R Convert MR and MRk matrices to csr format
-# Mknew=MRkl.tocsr()
-# MRklr=vstack(Mknew[1:,:])
+for ak in range(0,num_binsk):
+    #R Now for the M-matrix that applies only for k bins (not mu), and for r bins:
+    MRline[ np.where(  (kflat >= k_bar[ak] - dk0/2.00) & \
+                     (kflat < k_bar[ak] + dk0/2.00) ) ] = 1
+    MRline[ np.isnan(MRline) ] = 0
+    # stack the lines to construct the new M matrix
+    MRkl = vstack([MRkl,coo_matrix(MRline)], dtype=np.int8)
+    MRline = np.zeros(lenkf,dtype=np.int8)
 
-# #R Now convert the matrix to csc format, which is fastest for computations
-# MRk = MRklr.tocsc()
+#R The way the matrix MRk was organized is such that
+#R each rows corresponds to the kflats that belong to the bins:
+#R (null), (k[0]), (k[1]), ... , (k[-1])
+#R
+######################################################################
+#R ATTENTION! The first lines of the matrix MRk is ALL ZEROS,
+#R and should be DISCARDED!
+######################################################################
 
-# # Delete the initial sparse matrices to save memory
-# MRkl = None
-# Mknew = None
-# MRklr = None
-# del MRkl
-# del Mknew
+#R Convert MR and MRk matrices to csr format
+Mknew=MRkl.tocsr()
+MRklr=vstack(Mknew[1:,:])
 
-# # Counts in each bin
-# kkbar_counts = MRk.dot(np.ones(lenkf))
+#R Now convert the matrix to csc format, which is fastest for computations
+MRk = MRklr.tocsc()
 
-# print ('Done with k-binning matrices. Time cost: ', np.int32((time()-tempor)*1000)/1000., 's')
-# print ('Memory occupied by the binning matrix: ', MRk.nnz)
+# Delete the initial sparse matrices to save memory
+MRkl = None
+Mknew = None
+MRklr = None
+del MRkl
+del Mknew
 
-# #print('Bin counts in k, using M(k):')
-# #print(kkbar_counts[10:15])
+# Counts in each bin
+kkbar_counts = MRk.dot(np.ones(lenkf))
 
-# #R We defined "target" k's , but <k> on bins may be slightly different
-# kkav=(((MRk*kflat))/(kkbar_counts+0.00001))
-# print ('Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ])
-# print ('The true mean of k for each bin is:', [ "{:1.4f}".format(x) for x in kkav[10:16:2] ])
-# print()
-# print ('----------------------------------')
-# print()
-# print ('Now estimating the power spectra...')
+print ('Done with k-binning matrices. Time cost: ', np.int32((time()-tempor)*1000)/1000., 's')
+print ('Memory occupied by the binning matrix: ', MRk.nnz)
 
-# ###
-# #Corrections due to bin averaging
-# ###
-# Pk_flat_camb = np.asarray( np.interp(kflat*2*np.pi/cell_size, k_camb, Pk_camb) )
-# Pk_av=(((MRk*Pk_flat_camb))/(kkbar_counts+0.00001))
-# k_av_corr= Pk_av/(powtrue + 0.000001*np.min(powtrue))
+#print('Bin counts in k, using M(k):')
+#print(kkbar_counts[10:15])
 
-# if (np.any(k_av_corr > 2.0) | np.any(k_av_corr < 0.5)):
-#     print("    !!  Warning: Fourier bin averaging may severely under/overestimating your spectrum at some bins !!")
-#     k_av_corr[k_av_corr > 2] = 2.0
-#     k_av_corr[k_av_corr < 0.5] = 0.5
+#R We defined "target" k's , but <k> on bins may be slightly different
+kkav=(((MRk*kflat))/(kkbar_counts+0.00001))
+print ('Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ])
+print ('The true mean of k for each bin is:', [ "{:1.4f}".format(x) for x in kkav[10:16:2] ])
+print()
+print ('----------------------------------')
+print()
+print ('Now estimating the power spectra...')
 
-# Pk_flat_camb = None
-# del Pk_flat_camb
-# ###
+###
+#Corrections due to bin averaging
+###
+Pk_flat_camb = np.asarray( np.interp(kflat*2*np.pi/cell_size, k_camb, Pk_camb) )
+Pk_av=(((MRk*Pk_flat_camb))/(kkbar_counts+0.00001))
+k_av_corr= Pk_av/(powtrue + 0.000001*np.min(powtrue))
+
+if (np.any(k_av_corr > 2.0) | np.any(k_av_corr < 0.5)):
+    print("    !!  Warning: Fourier bin averaging may severely under/overestimating your spectrum at some bins !!")
+    k_av_corr[k_av_corr > 2] = 10.0
+    k_av_corr[k_av_corr < 0.1] = 0.1
+
+Pk_flat_camb = None
+del Pk_flat_camb
+###
 
 # ######################################################################
 # #R    FKP of the data to get the P_data(k) -- using MR and MRk
