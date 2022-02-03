@@ -822,27 +822,31 @@ for nt in range(ntracers):
 ntot = np.sum(nbarbar*effbias**2)
 
 
-# #############################################################################
-# # BEGIN ESTIMATION
-# print ('Starting power spectra estimation')
+#############################################################################
+# BEGIN ESTIMATION
+print ('Starting power spectra estimation')
 
 
-# # Initialize outputs
+# Initialize outputs
 
-# # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
-# # Original (convolved) spectra:
-# P0_data = np.zeros((n_maps,ntracers,num_binsk))
-# P2_data = np.zeros((n_maps,ntracers,num_binsk))
+# Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
+# Original (convolved) spectra:
+P0_data = np.zeros((n_maps,ntracers,num_binsk))
+P2_data = np.zeros((n_maps,ntracers,num_binsk))
+P4_data = np.zeros((n_maps,ntracers,num_binsk))
 
+# Traditional (FKP) method
+P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
+P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
+P4_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
-# # Traditional (FKP) method
-# P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
-# P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
-# Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-# Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+# Cross spectra
+Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+Cross4 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
 
-# # Covariance
-# ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
+# Covariance
+ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
 
 # # Range where we estimate some parameters
