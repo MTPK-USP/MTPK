@@ -68,6 +68,9 @@ class fkp_init(object):
         self.ky_half = self.kyhat[:,:,:self.n_z//2+1]
         self.kz_half = self.kzhat[:,:,:self.n_z//2+1]
 
+        # Mass Assignement Scheme window function -- notice that the numpy function sinc has an implicit factor of PI!
+        self.mas_wfunction = np.power( np.sinc(self.grid.KX[:,:,:self.n_z//2+1])*np.sinc(self.grid.KY[:,:,:self.n_z//2+1])*np.sinc(self.grid.KZ[:,:,:self.n_z//2+1]) , mas_power)
+
         # Definitions from Percival, Verde & Peacock 2004 (PVP)
         # The units in this subroutine are NOT physical: volume = (number of cells)^3, etc.
 
