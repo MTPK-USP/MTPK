@@ -813,33 +813,13 @@ del Pk_flat_camb
 
 
 
-# # These are the theory values for the total effective power spectrum
-# # updated nbar_bar to compute mean on cells with n > small=1.e-9
-# nbarbar = np.zeros(ntracers)
-# for nt in range(ntracers):
-#     nbarbar[nt] = np.mean(n_bar_matrix_fid[nt][n_bar_matrix_fid[nt] > small])/(cell_size)**3
+# These are the theory values for the total effective power spectrum
+# updated nbar_bar to compute mean on cells with n > small=1.e-9
+nbarbar = np.zeros(ntracers)
+for nt in range(ntracers):
+    nbarbar[nt] = np.mean(n_bar_matrix_fid[nt][n_bar_matrix_fid[nt] > small])/(cell_size)**3
 
-# ntot = np.sum(nbarbar*effbias**2)
-# P0tot_theory = np.sum(nbarbar*P0_theory.T,axis=1)/ntot
-# P0tot_model = np.sum(nbarbar*P0_model.T,axis=1)/ntot
-
-
-
-# ########################################
-# # ATTENTION: these are more like biases, not errors.
-# # We include them in the computation of the covariance, with an
-# # arbitrary ("fudge") factor that SHOULD BE UPDATED!
-# # biaserr
-# biaserr = 0.01
-# #
-# # Relative error due to angle averaging on square box
-# dd_P0_rel_kbar = biaserr*np.abs(P0_model - P0_theory)/(small + np.abs(P0_model))
-# dd_P2_rel_kbar = biaserr*np.abs(P2_model - P2_theory)/(small + np.abs(P2_model))
-# # Relative error due to Gaussian/Lognormal correspondence
-# dd_P_spec_kbar = biaserr*np.sqrt(np.var(pk_ln_spec_corr_kbar))*pk_ln_spec_corr_kbar
-# ########################################
-
-
+ntot = np.sum(nbarbar*effbias**2)
 
 
 # #############################################################################
