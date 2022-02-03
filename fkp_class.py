@@ -18,7 +18,8 @@ class fkp_init(object):
     Enters num_bins, n_bar (matrix), bias 
     n_x,n_y, n_z and the bin_matrix
     '''
-    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0):
+    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power):
+    # def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0):
         # Here bin_matrix is the M-matrix
         self.num_bins = num_bins
         self.n_bar_matrix = n_bar_matrix
@@ -48,9 +49,10 @@ class fkp_init(object):
 
         # Shift origin of the grid so that the origin is in the right place
         # NOTE: units of cells
+        # OBS: displace origin in z direction by fraction of a cell, to avoid division by 0 for map around r=0
         LX0 = n_x_orig
         LY0 = n_y_orig
-        LZ0 = n_z_orig
+        LZ0 = n_z_orig + 0.01
         
         rL0=np.sqrt((LX0 + self.grid.RX)**2 + (LY0 + self.grid.RY)**2 + (LZ0 + self.grid.RZ)**2)
         self.rxhat = (LX0 + self.grid.RX)/rL0

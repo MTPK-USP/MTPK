@@ -856,41 +856,42 @@ myran = np.arange(myk_min,myk_max)
 
 
 
-# #################################
-# # Initialize the multi-tracer estimation class
-# # We can assume many biases for the estimation of the power spectra:
-# #
-# # 1. Use the original bias
-# #fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,bias,cell_size,n_x,n_y,n_z,MRk,powercentral)
-# # 2. Use SQRT(monopole) for the bias. Now, we have two choices:
-# #
-# # 2a. Use the fiducial monopole as the MT bias
-# #
-# # 2b. Use the monopole estimated using the FKP technique
-# #fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,fkpeffbias,cell_size,n_x,n_y,n_z,MRk,powercentral)
+#################################
+# Initialize the multi-tracer estimation class
+# We can assume many biases for the estimation of the power spectra:
+#
+# 1. Use the original bias
+#fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,bias,cell_size,n_x,n_y,n_z,MRk,powercentral)
+# 2. Use SQRT(monopole) for the bias. Now, we have two choices:
+#
+# 2a. Use the fiducial monopole as the MT bias
+#
+# 2b. Use the monopole estimated using the FKP technique
+#fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,fkpeffbias,cell_size,n_x,n_y,n_z,MRk,powercentral)
 
-# # If shot noise is huge, then damp the effective bias of that species 
-# # so that it doesn't end up biasing the multi-tracer estimator: 
-# # nbar*b^2*P_0 > 0.01 , with P_0 = 2.10^4
-# effbias_mt = np.copy(effbias)
-# effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
+# If shot noise is huge, then damp the effective bias of that species 
+# so that it doesn't end up biasing the multi-tracer estimator: 
+# nbar*b^2*P_0 > 0.01 , with P_0 = 2.10^4
+effbias_mt = np.copy(effbias)
+effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
 
-# print( "Initializing multi-tracer estimation toolbox...")
+print( "Initializing multi-tracer estimation toolbox...")
 
-# fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
+fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
 
-# # If data bias is different from mocks
-# if use_data_bias:
-#     effbias_mt_data = np.copy(effbias_mt)
-#     effbias_mt_data[nbarbar*effbias_data**2 < 0.5e-6] = 0.01
-#     fkp_mult_data = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt_data,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
-# else:
-#     pass
+# If data bias is different from mocks
+if use_data_bias:
+    effbias_mt_data = np.copy(effbias_mt)
+    effbias_mt_data[nbarbar*effbias_data**2 < 0.5e-6] = 0.01
+    fkp_mult_data = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt_data,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
+else:
+    pass
 
-# ##
-# # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-# print( "Initializing traditional (FKP) estimation toolbox...")
+##
+# UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
+print( "Initializing traditional (FKP) estimation toolbox...")
+fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
 # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
 
 # # If data bias is different from mocks
