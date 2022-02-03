@@ -849,10 +849,10 @@ Cross4 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
 ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
 
-# # Range where we estimate some parameters
-# myk_min = int(len(k_bar)/4.)
-# myk_max = int(len(k_bar)*3./4.)
-# myran = np.arange(myk_min,myk_max)
+# Range where we estimate some parameters
+myk_min = np.argsort(np.abs(kph-0.1))[0]
+myk_max = np.argsort(np.abs(kph-0.2))[0]
+myran = np.arange(myk_min,myk_max)
 
 
 
