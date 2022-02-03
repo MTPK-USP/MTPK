@@ -136,21 +136,58 @@ class fkp_init(object):
         F4kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
 
         for i in range(self.number_tracers):
-            self.F[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * (ng[i] - alpha*self.nr[i])
-            Fk[i] = np.fft.rfftn(self.F[i])
+            #self.F[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * (ng[i] - alpha*self.nr[i])
+            self.F[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * (ng[i])
+            self.F_bar[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * ( - alpha*self.nr[i])
+            Fk[i] = np.fft.rfftn(self.F[i]) / self.mas_wfunction + np.fft.rfftn(self.F_bar[i])
+            Fi = self.F[i] + self.F_bar[i]
+            #Fk_bar[i] = np.fft.rfftn(self.F_bar[i])
+            #F0kflat[i] = np.ndarray.flatten(Fk[i] + Fk_bar[i])
             F0kflat[i] = np.ndarray.flatten(Fk[i])
     
             # Compute the multipoles
-            Frxx_k[i]=np.fft.rfftn((self.F[i])*(self.rxhat)*(self.rxhat))
-            Frxy_k[i]=np.fft.rfftn((self.F[i])*(self.rxhat)*(self.ryhat))
-            Frxz_k[i]=np.fft.rfftn((self.F[i])*(self.rxhat)*(self.rzhat))
-            Fryy_k[i]=np.fft.rfftn((self.F[i])*(self.ryhat)*(self.ryhat))
-            Fryz_k[i]=np.fft.rfftn((self.F[i])*(self.ryhat)*(self.rzhat))
-            Frzz_k[i]=np.fft.rfftn((self.F[i])*(self.rzhat)*(self.rzhat))
+            Frxx_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.rxhat))
+            Frxy_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.ryhat))
+            Frxz_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.rzhat))
+            Fryy_k[i]=np.fft.rfftn(Fi*(self.ryhat)*(self.ryhat))
+            Fryz_k[i]=np.fft.rfftn(Fi*(self.ryhat)*(self.rzhat))
+            Frzz_k[i]=np.fft.rfftn(Fi*(self.rzhat)*(self.rzhat))
+
+            F2 = (self.kx_half**2*Frxx_k[i] + \
+                self.ky_half**2*Fryy_k[i] + \
+                self.kz_half**2*Frzz_k[i] + \
+                2.0*self.kx_half*self.ky_half*Frxy_k[i] + \
+                2.0*self.kx_half*self.kz_half*Frxz_k[i] + \
+                2.0*self.ky_half*self.kz_half*Fryz_k[i] ) / self.mas_wfunction
+
+            # Now, the hexadecapole
+            F4 =  self.kx_half**4 *(np.fft.rfftn(Fi*(self.rxhat)**4))
+            F4 += self.ky_half**4 *(np.fft.rfftn(Fi*(self.ryhat)**4))
+            F4 += self.kz_half**4 *(np.fft.rfftn(Fi*(self.rzhat)**4))
+
+            F4 += 4.0 * self.kx_half**3 * self.ky_half * (np.fft.rfftn(Fi*(self.rxhat)**3*(self.ryhat)))
+            F4 += 4.0 * self.kx_half**3 * self.kz_half * (np.fft.rfftn(Fi*(self.rxhat)**3*(self.rzhat)))
+            F4 += 4.0 * self.ky_half**3 * self.kx_half * (np.fft.rfftn(Fi*(self.ryhat)**3*(self.rxhat)))
+            F4 += 4.0 * self.ky_half**3 * self.kz_half * (np.fft.rfftn(Fi*(self.ryhat)**3*(self.rzhat)))
+            F4 += 4.0 * self.kz_half**3 * self.kx_half * (np.fft.rfftn(Fi*(self.rzhat)**3*(self.rxhat)))
+            F4 += 4.0 * self.kz_half**3 * self.ky_half * (np.fft.rfftn(Fi*(self.rzhat)**3*(self.ryhat)))
+
+            F4 += 6.0 * self.kx_half**2 * self.ky_half**2 * (np.fft.rfftn(Fi*(self.rxhat)**2*(self.ryhat)**2))
+            F4 += 6.0 * self.kx_half**2 * self.kz_half**2 * (np.fft.rfftn(Fi*(self.rzhat)**2*(self.rxhat)**2))
+            F4 += 6.0 * self.ky_half**2 * self.kz_half**2 * (np.fft.rfftn(Fi*(self.ryhat)**2*(self.rzhat)**2))
             
-            F2kflat[i] = - F0kflat[i] + 3.0*np.ndarray.flatten(self.kx_half**2*Frxx_k[i]+ self.ky_half**2*Fryy_k[i]+ self.kz_half**2*Frzz_k[i]+ 2.0*self.kx_half*self.ky_half*Frxy_k[i]+ 2.0*self.kx_half*self.kz_half*Frxz_k[i]+ 2.0*self.ky_half*self.kz_half*Fryz_k[i])
-        
-        F_ret = self.F
+            F4 += 12.0 * self.kx_half**2 * self.ky_half * self.kz_half * (np.fft.rfftn(Fi*(self.rxhat)**2*(self.ryhat)*(self.rzhat)))
+            F4 += 12.0 * self.kz_half**2 * self.kx_half * self.ky_half * (np.fft.rfftn(Fi*(self.rzhat)**2*(self.rxhat)*(self.ryhat)))
+            F4 += 12.0 * self.ky_half**2 * self.kz_half * self.kx_half * (np.fft.rfftn(Fi*(self.ryhat)**2*(self.rxhat)*(self.rzhat)))
+
+            F4 = F4 / self.mas_wfunction
+
+            F2kflat[i] = - F0kflat[i] + 3.0*np.ndarray.flatten(F2)
+            F4kflat[i] = -7.0/4.0*F0kflat[i] - 2.5*F2kflat[i] + 35.0/4.0*np.ndarray.flatten(F4)
+            # F2kflat[i] = - F0kflat[i] + 3.0*np.ndarray.flatten(self.kx_half**2*Frxx_k[i]+ self.ky_half**2*Fryy_k[i]+ self.kz_half**2*Frzz_k[i]+ 2.0*self.kx_half*self.ky_half*Frxy_k[i]+ 2.0*self.kx_half*self.kz_half*Frxz_k[i]+ 2.0*self.ky_half*self.kz_half*Fryz_k[i])
+
+        F_ret = self.F + self.F_bar
+        # F_ret = self.F
         
         #numpy.fft is in the same Fourier convention of PVP - no extra normalization needed
         self.Fk=Fk               
