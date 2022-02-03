@@ -20,8 +20,11 @@
 # and added as the first map (in that case, the remaining n_maps are the training sims)
 import numpy as np
 
+# Whether or not to impose a mask on the selection function (randoms) and data
 use_mask = False
 #use_mask = True
+# If a mask is used, specify where to find it. Format is array (n_x,n_y,n_z) 
+#mask_filename = 'some_file.h5py'
 
 #sims_only = False
 sims_only = True
@@ -165,6 +168,8 @@ n_x_orig= -64. #-128.
 n_y_orig= -64 #-128.
 n_z_orig= 10000.
 
+# Mass Assignement Scheme
+mas_method = "TSC"
 
 # Volume occupied by tracers in this map: 1.635 h^-3 Gpc^3 (74.7% of the full box)
 ################################
@@ -216,8 +221,9 @@ mult_sel_fun, shift_sel_fun = 1.0 , 0.0
 #
 # You may also define a DATA bias that is different from the mocks
 #
-# data_bias = [1.0,2.0]
+# data_bias = [1.0,2.0, 3.0]
 
+#padding_length = [1, 1, 1]
 
 # Here, define the interval in k that you want to use to estimate the bias
 kmin_bias = 0.05

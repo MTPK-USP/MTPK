@@ -14,6 +14,14 @@ class code_parameters:
     All of these parameters are optional. If a parameter is not provided,
     the code will simply use the default parameter defined below
 
+    mass_method : string
+
+    Identifies the mass assignment scheme to use:
+      mass_method = 'NGP' -> Nearest Grid Point
+      mass_method = 'CIC' -> Cloud In Cell
+      mass_method = 'TSC' -> Triangular Shaped Cloud
+      mass_method = 'PCS' -> Piecewise Cubic Spline
+
     use_data_bias : bool
 
     True -> use a different bias from the mocks
@@ -200,6 +208,7 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
+            'mass_method'          : 'NGP',
             'use_data_bias'        : False,
             'data_bias'            : np.array([1.4, 1.8, 2.6]),
             'use_kdip_phys'        : False,
@@ -255,6 +264,7 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
+        self.mass_method = default_params['mass_method']
         self.use_data_bias = default_params['use_data_bias']
         self.data_bias = default_params['data_bias']
         self.use_kdip_phys = default_params['use_kdip_phys']
