@@ -622,14 +622,15 @@ hexa = 8./35*matgrowcentral**2
 
 hexapoles = hexa*np.power(monopoles,0)
 
-# try:
-#     pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-#     cross_monopoles = pk_mg_cross.monos
-#     cross_quadrupoles = pk_mg_cross.quads
-# except:
-#     cross_monopoles = np.zeros((len(k_camb),1))
-#     cross_quadrupoles = np.zeros((len(k_camb),1))
+try:
+    pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+    cross_monopoles = pk_mg_cross.monos
+    cross_quadrupoles = pk_mg_cross.quads
+except:
+    cross_monopoles = np.zeros((len(k_camb),1))
+    cross_quadrupoles = np.zeros((len(k_camb),1))
 
+cross_hexapoles = hexa*np.power(cross_monopoles,0)
 
 # # Compute effective dipole and bias of tracers
 # kph_central = my_code_options.kph_central
