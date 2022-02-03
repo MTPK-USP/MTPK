@@ -544,78 +544,83 @@ else:
     kmaxbar = 0.5  # Use Nyquist frequency in cell units
     kmax_phys = np.pi/cell_size
     
-# # The number of bins should be set by the maximum k to be computed,
-# # together with the minimum separation based on the physical volume.
-# #
-# # Typically, dk_phys =~ 1.4/L , where L is the typical physical size
-# # of the survey (Abramo 2012)
-# # For some particular applications (esp. large scales) we can use larger bins
-# #dk0=1.4/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
-# dk0 = 3.0/np.power(n_x_box*n_y_box*n_z_box,1/3.)/(2.0*np.pi)
-# dk_phys = 2.0*np.pi*dk0/cell_size
+# The number of bins should be set by the maximum k to be computed,
+# together with the minimum separation based on the physical volume.
+#
+# Typically, dk_phys =~ 1.4/L , where L is the typical physical size
+# of the survey (Abramo 2012)
+# For some particular applications (esp. large scales) we can use larger bins
+#dk0=1.4/np.power(n_x*n_y*n_z,1/3.)/(2.0*np.pi)
+dk0 = 3.0/np.power(n_x_box*n_y_box*n_z_box,1/3.)/(2.0*np.pi)
+dk_phys = 2.0*np.pi*dk0/cell_size
 
-# # Ensure that the binning is at least a certain size
-# dkph_bin = parameters_code['dkph_bin']
-# dk_phys = max(dk_phys,dkph_bin)
-# # Fourier bins in units of frequency
-# dk0 = dk_phys*cell_size/2.0/np.pi
+# Ensure that the binning is at least a certain size
+dkph_bin = parameters_code['dkph_bin']
+dk_phys = max(dk_phys,dkph_bin)
+# Fourier bins in units of frequency
+dk0 = dk_phys*cell_size/2.0/np.pi
 
-# #  Physically, the maximal useful k is perhaps k =~ 0.3 h/Mpc (non-linear scale)
-# np.set_printoptions(precision=3)
+#  Physically, the maximal useful k is perhaps k =~ 0.3 h/Mpc (non-linear scale)
+np.set_printoptions(precision=3)
 
-# print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
+print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
 
-# print(".")
-# print ('----------------------------------')
-# print(".")
+print(".")
+print ('----------------------------------')
+print(".")
 
-# #R This line makes some np variables be printed with less digits
-# np.set_printoptions(precision=6)
-
-
-# #R Here are the k's that will be estimated (in grid units):
-# kgrid = grid.grid_k
-# kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
-
-# ### K_MAX_MIN
-# try:
-#     kmin_phys = parameters_code['kmin_phys']
-#     kminbar = kmin_phys*cell_size/2.0/np.pi
-# except:
-#     pass
-
-# ### K_MAX_MIN
-# num_binsk = int((kmaxbar-kminbar)/dk0)
-# dk_bar = dk0*np.ones(num_binsk)
-# k_bar = kminbar + dk0*np.arange(num_binsk)
-# r_bar = 1/2.0 + ((1.0*n_x_box)/num_binsk)*np.arange(num_binsk)
-
-# #
-# # k in physical units
-# #
-# kph = k_bar*2*np.pi/cell_size
+#R This line makes some np variables be printed with less digits
+np.set_printoptions(precision=6)
 
 
+#R Here are the k's that will be estimated (in grid units):
+kgrid = grid.grid_k
+kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
 
-# ##############################################
-# # Define the "effective bias" as the amplitude of the monopole
-# use_kdip_phys = parameters_code['use_kdip_phys']
-# if use_kdip_phys:
-#     kdip_phys = parameters_code['kdip_phys']
-#     print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
-#     pass
-# else:
-#     kdip_phys = 1./(cell_size*(n_z_orig + n_z/2.))    
+### K_MAX_MIN
+try:
+    kmin_phys = parameters_code['kmin_phys']
+    kminbar = kmin_phys*cell_size/2.0/np.pi
+except:
+    pass
+
+### K_MAX_MIN
+num_binsk = int((kmaxbar-kminbar)/dk0)
+dk_bar = dk0*np.ones(num_binsk)
+k_bar = kminbar + dk0*np.arange(num_binsk)
+r_bar = 1/2.0 + ((1.0*n_x_box)/num_binsk)*np.arange(num_binsk)
+
+#
+# k in physical units
+#
+kph = k_bar*2*np.pi/cell_size
+
+
+
+##############################################
+# Define the "effective bias" as the amplitude of the monopole
+use_kdip_phys = parameters_code['use_kdip_phys']
+if use_kdip_phys:
+    kdip_phys = parameters_code['kdip_phys']
+    print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
+    pass
+else:
+    kdip_phys = 1./(cell_size*(n_z_orig + n_z/2.))    
     
-# try:
-#     dip = np.asarray(gal_adip) * kdip_phys
-# except:
-#     dip = 0.0
+try:
+    dip = np.asarray(gal_adip) * kdip_phys
+except:
+    dip = 0.0
 
-# pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
 
-# monopoles = pk_mg.mono
-# quadrupoles = pk_mg.quad
+monopoles = pk_mg.mono
+quadrupoles = pk_mg.quad
+
+# Hexadecapoles only in the Kaiser approximation
+hexa = 8./35*matgrowcentral**2
+
+hexapoles = hexa*np.power(monopoles,0)
 
 # try:
 #     pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
