@@ -119,7 +119,10 @@ class fkp_init(object):
         
         # Weighted overdensity field -- eq. 6 in PVP
         self.F = np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z))
+        self.F_bar = np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z))
         Fk = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))
+        # Fk = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))
+        
         
         Frxx_k = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))
         Frxy_k = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))
@@ -130,6 +133,7 @@ class fkp_init(object):
         
         F0kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
         F2kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
+        F4kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
 
         for i in range(self.number_tracers):
             self.F[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * (ng[i] - alpha*self.nr[i])
