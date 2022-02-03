@@ -661,9 +661,16 @@ where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 effadip = gal_adip*matgrowcentral/(0.00000000001 + kph_central)
 effbias = np.sqrt(monopoles[:,where_kph_central])
 
-# print()
-# print ('----------------------------------')
-# print()
+if use_data_bias:
+    pk_mg_data = pkmg.pkmg(data_bias,gal_adip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+    monopoles_data = pk_mg_data.mono
+    effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
+else:
+    pass
+
+print()
+print ('----------------------------------')
+print()
 
 
 
