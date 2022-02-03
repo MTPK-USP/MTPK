@@ -201,350 +201,349 @@ else:
     print("Aborting now...")
     sys.exit(-1)
 
-# # Directory with data and simulated maps
-# dir_maps = this_dir + '/maps/sims/' + handle_sims
+# Directory with data and simulated maps
+dir_maps = this_dir + '/maps/sims/' + handle_sims
 
-# # Directory with data
-# use_mask = parameters_code['use_mask']
-# sel_fun_data = parameters_code['sel_fun_data']
-# dir_data = this_dir + '/maps/data/' + handle_data
-
-
-# # Will save results of the estimations to these directories:
-# dir_specs = this_dir + '/spectra/' + handle_estimates
-# dir_figs = this_dir + '/figures/' + handle_estimates
-# if not os.path.exists(dir_specs):
-#     os.makedirs(dir_specs)
-# if not os.path.exists(dir_figs):
-#     os.makedirs(dir_figs)
-
-# # Save estimations for each assumed k_phys in subdirectories named after k_phys
-# # strkph = str(kph_central)
-# strkph = str(parameters_code['kph_central'])
-
-# dir_specs += '/k=' + strkph
-# dir_figs  += '/k=' + strkph
-
-# # If directories do not exist, create them now...
-# if not os.path.exists(dir_specs):
-#     os.makedirs(dir_specs)
-# else:
-#     print ('Directory ', dir_specs, 'exists!')
-#     # print [name for name in os.listdir(dir_specs)]
-#     answer = input('Continue anyway? y/n  ')
-#     if answer!='y':
-#         print ('Aborting now...')
-#         sys.exit(-1)
-
-# if not os.path.exists(dir_figs):
-#     os.makedirs(dir_figs)
-# else:
-#     print ('Directory ', dir_figs , 'exists!')
-#     # print [name for name in os.listdir(dir_figs)]
-#     answer = input('Continue anyway? y/n  ')
-#     if answer!='y':
-#         print ('Aborting now...')
-#         sys.exit(-1)
-
-# ########################## Some other cosmological quantities ######################################
-
-# Omegam = physical_options['Omega0_m']
-# OmegaDE = physical_options['Omega0_DE']
-# Omegab = physical_options['Omega0_b']
-# Omegac = physical_options['Omega0_cdm']
-# A_s = physical_options['A_s']
-# gamma = physical_options['gamma']
-# matgrowcentral = physical_options['matgrowcentral']
-# w0 = physical_options['w0']
-# w1 = physical_options['w1']
-# z_re = physical_options['z_re']
-# zcentral = physical_options['zcentral']
-# n_SA = physical_options['n_s']
-
-# # Velocity dispersion. vdisp is defined on inputs with units of km/s
-# vdisp = np.asarray(my_code_options.vdisp) #km/s
-# sigma_v = my_code_options.vdisp/my_cosmology.H(physical_options['zcentral'], False) #Mpc/h
-# a_vdisp = vdisp/physical_options['c_light'] #Adimensional vdisp
-
-# # Redshift errors. sigz_est is defined on inputs, and is adimensional
-# sigz_est = np.asarray(my_code_options.sigz_est)
-# sigma_z = sigz_est*physical_options['c_light']/my_cosmology.H(physical_options['zcentral'], False) # Mpc/h
-
-# whichspec = parameters_code['whichspec']
-
-# # Joint factor considering v dispersion and z error
-# sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
-# a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
-
-# ###################################################################################################
+# Directory with data
+use_mask = parameters_code['use_mask']
+sel_fun_data = parameters_code['sel_fun_data']
+dir_data = this_dir + '/maps/data/' + handle_data
 
 
-# #############Calling CAMB for calculations of the spectra#################
-# print('Beggining CAMB calculations\n')
+# Will save results of the estimations to these directories:
+dir_specs = this_dir + '/spectra/' + handle_estimates
+dir_figs = this_dir + '/figures/' + handle_estimates
+if not os.path.exists(dir_specs):
+    os.makedirs(dir_specs)
+if not os.path.exists(dir_figs):
+    os.makedirs(dir_figs)
 
-# use_theory_spectrum = parameters_code['use_theory_spectrum']
-# theory_spectrum_file = parameters_code['theory_spectrum_file']
-# if use_theory_spectrum:
-#     print('Using pre-existing power spectrum in file:',theory_spectrum_file)
-#     kcpkc = np.loadtxt(theory_spectrum_file)
-#     if kcpkc.shape[1] > kcpkc.shape[0]: 
-#         k_camb=kcpkc[0]
-#         Pk_camb=kcpkc[1]
-#     else:
-#         k_camb=kcpkc[:,0]
-#         Pk_camb=kcpkc[:,1]
-# else:
-#     print('Computing matter power spectrum for given cosmology...\n')
+# Save estimations for each assumed k_phys in subdirectories named after k_phys
+strkph = str(parameters_code['kph_central'])
 
-#     # It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
-#     k_min_camb = parameters_code['k_min_CAMB']
-#     k_max_camb = parameters_code['k_max_CAMB']
+dir_specs += '/k=' + strkph
+dir_figs  += '/k=' + strkph
 
-#     nklist = 1000
-#     k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
+# If directories do not exist, create them now...
+if not os.path.exists(dir_specs):
+    os.makedirs(dir_specs)
+else:
+    print ('Directory ', dir_specs, 'exists!')
+    # print [name for name in os.listdir(dir_specs)]
+    answer = input('Continue anyway? y/n  ')
+    if answer!='y':
+        print ('Aborting now...')
+        sys.exit(-1)
 
-#     kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
-#     Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
+if not os.path.exists(dir_figs):
+    os.makedirs(dir_figs)
+else:
+    print ('Directory ', dir_figs , 'exists!')
+    # print [name for name in os.listdir(dir_figs)]
+    answer = input('Continue anyway? y/n  ')
+    if answer!='y':
+        print ('Aborting now...')
+        sys.exit(-1)
 
-# # Ended CAMB calculation #####################################
+########################## Some other cosmological quantities ######################################
 
-# use_power_law = parameters_code['use_power_law']
-# power_law = parameters_code['power_law']
-# pk_power = parameters_code['pk_power']
-# if use_power_law:
-#     Pk_camb = power_low*np.power(Pk_camb, pk_power)
-# else:
-#     pass
+Omegam = physical_options['Omega0_m']
+OmegaDE = physical_options['Omega0_DE']
+Omegab = physical_options['Omega0_b']
+Omegac = physical_options['Omega0_cdm']
+A_s = physical_options['A_s']
+gamma = physical_options['gamma']
+matgrowcentral = physical_options['matgrowcentral']
+w0 = physical_options['w0']
+w1 = physical_options['w1']
+z_re = physical_options['z_re']
+zcentral = physical_options['zcentral']
+n_SA = physical_options['n_s']
 
-# # Construct spectrum that decays sufficiently rapidly, and interpolate, using an initial ansatz for power-law of P ~ k^(-1) [good for HaloFit]
-# k_interp = np.append(k_camb,np.array([2*k_camb[-1],4*k_camb[-1],8*k_camb[-1],16*k_camb[-1],32*k_camb[-1],64*k_camb[-1],128*k_camb[-1]]))
-# P_interp = np.append(Pk_camb,np.array([1./2.*Pk_camb[-1],1./4*Pk_camb[-1],1./8*Pk_camb[-1],1./16*Pk_camb[-1],1./32*Pk_camb[-1],1./64*Pk_camb[-1],1./128*Pk_camb[-1]]))
-# pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
+# Velocity dispersion. vdisp is defined on inputs with units of km/s
+vdisp = np.asarray(my_code_options.vdisp) #km/s
+sigma_v = my_code_options.vdisp/my_cosmology.H(physical_options['zcentral'], False) #Mpc/h
+a_vdisp = vdisp/physical_options['c_light'] #Adimensional vdisp
+
+# Redshift errors. sigz_est is defined on inputs, and is adimensional
+sigz_est = np.asarray(my_code_options.sigz_est)
+sigma_z = sigz_est*physical_options['c_light']/my_cosmology.H(physical_options['zcentral'], False) # Mpc/h
+
+whichspec = parameters_code['whichspec']
+
+# Joint factor considering v dispersion and z error
+sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
+a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
+
+###################################################################################################
 
 
-# #####################################################
-# #####################################################
-# #####################################################
+#############Calling CAMB for calculations of the spectra#################
+print('Beggining CAMB calculations\n')
 
-# gal_bias = my_code_options.bias_file
-# adip = my_code_options.adip
+use_theory_spectrum = parameters_code['use_theory_spectrum']
+theory_spectrum_file = parameters_code['theory_spectrum_file']
+if use_theory_spectrum:
+    print('Using pre-existing power spectrum in file:',theory_spectrum_file)
+    kcpkc = np.loadtxt(theory_spectrum_file)
+    if kcpkc.shape[1] > kcpkc.shape[0]: 
+        k_camb=kcpkc[0]
+        Pk_camb=kcpkc[1]
+    else:
+        k_camb=kcpkc[:,0]
+        Pk_camb=kcpkc[:,1]
+else:
+    print('Computing matter power spectrum for given cosmology...\n')
 
-# gal_adip = np.asarray(adip)
-# gal_sigz_est = np.asarray(sigz_est)
-# gal_vdisp = np.asarray(vdisp)
-# a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
+    # It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
+    k_min_camb = parameters_code['k_min_CAMB']
+    k_max_camb = parameters_code['k_max_CAMB']
 
-# #####################################################
-# # Generate real- and Fourier-space grids for FFTs
-# #####################################################
+    nklist = 1000
+    k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
 
-# print('.')
-# print('Generating the k-space Grid...')
-# print('.')
+    kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
+    Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 
-# n_x = parameters_code['n_x']
-# n_y = parameters_code['n_y']
-# n_z = parameters_code['n_z']
-# n_x_orig = parameters_code['n_x_orig']
-# n_y_orig = parameters_code['n_y_orig']
-# n_z_orig = parameters_code['n_z_orig']
+# Ended CAMB calculation #####################################
 
-# use_padding = parameters_code['use_padding']
-# padding_length = parameters_code['padding_length']
-# if use_padding:
-#     n_x_box = n_x + 2*padding_length[0]
-#     n_y_box = n_y + 2*padding_length[1]
-#     n_z_box = n_z + 2*padding_length[2]
-#     n_x_orig = n_x_orig - padding_length[0]
-#     n_y_orig = n_y_orig - padding_length[1]
-#     n_z_orig = n_z_orig - padding_length[2]
-# else:
-#     n_x_box = n_x
-#     n_y_box = n_y
-#     n_z_box = n_z
+use_power_law = parameters_code['use_power_law']
+power_law = parameters_code['power_law']
+pk_power = parameters_code['pk_power']
+if use_power_law:
+    Pk_camb = power_low*np.power(Pk_camb, pk_power)
+else:
+    pass
 
-# cell_size = parameters_code['cell_size']
-# ntracers = my_code_options.ntracers
-# nbar = my_code_options.nbar
-# ncentral = my_code_options.ncentral
-# nsigma = my_code_options.nsigma
+# Construct spectrum that decays sufficiently rapidly, and interpolate, using an initial ansatz for power-law of P ~ k^(-1) [good for HaloFit]
+k_interp = np.append(k_camb,np.array([2*k_camb[-1],4*k_camb[-1],8*k_camb[-1],16*k_camb[-1],32*k_camb[-1],64*k_camb[-1],128*k_camb[-1]]))
+P_interp = np.append(Pk_camb,np.array([1./2.*Pk_camb[-1],1./4*Pk_camb[-1],1./8*Pk_camb[-1],1./16*Pk_camb[-1],1./32*Pk_camb[-1],1./64*Pk_camb[-1],1./128*Pk_camb[-1]]))
+pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
 
-# L_x = n_x_box*cell_size ; L_y = n_y_box*cell_size ; L_z = n_z_box*cell_size
-# grid = gr.grid3d(n_x_box,n_y_box,n_z_box,L_x,L_y,L_z)
+#####################################################
+#####################################################
+#####################################################
 
-# grid_orig = gr.grid3d(n_x,n_y,n_z,n_x*cell_size,n_y*cell_size,n_z*cell_size)
+gal_bias = my_code_options.bias_file
+adip = my_code_options.adip
 
-# sel_fun_file = parameters_code['sel_fun_file']
+gal_adip = np.asarray(adip)
+gal_sigz_est = np.asarray(sigz_est)
+gal_vdisp = np.asarray(vdisp)
+a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
 
-# # Selection function
-# # If given by data
-# if sel_fun_data:
-#     try:
-#         h5map = h5py.File(dir_data + '/' + sel_fun_file,'r')
-#         h5data = h5map.get(list(h5map.keys())[0])
-#         nbm = np.asarray(h5data,dtype='float32')
-#         #updated to shift selection function by small=1.e-9
-#         mult_sel_fun = parameters_code['mult_sel_fun']
-#         shift_sel_fun = parameters_code['shift_sel_fun']
-#         nbm = np.asarray(small + mult_sel_fun*(nbm + shift_sel_fun),dtype='float32')
-#         h5map.close
-#     except:
-#         print ('Could not find file with data selection function!')
-#         print ('Check your directory ', dir_data)
-#         print ('Aborting now...')
-#         sys.exit(-1)
-#     if len(nbm.shape)==3:
-#         n_bar_matrix_fid = np.zeros((1,n_x,n_y,n_z))
-#         n_bar_matrix_fid[0] = nbm
-#     elif len(nbm.shape)==4:
-#         n_bar_matrix_fid = nbm
-#         if (np.shape(n_bar_matrix_fid)[1] != n_x) or (np.shape(n_bar_matrix_fid)[2] != n_y) or (np.shape(n_bar_matrix_fid)[3] != n_z):
-#             print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
-#             print ('Please correct/check input files and/or maps. Aborting now.')
-#             sys.exit(-1)
-#     else:
-#         print ('WARNING!!! Data selection function has funny dimensions:', nbm.shape)
-#         print ('Please check, something is not right here. Aborting now...')
-#         sys.exit(-1)
-# else:
-#     try:
-#         mult_sel_fun = parameters_code['mult_sel_fun']
-#         mass_fun = parameters_code['mass_fun']
-#         mass_fun = mult_sel_fun*mass_fun
-#         nbar = mass_fun*cell_size**3
-#         ncentral = 10.0*nbar**0
-#         nsigma = 10000.0*nbar**0 
-#     except:
-#         print("Att.: using analytical selection function for galaxies (check parameters in input file).")
-#         print("Using n_bar, n_central, n_sigma  from input file")
+#####################################################
+# Generate real- and Fourier-space grids for FFTs
+#####################################################
 
-#     n_bar_matrix_fid = np.zeros((ntracers,n_x,n_y,n_z),dtype='float32')
-#     for nt in range(ntracers):
-#         # Here you can choose how to call the selection function, using the different dependencies
-#         # Exponential/Gaussian form:
-#         try:
-#             n_bar_matrix_fid[nt] = selection_func_Gaussian(grid_orig.grid_r, nbar[nt],ncentral[nt],nsigma[nt])
-#         except:  # If there is only one species of tracer, the nbar, ncentral etc. are not arrays
-#             n_bar_matrix_fid[nt] = selection_func_Gaussian(grid_orig.grid_r, nbar,ncentral,nsigma)
-#         # Linear form:
-#         #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
+print('.')
+print('Generating the k-space Grid...')
+print('.')
+
+n_x = parameters_code['n_x']
+n_y = parameters_code['n_y']
+n_z = parameters_code['n_z']
+n_x_orig = parameters_code['n_x_orig']
+n_y_orig = parameters_code['n_y_orig']
+n_z_orig = parameters_code['n_z_orig']
+
+use_padding = parameters_code['use_padding']
+padding_length = parameters_code['padding_length']
+if use_padding:
+    n_x_box = n_x + 2*padding_length[0]
+    n_y_box = n_y + 2*padding_length[1]
+    n_z_box = n_z + 2*padding_length[2]
+    n_x_orig = n_x_orig - padding_length[0]
+    n_y_orig = n_y_orig - padding_length[1]
+    n_z_orig = n_z_orig - padding_length[2]
+else:
+    n_x_box = n_x
+    n_y_box = n_y
+    n_z_box = n_z
+
+cell_size = parameters_code['cell_size']
+ntracers = my_code_options.ntracers
+nbar = my_code_options.nbar
+ncentral = my_code_options.ncentral
+nsigma = my_code_options.nsigma
+
+L_x = n_x_box*cell_size ; L_y = n_y_box*cell_size ; L_z = n_z_box*cell_size
+grid = gr.grid3d(n_x_box,n_y_box,n_z_box,L_x,L_y,L_z)
+
+grid_orig = gr.grid3d(n_x,n_y,n_z,n_x*cell_size,n_y*cell_size,n_z*cell_size)
+
+sel_fun_file = parameters_code['sel_fun_file']
+
+# Selection function
+# If given by data
+if sel_fun_data:
+    try:
+        h5map = h5py.File(dir_data + '/' + sel_fun_file,'r')
+        h5data = h5map.get(list(h5map.keys())[0])
+        nbm = np.asarray(h5data,dtype='float32')
+        #updated to shift selection function by small=1.e-9
+        mult_sel_fun = parameters_code['mult_sel_fun']
+        shift_sel_fun = parameters_code['shift_sel_fun']
+        nbm = np.asarray(small + mult_sel_fun*(nbm + shift_sel_fun),dtype='float32')
+        h5map.close
+    except:
+        print ('Could not find file with data selection function!')
+        print ('Check your directory ', dir_data)
+        print ('Aborting now...')
+        sys.exit(-1)
+    if len(nbm.shape)==3:
+        n_bar_matrix_fid = np.zeros((1,n_x,n_y,n_z))
+        n_bar_matrix_fid[0] = nbm
+    elif len(nbm.shape)==4:
+        n_bar_matrix_fid = nbm
+        if (np.shape(n_bar_matrix_fid)[1] != n_x) or (np.shape(n_bar_matrix_fid)[2] != n_y) or (np.shape(n_bar_matrix_fid)[3] != n_z):
+            print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
+            print ('Please correct/check input files and/or maps. Aborting now.')
+            sys.exit(-1)
+    else:
+        print ('WARNING!!! Data selection function has funny dimensions:', nbm.shape)
+        print ('Please check, something is not right here. Aborting now...')
+        sys.exit(-1)
+else:
+    try:
+        mult_sel_fun = parameters_code['mult_sel_fun']
+        mass_fun = parameters_code['mass_fun']
+        mass_fun = mult_sel_fun*mass_fun
+        nbar = mass_fun*cell_size**3
+        ncentral = 10.0*nbar**0
+        nsigma = 10000.0*nbar**0 
+    except:
+        print("Att.: using analytical selection function for galaxies (check parameters in input file).")
+        print("Using n_bar, n_central, n_sigma  from input file")
+
+    n_bar_matrix_fid = np.zeros((ntracers,n_x,n_y,n_z),dtype='float32')
+    for nt in range(ntracers):
+        # Here you can choose how to call the selection function, using the different dependencies
+        # Exponential/Gaussian form:
+        try:
+            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid_orig.grid_r, nbar[nt],ncentral[nt],nsigma[nt])
+        except:  # If there is only one species of tracer, the nbar, ncentral etc. are not arrays
+            n_bar_matrix_fid[nt] = selection_func_Gaussian(grid_orig.grid_r, nbar,ncentral,nsigma)
+        # Linear form:
+        #nbar_sel_fun = selection_func_Linear(grid.RX, grid.RY, grid.RZ, nbar[ng],ax[ng],ay[ng],az[ng])
 
         
-# if use_mask:
-#     try:
-#         h5map = h5py.File(dir_data + '/' + mask_filename,'r')
-#         h5data = h5map.get(list(h5map.keys())[0])
-#         mask = np.asarray(h5data,dtype='int32')
-#         h5map.close
-#     except:
-#         print ('Could not find file with mask!')
-#         print ('Check your directory ', dir_data)
-#         print ('Aborting now...')
-#         sys.exit(-1)
-#     if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
-#         print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
-#         print ('Please correct/check input files and/or maps. Aborting now.')
-#         sys.exit(-1)
-#     n_bar_matrix_fid = n_bar_matrix_fid * mask
+if use_mask:
+    try:
+        h5map = h5py.File(dir_data + '/' + mask_filename,'r')
+        h5data = h5map.get(list(h5map.keys())[0])
+        mask = np.asarray(h5data,dtype='int32')
+        h5map.close
+    except:
+        print ('Could not find file with mask!')
+        print ('Check your directory ', dir_data)
+        print ('Aborting now...')
+        sys.exit(-1)
+    if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
+        print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
+        print ('Please correct/check input files and/or maps. Aborting now.')
+        sys.exit(-1)
+    n_bar_matrix_fid = n_bar_matrix_fid * mask
 
-# # Apply padding, if it exists
-# try:
-#     n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
-#     n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = n_bar_matrix_fid
-#     n_bar_matrix_fid = np.copy(n_box)
-#     n_box = None
-#     del n_box
-# except:
-#     pass
+# Apply padding, if it exists
+try:
+    n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
+    n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = n_bar_matrix_fid
+    n_bar_matrix_fid = np.copy(n_box)
+    n_box = None
+    del n_box
+except:
+    pass
     
-# n_maps = parameters_code['n_maps']
-# mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
-# if len(mapnames_sims)==0 :
-#     print()
-#     print ('Simulated map files not found! Check input simulation files.')
-#     print ('Exiting program...')
-#     print ()
-#     sys.exit(-1)
-# if len(mapnames_sims) != n_maps :
-#     print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
-#     answer = input('Continue anyway? y/n  ')
-#     if answer!='y':
-#         print ('Aborting now...')
-#         sys.exit(-1)
-# print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
+n_maps = parameters_code['n_maps']
+mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
+if len(mapnames_sims)==0 :
+    print()
+    print ('Simulated map files not found! Check input simulation files.')
+    print ('Exiting program...')
+    print ()
+    sys.exit(-1)
+if len(mapnames_sims) != n_maps :
+    print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
+    answer = input('Continue anyway? y/n  ')
+    if answer!='y':
+        print ('Aborting now...')
+        sys.exit(-1)
+print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
 
 
-# ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
-# ## We will treat this as an additional MASK (thresh_mask) for data and mocks
-# use_cell_low_count_thresh = parameters_code['use_cell_low_count_thresh']
-# cell_low_count_thresh = parameters_code['cell_low_count_thresh']
-# if use_cell_low_count_thresh:
-#     cell_low_count_thresh = parameters_code['cell_low_count_thresh']
-#     thresh_mask = np.ones_like(n_bar_matrix_fid)
-#     thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
-#     n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
-# else:
-#     pass
+## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
+## We will treat this as an additional MASK (thresh_mask) for data and mocks
+use_cell_low_count_thresh = parameters_code['use_cell_low_count_thresh']
+cell_low_count_thresh = parameters_code['cell_low_count_thresh']
+if use_cell_low_count_thresh:
+    cell_low_count_thresh = parameters_code['cell_low_count_thresh']
+    thresh_mask = np.ones_like(n_bar_matrix_fid)
+    thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
+    n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
+else:
+    pass
 
 
-# print(".")
+print(".")
 
-# print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
-# # Apply padding, if it exists
-# try:
-#     print ('Geometry including bounding box: (nx,ny,nz) = (' +str(n_x_box)+','+str(n_y_box)+','+str(n_z_box) + ')')
-# except:
-#     pass
+print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
+# Apply padding, if it exists
+try:
+    print ('Geometry including bounding box: (nx,ny,nz) = (' +str(n_x_box)+','+str(n_y_box)+','+str(n_z_box) + ')')
+except:
+    pass
 
-# print(".")
-# if whichspec == 0:
-#     print ('Using LINEAR power spectrum from CAMB')
-# elif whichspec == 1:
-#     print ('Using power spectrum from CAMB + HaloFit')
-# else:
-#     print ('Using power spectrum from CAMB + HaloFit with PkEqual')
+print(".")
+if whichspec == 0:
+    print ('Using LINEAR power spectrum from CAMB')
+elif whichspec == 1:
+    print ('Using power spectrum from CAMB + HaloFit')
+else:
+    print ('Using power spectrum from CAMB + HaloFit with PkEqual')
 
-# print(".")
-# print ('----------------------------------')
-# print(".")
-
-
-
-# #####################################################
-# # Start computing physical sizes of boxes
-# #####################################################
-# box_vol = L_x*L_y*L_z            # Box's volume
-# L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)    
+print(".")
+print ('----------------------------------')
+print(".")
 
 
-# ##########################################
-# #  Generating the Bins Matrix M^a_{ijl}
-# #  The matrix MR maps the \vec{k}'s into bins (k,mu)
-# #  The matrix MRk maps the \vec{k}'s into bins (k)
-# ##########################################
 
-# #  Fundamental frequencies (NOT ANGULAR FREQUENCIES) of the grid
-# #  Here nn, kk_bar, etc., are in units of the grid, for which cell size == 1
-
-# #R NOTE ON CONVERSION OF k's (which here are FREQUENCIES) to PHYSICAL k:
-# #R
-# #R   k_phys = 2*pi/cell_size * frequency
-# #R
-# nn = int(np.sqrt(n_x**2 + n_y**2 + n_z**2))
-# kk_bar = np.fft.fftfreq(nn)
+#####################################################
+# Start computing physical sizes of boxes
+#####################################################
+box_vol = L_x*L_y*L_z            # Box's volume
+L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)    
 
 
-# ### K_MAX_MIN
-# #  Maximum ***frequency*** allowed
-# #  Nyquist frequency is 0.5 (in units of 1/cell)
-# try:
-#     kmax_phys = parameters_code['kmax_phys']
-#     kmaxbar = min(0.5,kmax_phys*cell_size/2.0/np.pi)
-#     kmax_phys = kmaxbar*2*np.pi/cell_size
-# except:
-#     kmaxbar = 0.5  # Use Nyquist frequency in cell units
-#     kmax_phys = np.pi/cell_size
+##########################################
+#  Generating the Bins Matrix M^a_{ijl}
+#  The matrix MR maps the \vec{k}'s into bins (k,mu)
+#  The matrix MRk maps the \vec{k}'s into bins (k)
+##########################################
 
+#  Fundamental frequencies (NOT ANGULAR FREQUENCIES) of the grid
+#  Here nn, kk_bar, etc., are in units of the grid, for which cell size == 1
+
+#R NOTE ON CONVERSION OF k's (which here are FREQUENCIES) to PHYSICAL k:
+#R
+#R   k_phys = 2*pi/cell_size * frequency
+#R
+nn = int(np.sqrt(n_x**2 + n_y**2 + n_z**2))
+kk_bar = np.fft.fftfreq(nn)
+
+
+### K_MAX_MIN
+#  Maximum ***frequency*** allowed
+#  Nyquist frequency is 0.5 (in units of 1/cell)
+use_kmax_phys = parameters_code['use_kmax_phys']
+if use_kmax_phys:
+    kmax_phys = parameters_code['kmax_phys']
+    kmaxbar = min(0.5,kmax_phys*cell_size/2.0/np.pi)
+    kmax_phys = kmaxbar*2*np.pi/cell_size
+else:
+    kmaxbar = 0.5  # Use Nyquist frequency in cell units
+    kmax_phys = np.pi/cell_size
+    
 # # The number of bins should be set by the maximum k to be computed,
 # # together with the minimum separation based on the physical volume.
 # #

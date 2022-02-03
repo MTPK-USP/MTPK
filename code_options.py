@@ -126,6 +126,10 @@ class code_parameters:
     dkph_bin : float
     Binning in k (in units of h^-1 Mpc) -- this should be ~ 1.4/(smallest side of box)
 
+    use_kmax_phys : bool
+    True -> use the specified kmax_phys parameter
+    False -> will compute it, according to Nyquist frequency
+
     kmax_phys : float
     Max k (in units of h^-1 Mpc) -- this should be < 2 \pi * Nyquist frequency = \pi /cell_size
 
@@ -241,6 +245,7 @@ class code_parameters:
             'kph_central'          : 0.1,
             'dkph_bin'             : 0.01,
             'kmin_phys'            : 0.05,
+            'use_kmax_phys'        : False,
             'kmax_phys'            : 0.6,
             'whichspec'            : 1,
             'jing_dec_sims'        : True,
@@ -299,6 +304,7 @@ class code_parameters:
         self.kmax_bias = default_params['kmax_bias']
         self.kph_central = default_params['kph_central']
         self.kmin_phys = default_params['kmin_phys']
+        self.use_kmax_phys = default_params['use_kmax_phys']
         self.kmax_phys = default_params['kmax_phys']
         self.whichspec = default_params['whichspec']
         self.jing_dec_sims = default_params['jing_dec_sims']
