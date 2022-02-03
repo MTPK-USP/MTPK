@@ -632,148 +632,21 @@ except:
 
 cross_hexapoles = hexa*np.power(cross_monopoles,0)
 
-# # Compute effective dipole and bias of tracers
-# kph_central = my_code_options.kph_central
-# where_kph_central = np.argmin(np.abs(k_camb - kph_central))
+# Compute effective dipole and bias of tracers
+kph_central = my_code_options.kph_central
+where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 
-# effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
-# effbias = np.sqrt(monopoles[:,where_kph_central])
+effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
+effbias = np.sqrt(monopoles[:,where_kph_central])
 
-# use_data_bias = parameters_code['use_data_bias']
-# data_bias = parameters_code['data_bias']
-# if use_data_bias:
-#     pk_mg_data = pkmg.pkmg(data_bias, dip, matgrowcentral, k_camb, a_gal_sig_tot, cH, zcentral)
-#     monopoles_data = pk_mg_data.mono
-#     effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
-# else:
-#     pass
-
-
-# # Import correction factors for the lognormal halo simulations
-# # Use these to correct the spectra of the lognormal sims
-# # spec_corr are the corrections in REAL (not redshift) space
-# dir_spec_corr_sims = this_dir + '/spectra/' + handle_sims
-# try:
-#     Pk_camb_sim = np.loadtxt(dir_spec_corr_sims + '/Pk_camb.dat')[:,1]
-#     spec_corr = np.loadtxt(dir_spec_corr_sims + '/spec_corrections.dat')
-#     print("Reading spectral corrections in:", dir_spec_corr_sims)
-#     k_corr = spec_corr[:,0]
-#     nks = len(k_corr)
-#     try:
-#         mono_model = np.loadtxt(dir_spec_corr_sims + '/monopole_model.dat')
-#         quad_model = np.loadtxt(dir_spec_corr_sims + '/quadrupole_model.dat')
-#         mono_theory = np.loadtxt(dir_spec_corr_sims + '/monopole_theory.dat')
-#         quad_theory = np.loadtxt(dir_spec_corr_sims + '/quadrupole_theory.dat')
-#         print("Using pre-computed theory/model multipoles in:", dir_spec_corr_sims)
-#         print()
-#         if(ntracers>1):
-#             crossmono_model = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_model.dat')
-#             crossquad_model = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_model.dat')
-#             crossmono_theory = np.loadtxt(dir_spec_corr_sims + '/cross_monopole_theory.dat')
-#             crossquad_theory = np.loadtxt(dir_spec_corr_sims + '/cross_quadrupole_theory.dat')
-#             if len(crossmono_model.shape) == 1:
-#                 crossmono_model = np.reshape(crossmono_model, (nks, 1))
-#                 crossquad_model = np.reshape(crossquad_model, (nks, 1))
-#                 crossmono_theory = np.reshape(crossmono_theory, (nks, 1))
-#                 crossquad_theory = np.reshape(crossquad_theory, (nks, 1))
-#     except:
-#         print("Did not find pre-computed theory/model monopoles and/or quadrupoles.")
-#         print("Assuming Kaiser model (+ Gaussian photo-zs + Gaussian veloc. disp.)")
-#         print()
-#         pk_mg2 = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_corr,a_gal_sig_tot,cH,zcentral)
-#         monopoles2 = pk_mg2.mono
-#         quadrupoles2 = pk_mg2.quad
-#         try:
-#             pk_mg_cross2 = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_corr,a_gal_sig_tot,cH,zcentral)
-#             cross_monopoles2 = pk_mg_cross2.monos
-#             cross_quadrupoles2 = pk_mg_cross2.quads
-#         except:
-#             cross_monopoles = np.zeros((len(k_corr),1))
-#             cross_quadrupoles = np.zeros((len(k_corr),1))
-#         mono_model = np.ones((nks,ntracers))
-#         quad_model = np.ones((nks,ntracers))
-#         mono_theory = np.ones((nks,ntracers))
-#         quad_theory = np.ones((nks,ntracers))
-#         if(ntracers>1):
-#             crossmono_model = np.ones((nks,ntracers*(ntracers-1)//2))
-#             crossquad_model = np.ones((nks,ntracers*(ntracers-1)//2))
-#             crossmono_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-#             crossquad_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-#         index=0
-#         for nt in range(ntracers):
-#             mono_model[:,nt]= monopoles2[nt]*Pk_camb_sim
-#             quad_model[:,nt]= quadrupoles2[nt]*Pk_camb_sim
-#             mono_theory[:,nt]= monopoles2[nt]*Pk_camb_sim
-#             quad_theory[:,nt]= quadrupoles2[nt]*Pk_camb_sim
-#             for ntp in range(nt+1,ntracers):
-#                 crossmono_model[:,index] = cross_monopoles2[index]*Pk_camb_sim
-#                 crossmono_theory[:,index] = cross_monopoles2[index]*Pk_camb_sim
-#                 crossquad_model[:,index] = cross_quadrupoles2[index]*Pk_camb_sim
-#                 crossquad_theory[:,index] = cross_quadrupoles2[index]*Pk_camb_sim
-#                 index += 1
-# except:    
-#     print()
-#     print ("Did not find spectral corrections and theory spectra on directory:")
-#     print (dir_spec_corr_sims)
-#     print ("[Sometimes these files are created by the lognormal map-creating tool.]")
-#     print ("Will assume spectral corrections are all unity, in the interval k_phys: [0,1],")
-#     print ("and that monopoles and quadrupoles are from linear bias + RSD model, with CAMB spectrum.")
-#     print()
-#     k_corr = k_camb
-#     nks = len(k_camb)
-#     spec_corr = np.ones((nks,ntracers+1))
-#     mono_model = np.ones((nks,ntracers))
-#     quad_model = np.ones((nks,ntracers))
-#     mono_theory = np.ones((nks,ntracers))
-#     quad_theory = np.ones((nks,ntracers))
-#     #mono_model[:,0]=k_camb
-#     #quad_model[:,0]=k_camb
-#     #mono_theory[:,0]=k_camb
-#     #mono_theory[:,0]=k_camb
-#     if(ntracers>1):
-#         crossmono_model = np.ones((nks,ntracers*(ntracers-1)//2))
-#         crossquad_model = np.ones((nks,ntracers*(ntracers-1)//2))
-#         crossmono_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-#         crossquad_theory = np.ones((nks,ntracers*(ntracers-1)//2))
-
-#     index=0
-#     for nt in range(ntracers):
-#         mono_model[:,nt]= monopoles[nt]*Pk_camb
-#         quad_model[:,nt]= quadrupoles[nt]*Pk_camb
-#         mono_theory[:,nt]= monopoles[nt]*Pk_camb
-#         quad_theory[:,nt]= quadrupoles[nt]*Pk_camb
-#         for ntp in range(nt+1,ntracers):
-#             crossmono_model[:,index] = cross_monopoles[index]*Pk_camb
-#             crossmono_theory[:,index] = cross_monopoles[index]*Pk_camb
-#             crossquad_model[:,index] = cross_quadrupoles[index]*Pk_camb
-#             crossquad_theory[:,index] = cross_quadrupoles[index]*Pk_camb
-#             index += 1
-
-# # Discard the first column of spec_corr, since it just gives the values of k
-# spec_corr = spec_corr[:,1:]
-
-# # NOW INCLUDING CROSS-CORRELATIONS
-# all_mono_model = np.zeros((nks,ntracers,ntracers))
-# all_quad_model = np.zeros((nks,ntracers,ntracers))
-# all_mono_theory = np.zeros((nks,ntracers,ntracers))
-# all_quad_theory = np.zeros((nks,ntracers,ntracers))
-
-# index=0
-# for i in range(ntracers):
-#     all_mono_model[:,i,i] = mono_model[:,i]
-#     all_mono_theory[:,i,i] = mono_theory[:,i]
-#     all_quad_model[:,i,i] = quad_model[:,i]
-#     all_quad_theory[:,i,i] = quad_theory[:,i]
-#     for j in range(i+1,ntracers):
-#         all_mono_model[:,i,j] = crossmono_model[:,index]
-#         all_mono_theory[:,i,j] = crossmono_theory[:,index]
-#         all_quad_model[:,i,j] = crossquad_model[:,index]
-#         all_quad_theory[:,i,j] = crossquad_theory[:,index]
-#         all_mono_model[:,j,i] = crossmono_model[:,index] 
-#         all_mono_theory[:,j,i] = crossmono_theory[:,index] 
-#         all_quad_model[:,j,i] = crossquad_model[:,index]
-#         all_quad_theory[:,j,i] = crossquad_theory[:,index]
-#         index += 1
+use_data_bias = parameters_code['use_data_bias']
+data_bias = parameters_code['data_bias']
+if use_data_bias:
+    pk_mg_data = pkmg.pkmg(data_bias, dip, matgrowcentral, k_camb, a_gal_sig_tot, cH, zcentral)
+    monopoles_data = pk_mg_data.mono
+    effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
+else:
+    pass
 
 
 # # Get effective bias (sqrt of monopoles) for final tracers
