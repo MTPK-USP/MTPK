@@ -649,35 +649,17 @@ else:
     pass
 
 
-# # Get effective bias (sqrt of monopoles) for final tracers
-# pk_mg = pkmg.pkmg(gal_bias,gal_adip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+# Get effective bias (sqrt of monopoles) for final tracers
+pk_mg = pkmg.pkmg(gal_bias,gal_adip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
 
-# monopoles = pk_mg.mono
-# quadrupoles = pk_mg.quad
+monopoles = pk_mg.mono
+quadrupoles = pk_mg.quad
 
-# # Compute effective dipole and bias of tracers
-# where_kph_central = np.argmin(np.abs(k_camb - kph_central))
+# Compute effective dipole and bias of tracers
+where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 
-# effadip = gal_adip*matgrowcentral/(0.00000000001 + kph_central)
-# effbias = np.sqrt(monopoles[:,where_kph_central])
-
-# k_spec_corr = np.append(np.append(0.,k_corr),k_corr[-1] + dkph_bin )
-# pk_ln_spec_corr = np.vstack((np.vstack((np.asarray(spec_corr[0]),np.asarray(spec_corr))),spec_corr[-1]))
-
-# pk_ln_mono_model = np.vstack((np.vstack((np.asarray(mono_model[0]),np.asarray(mono_model))),mono_model[-1]))
-# pk_ln_quad_model = np.vstack((np.vstack((np.asarray(quad_model[0]),np.asarray(quad_model))),quad_model[-1]))
-
-# pk_ln_mono_theory = np.vstack((np.vstack((np.asarray(mono_theory[0]),np.asarray(mono_theory))),mono_theory[-1]))
-# pk_ln_quad_theory = np.vstack((np.vstack((np.asarray(quad_theory[0]),np.asarray(quad_theory))),quad_theory[-1]))
-
-# if (ntracers>1):
-#     pk_ln_crossmono_model = np.vstack((np.vstack((np.asarray(crossmono_model[0]),np.asarray(crossmono_model))),crossmono_model[-1]))
-#     pk_ln_crossmono_theory = np.vstack((np.vstack((np.asarray(crossmono_theory[0]),np.asarray(crossmono_theory))),crossmono_theory[-1]))
-
-#     pk_ln_crossquad_model = np.vstack((np.vstack((np.asarray(crossquad_model[0]),np.asarray(crossquad_model))),crossquad_model[-1]))
-#     pk_ln_crossquad_theory = np.vstack((np.vstack((np.asarray(crossquad_theory[0]),np.asarray(crossquad_theory))),crossquad_theory[-1]))
-
-
+effadip = gal_adip*matgrowcentral/(0.00000000001 + kph_central)
+effbias = np.sqrt(monopoles[:,where_kph_central])
 
 # print()
 # print ('----------------------------------')
