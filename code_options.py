@@ -186,7 +186,7 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
-            'method'               : 'MT',#'both',
+            'method'               : 'both',
             'mas_method'           : 'CIC',
             'use_kdip_phys'        : False,
             'kdip_phys'            : 0.005,
