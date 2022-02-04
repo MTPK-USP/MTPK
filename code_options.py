@@ -203,10 +203,10 @@ class code_parameters:
     def __init__(self, **kwargs):
         default_params = {
             'mas_method'           : 'CIC',
-            'use_kdip_phys'        : True,
+            'use_kdip_phys'        : False,
             'kdip_phys'            : 0.005,
             'use_padding'          : False,
-            'padding_length'       : [1, 1, 1],
+            'padding_length'       : [10, 10, 10],
             'use_power_law'        : False,
             'power_law'            : 1,
             'pk_power'             : 1,

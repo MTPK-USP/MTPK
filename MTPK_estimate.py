@@ -311,7 +311,7 @@ use_power_law = parameters_code['use_power_law']
 power_law = parameters_code['power_law']
 pk_power = parameters_code['pk_power']
 if use_power_law:
-    Pk_camb = power_low*np.power(Pk_camb, pk_power)
+    Pk_camb = power_law*np.power(Pk_camb, pk_power)
 else:
     pass
 
@@ -527,7 +527,7 @@ L_max = np.sqrt(L_x*L_x + L_y*L_y + L_z*L_z)
 #R
 #R   k_phys = 2*pi/cell_size * frequency
 #R
-nn = int(np.sqrt(n_x**2 + n_y**2 + n_z**2))
+nn = int(np.sqrt(n_x_box**2 + n_y_box**2 + n_z_box**2))
 kk_bar = np.fft.fftfreq(nn)
 
 
@@ -673,7 +673,7 @@ print()
 #R  (Remembering that 1/2 of the grid is redundant, since the maps are real-valued)
 #RR kflat=np.ndarray.flatten(grid.grid_k[:,:,:n_z/2-1])
 
-kflat=(np.ndarray.flatten(kgrid[:,:,:n_z//2+1]))
+kflat=(np.ndarray.flatten(kgrid[:,:,:n_z_box//2+1]))
 lenkf=len(kflat)
 
 
