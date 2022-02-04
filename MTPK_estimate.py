@@ -639,16 +639,6 @@ where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
 effbias = np.sqrt(monopoles[:,where_kph_central])
 
-use_data_bias = parameters_code['use_data_bias']
-data_bias = parameters_code['data_bias']
-if use_data_bias:
-    pk_mg_data = pkmg.pkmg(data_bias, dip, matgrowcentral, k_camb, a_gal_sig_tot, cH, zcentral)
-    monopoles_data = pk_mg_data.mono
-    effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
-else:
-    pass
-
-
 # Get effective bias (sqrt of monopoles) for final tracers
 pk_mg = pkmg.pkmg(gal_bias,gal_adip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
 
@@ -660,13 +650,6 @@ where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 
 effadip = gal_adip*matgrowcentral/(0.00000000001 + kph_central)
 effbias = np.sqrt(monopoles[:,where_kph_central])
-
-if use_data_bias:
-    pk_mg_data = pkmg.pkmg(data_bias,gal_adip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
-    monopoles_data = pk_mg_data.mono
-    effbias_data = np.sqrt(monopoles_data[:,where_kph_central])
-else:
-    pass
 
 print()
 print ('----------------------------------')
@@ -880,24 +863,10 @@ print( "Initializing multi-tracer estimation toolbox...")
 
 fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
 
-# If data bias is different from mocks
-if use_data_bias:
-    effbias_mt_data = np.copy(effbias_mt)
-    effbias_mt_data[nbarbar*effbias_data**2 < 0.5e-6] = 0.01
-    fkp_mult_data = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt_data,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
-else:
-    pass
-
 ##
 # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
 print( "Initializing traditional (FKP) estimation toolbox...")
 fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
-
-# If data bias is different from mocks
-if use_data_bias:
-    fkp_many_data = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias_data, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
-else:
-    pass
 
 '''
 Because of the very sensitive nature of shot noise subtraction 
@@ -973,25 +942,14 @@ for nm in range(n_maps):
         normsel[normsel < 0.5] = 0.5
         print(" Normalized selection function/map at:",np.around(normsel[nm],3))
     if nm==0:
-        # If data bias is different from mocks
-        if use_data_bias:
-            FKPmany = fkp_many_data.fkp((normsel[nm]*maps.T).T)
-            P0_fkp[nm] = fkp_many_data.P_ret
-            P2_fkp[nm] = fkp_many_data.P2_ret
-            P4_fkp[nm] = fkp_many.P4_ret
-            Cross0[nm] = fkp_many_data.cross_spec
-            Cross2[nm] = fkp_many_data.cross_spec2
-            Cross4[nm] = fkp_many.cross_spec4
-            ThCov_fkp[nm] = (fkp_many_data.sigma)**2
-        else:
-            FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
-            P0_fkp[nm] = fkp_many.P_ret
-            P2_fkp[nm] = fkp_many.P2_ret
-            P4_fkp[nm] = fkp_many.P4_ret
-            Cross0[nm] = fkp_many.cross_spec
-            Cross2[nm] = fkp_many.cross_spec2
-            Cross4[nm] = fkp_many.cross_spec4
-            ThCov_fkp[nm] = (fkp_many.sigma)**2
+        FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
+        P0_fkp[nm] = fkp_many.P_ret
+        P2_fkp[nm] = fkp_many.P2_ret
+        P4_fkp[nm] = fkp_many.P4_ret
+        Cross0[nm] = fkp_many.cross_spec
+        Cross2[nm] = fkp_many.cross_spec2
+        Cross4[nm] = fkp_many.cross_spec4
+        ThCov_fkp[nm] = (fkp_many.sigma)**2
     else:
         FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
         P0_fkp[nm] = fkp_many.P_ret
@@ -1006,17 +964,10 @@ for nm in range(n_maps):
     # Now, the multi-tracer method
     print ('  Now estimating multi-tracer spectra...')
     if nm==0:
-        # If data bias is different from mocks
-        if use_data_bias:
-            FKPmult = fkp_mult_data.fkp((normsel[nm]*maps.T).T)
-            P0_data[nm] = fkp_mult_data.P0_mu_ret
-            P2_data[nm] = fkp_mult_data.P2_mu_ret
-            P4_data[nm] = fkp_mult_data.P4_mu_ret
-        else:
-            FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
-            P0_data[nm] = fkp_mult.P0_mu_ret
-            P2_data[nm] = fkp_mult.P2_mu_ret
-            P4_data[nm] = fkp_mult.P4_mu_ret
+        FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
+        P0_data[nm] = fkp_mult.P0_mu_ret
+        P2_data[nm] = fkp_mult.P2_mu_ret
+        P4_data[nm] = fkp_mult.P4_mu_ret
     else:
         FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
         P0_data[nm] = fkp_mult.P0_mu_ret
@@ -1036,26 +987,15 @@ for nm in range(n_maps):
 
     if nm==0:
     # If data bias is different from mocks
-        if use_data_bias:
-            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-            print ("  Effective biases of the data maps:")
-            print ("   Fiducial=", ["%.3f"%b for b in effbias])
-            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
-            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-            dt = time() - time_start
-            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-            print(".")
-        else:
-            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-            print ("  Effective biases of the simulated maps:")
-            print ("   Fiducial=", ["%.3f"%b for b in effbias])
-            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
-            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-            dt = time() - time_start
-            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-            print(".")
+        est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+        est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+        print ("  Effective biases of the simulated maps:")
+        print ("   Fiducial=", ["%.3f"%b for b in effbias])
+        print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+        dt = time() - time_start
+        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+        print(".")
     else:
         est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
         est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
