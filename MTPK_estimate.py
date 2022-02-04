@@ -577,10 +577,11 @@ kgrid = grid.grid_k
 kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
 
 ### K_MAX_MIN
-try:
+use_kmin_phys = parameters_code['use_kmin_phys']
+if use_kmin_phys:
     kmin_phys = parameters_code['kmin_phys']
     kminbar = kmin_phys*cell_size/2.0/np.pi
-except:
+else:
     pass
 
 ### K_MAX_MIN

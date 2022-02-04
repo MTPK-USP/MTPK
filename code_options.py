@@ -123,6 +123,10 @@ class code_parameters:
     kmax_phys : float
     Max k (in units of h^-1 Mpc) -- this should be < 2 \pi * Nyquist frequency = \pi /cell_size
 
+    use_kmin_phys : bool
+    True -> Use the specified value for kmin_phys and compute kminbar using it
+    False -> Use the computed kminbar
+
     kmin_phys : float
     Min k (in units of h^-1 Mpc) -- this should be > 1.0/box_size. In units of h^-1 Mpc
 
@@ -228,10 +232,11 @@ class code_parameters:
             'n_z_orig'             : 10000.,
             'sel_fun_data'         : False,
             'sel_fun_file'         : "sel_fun-N128_halos.hdf5",
-            'kmin_bias'            : 0.05,
-            'kmax_bias'            : 0.15,
+            'kmin_bias'            : 0.05, #is it necessary?
+            'kmax_bias'            : 0.15, #is it necessary?
             'kph_central'          : 0.1,
             'dkph_bin'             : 0.01,
+            'use_kmin_phys'        : False,
             'kmin_phys'            : 0.05,
             'use_kmax_phys'        : False,
             'kmax_phys'            : 0.6,
@@ -289,6 +294,7 @@ class code_parameters:
         self.kmin_bias = default_params['kmin_bias']
         self.kmax_bias = default_params['kmax_bias']
         self.kph_central = default_params['kph_central']
+        self.use_kmin_phys = default_params['use_kmin_phys']
         self.kmin_phys = default_params['kmin_phys']
         self.use_kmax_phys = default_params['use_kmax_phys']
         self.kmax_phys = default_params['kmax_phys']
