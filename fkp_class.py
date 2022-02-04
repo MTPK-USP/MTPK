@@ -235,7 +235,7 @@ class fkp_init(object):
             # Changed to sparse matrix format
             P_ret[i] = ((self.bin_matrix).dot(Fkf2[i]))/(self.counts + small)
             # Quadrupole with factor of 5/2
-            P2a_ret[i] = 2.5*((self.bin_matrix).dot(F2kf2[i]))/(self.counts + small)
+            P2_ret[i] = 2.5*((self.bin_matrix).dot(F2kf2[i]))/(self.counts + small)
             # Hexadecapole with factor of 9/2
             P4_ret[i] = 4.5*((self.bin_matrix).dot(F4kf2[i]))/(self.counts + small)
             

@@ -892,110 +892,115 @@ else:
 # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
 print( "Initializing traditional (FKP) estimation toolbox...")
 fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
-# fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
 
-# # If data bias is different from mocks
-# if use_data_bias:
-#     fkp_many_data = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias_data, cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral)
-# else:
-#     pass
+# If data bias is different from mocks
+if use_data_bias:
+    fkp_many_data = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias_data, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
+else:
+    pass
 
-# '''
-# Because of the very sensitive nature of shot noise subtraction 
-# in the Jing de-aliasing, it may be better to normalize the counts of the 
-# selection function to each map, and not to the mean of the maps.
-# ''' 
-# normsel = np.zeros((n_maps,ntracers))
+'''
+Because of the very sensitive nature of shot noise subtraction 
+in the Jing de-aliasing, it may be better to normalize the counts of the 
+selection function to each map, and not to the mean of the maps.
+''' 
+normsel = np.zeros((n_maps,ntracers))
 
-# print ("... done. Starting computations for each map (box) now.")
-# print()
+print ("... done. Starting computations for each map (box) now.")
+print()
 
-# #################################
-
-
-# est_bias_fkp = np.zeros(ntracers)
-# est_bias_mt = np.zeros(ntracers)
-
-# for nm in range(n_maps):
-#     time_start=time()
-#     print ('Loading simulated box #', nm)
-#     h5map = h5py.File(mapnames_sims[nm],'r')
-#     maps = np.asarray(h5map.get(list(h5map.keys())[0]))
-#     if not maps.shape == (ntracers,n_x,n_y,n_z):
-#         print()
-#         print ('Unexpected shape of simulated maps! Found:', maps.shape)
-#         print ('Check inputs and sims.  Aborting now...')
-#         print()
-#         sys.exit(-1)
-#     h5map.close
-
-#     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
-
-#     ## !! NEW !! Additional mask from low-cell-count threshold
-#     if use_cell_low_count_thresh:
-#         maps = thresh_mask*maps
-#         #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
-#     else:
-#         pass
-
-#     if use_mask:
-#         maps = maps * mask
+#################################
 
 
-#     # Apply padding, if it exists
-#     if use_padding:
-#         n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
-#         n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = maps
-#         maps = np.copy(n_box)
-#         n_box = None
-#         del n_box
-#     else:
-#         pass
+est_bias_fkp = np.zeros(ntracers)
+est_bias_mt = np.zeros(ntracers)
+
+for nm in range(n_maps):
+    time_start=time()
+    print ('Loading simulated box #', nm)
+    h5map = h5py.File(mapnames_sims[nm],'r')
+    maps = np.asarray(h5map.get(list(h5map.keys())[0]))
+    if not maps.shape == (ntracers,n_x,n_y,n_z):
+        print()
+        print ('Unexpected shape of simulated maps! Found:', maps.shape)
+        print ('Check inputs and sims.  Aborting now...')
+        print()
+        sys.exit(-1)
+    h5map.close
+
+    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+
+    ## !! NEW !! Additional mask from low-cell-count threshold
+    if use_cell_low_count_thresh:
+        maps = thresh_mask*maps
+        #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
+    else:
+        pass
+
+    if use_mask:
+        maps = maps * mask
+
+
+    # Apply padding, if it exists
+    if use_padding:
+        n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
+        n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = maps
+        maps = np.copy(n_box)
+        n_box = None
+        del n_box
+    else:
+        pass
         
-#     ##################################################
-#     # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
-#     # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
-#     # Notice that this means that the output of the FKP quadrupole
-#     # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
-#     ##################################################
+    ##################################################
+    # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
+    # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
+    # Notice that this means that the output of the FKP quadrupole
+    # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
+    ##################################################
 
-#     # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-#     print ('  Estimating FKP power spectra...')
-#     # Use sum instead of mean to take care of empty cells
-#     normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
-#     # Updated definition of normsel to avoid raising a NaN when there are zero tracers
-#     normsel[nm,np.isinf(normsel[nm])]=1.0
-#     normsel[nm,np.isnan(normsel[nm])]=1.0
+    # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
+    print ('  Estimating FKP power spectra...')
+    # Use sum instead of mean to take care of empty cells
+    normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
+    # Updated definition of normsel to avoid raising a NaN when there are zero tracers
+    normsel[nm,np.isinf(normsel[nm])]=1.0
+    normsel[nm,np.isnan(normsel[nm])]=1.0
     
-#     if ( (normsel[nm].any() > 2.0) | (normsel[nm].any() < 0.5) ):
-#         print("Attention! Your selection function and simulation have very different numbers of objects:")
-#         print("Selecion function/map for all tracers:",np.around(normsel[nm],3))
-#         normsel[normsel > 2.0] = 2.0
-#         normsel[normsel < 0.5] = 0.5
-#         print(" Normalized selection function/map at:",np.around(normsel[nm],3))
-#     if nm==0:
-#         # If data bias is different from mocks
-#         if use_data_bias:
-#             FKPmany = fkp_many_data.fkp((normsel[nm]*maps.T).T)
-#             P0_fkp[nm] = fkp_many_data.P_ret
-#             P2_fkp[nm] = fkp_many_data.P2a_ret
-#             Cross0[nm] = fkp_many_data.cross_spec
-#             Cross2[nm] = fkp_many_data.cross_spec2
-#             ThCov_fkp[nm] = (fkp_many_data.sigma)**2
-#         else:
-#             FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
-#             P0_fkp[nm] = fkp_many.P_ret
-#             P2_fkp[nm] = fkp_many.P2a_ret
-#             Cross0[nm] = fkp_many.cross_spec
-#             Cross2[nm] = fkp_many.cross_spec2
-#             ThCov_fkp[nm] = (fkp_many.sigma)**2
-#     else:
-#         FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
-#         P0_fkp[nm] = fkp_many.P_ret
-#         P2_fkp[nm] = fkp_many.P2a_ret
-#         Cross0[nm] = fkp_many.cross_spec
-#         Cross2[nm] = fkp_many.cross_spec2
-#         ThCov_fkp[nm] = (fkp_many.sigma)**2
+    if ( (normsel[nm].any() > 2.0) | (normsel[nm].any() < 0.5) ):
+        print("Attention! Your selection function and simulation have very different numbers of objects:")
+        print("Selecion function/map for all tracers:",np.around(normsel[nm],3))
+        normsel[normsel > 2.0] = 2.0
+        normsel[normsel < 0.5] = 0.5
+        print(" Normalized selection function/map at:",np.around(normsel[nm],3))
+    if nm==0:
+        # If data bias is different from mocks
+        if use_data_bias:
+            FKPmany = fkp_many_data.fkp((normsel[nm]*maps.T).T)
+            P0_fkp[nm] = fkp_many_data.P_ret
+            P2_fkp[nm] = fkp_many_data.P2_ret
+            P4_fkp[nm] = fkp_many.P4_ret
+            Cross0[nm] = fkp_many_data.cross_spec
+            Cross2[nm] = fkp_many_data.cross_spec2
+            Cross4[nm] = fkp_many.cross_spec4
+            ThCov_fkp[nm] = (fkp_many_data.sigma)**2
+        else:
+            FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
+            P0_fkp[nm] = fkp_many.P_ret
+            P2_fkp[nm] = fkp_many.P2_ret
+            P4_fkp[nm] = fkp_many.P4_ret
+            Cross0[nm] = fkp_many.cross_spec
+            Cross2[nm] = fkp_many.cross_spec2
+            Cross4[nm] = fkp_many.cross_spec4
+            ThCov_fkp[nm] = (fkp_many.sigma)**2
+    else:
+        FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
+        P0_fkp[nm] = fkp_many.P_ret
+        P2_fkp[nm] = fkp_many.P2_ret
+        P4_fkp[nm] = fkp_many.P4_ret
+        Cross0[nm] = fkp_many.cross_spec
+        Cross2[nm] = fkp_many.cross_spec2
+        Cross4[nm] = fkp_many.cross_spec4
+        ThCov_fkp[nm] = (fkp_many.sigma)**2
         
 #     #################################
 #     # Now, the multi-tracer method
