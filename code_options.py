@@ -143,9 +143,6 @@ class code_parameters:
     Which spectrum to use in the ln sims and estimation:
     (0) linear (1) HaloFit (2) PkEqual
 
-    power_jing_sims : float
-    Power used for deconvolution window function of sims
-
     plot_all_cov : bool
     True -> To plot the 2D covariances (FKP v. MT)
     False -> Otherwise
@@ -237,7 +234,6 @@ class code_parameters:
             'use_kmax_phys'        : False,
             'kmax_phys'            : 0.6,
             'whichspec'            : 1,
-            'power_jing_sims'      : 2.0,
             'plot_all_cov'         : False,
             'use_cell_low_count_thresh': False,
             'cell_low_count_thresh': 0.0,
@@ -294,7 +290,6 @@ class code_parameters:
         self.use_kmax_phys = default_params['use_kmax_phys']
         self.kmax_phys = default_params['kmax_phys']
         self.whichspec = default_params['whichspec']
-        self.power_jing_sims = default_params['power_jing_sims']
         self.plot_all_cov = default_params['plot_all_cov']
         self.fudge = default_params['fudge']
 
