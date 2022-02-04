@@ -161,15 +161,6 @@ class code_parameters:
     nsigma : list of float
     It is the ncentral times a list
          
-    shot_fudge : list of float
-    A parameter to subtract shot noise
-
-    shot_fudge_FKP : list of float
-    A parameter to subtract shot noise, specific to FKP
-
-    shot_fudge_MT : list of float
-    A parameter to subtract shot noise, specific to MT
-
     sigz_est : list of floats
     Gaussian redshift errors of GALAXIES/TRACERS created by HOD. It is in units of the cell size
 
@@ -236,7 +227,6 @@ class code_parameters:
             'shift_sel_fun'        : 0.0,
             'k_min_CAMB'           : 1.e-4,
             'k_max_CAMB'           : 1.e+0,
-            'fudge'                : 0.0000001
         }
 
         #Errors
@@ -285,7 +275,6 @@ class code_parameters:
         self.use_kmax_phys = default_params['use_kmax_phys']
         self.kmax_phys = default_params['kmax_phys']
         self.whichspec = default_params['whichspec']
-        self.fudge = default_params['fudge']
 
         #Computed Parameters
         self.ntracers = self.nhalos
@@ -294,9 +283,6 @@ class code_parameters:
         self.nbar = self.mass_fun*(self.cell_size**3)
         self.ncentral = self.ntracers*[20.0]
         self.nsigma = self.ntracers*[1000000.0]
-        self.shot_fudge = self.nhalos*[0.]
-        self.shot_fudge_FKP = self.nhalos*[0.]
-        self.shot_fudge_MT = self.nhalos*[0.]
         self.sigz_est = self.ntracers*[0.0000001]
         self.adip = self.ntracers*[0.0000000001]
         self.vdisp = self.adip
