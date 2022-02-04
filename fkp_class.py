@@ -192,23 +192,28 @@ class fkp_init(object):
         #numpy.fft is in the same Fourier convention of PVP - no extra normalization needed
         self.Fk=Fk               
 
-        Frxx_k=Frxx_k
-        Frxy_k=Frxy_k
-        Frxz_k=Frxz_k
-        Fryy_k=Fryy_k
-        Fryz_k=Fryz_k
-        Frzz_k=Frzz_k
+        # Frxx_k=Frxx_k
+        # Frxy_k=Frxy_k
+        # Frxz_k=Frxz_k
+        # Fryy_k=Fryy_k
+        # Fryz_k=Fryz_k
+        # Frzz_k=Frzz_k
+        
         ntr = self.number_tracers
         Fkf2 = np.zeros((ntr,lenkf))
-        F2akf2 = np.zeros((ntr,lenkf))
+        F2kf2 = np.zeros((ntr,lenkf))
+        F4kf2 = np.zeros((ntr,lenkf))
         for i in range(self.number_tracers):
             # Monopole: F(0)*F(0)^*
             Fkf2[i] = ( F0kflat[i]*(F0kflat[i].conj()) ).real
             # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
-            F2akf2[i]= 0.5*( F2kflat[i]*(F0kflat[i].conj()) + F0kflat[i]*(F2kflat[i].conj()) ).real
+            F2kf2[i]= 0.5*( F2kflat[i]*(F0kflat[i].conj()) + F0kflat[i]*(F2kflat[i].conj()) ).real
+            # Hexadecapole
+            F4kf2[i]= 0.5*( F4kflat[i]*(F0kflat[i].conj()) + F0kflat[i]*(F4kflat[i].conj()) ).real
             
         self.Fkf2 = Fkf2
-        self.F2akf2 = F2akf2
+        self.F2kf2 = F2kf2
+        self.F4kf2 = F4kf2
         self.F0kflat = F0kflat
         ###############################################################
         counts=np.ones(self.num_bins) #initializing the vector that averages over modes within a bin 
@@ -220,7 +225,8 @@ class fkp_init(object):
 
         rel_var = np.zeros((self.number_tracers,self.num_bins)) #initializing relative variance vector
         P_ret = np.zeros((self.number_tracers,self.num_bins))
-        P2a_ret = np.zeros((self.number_tracers,self.num_bins))
+        P2_ret = np.zeros((self.number_tracers,self.num_bins))
+        P4_ret = np.zeros((self.number_tracers,self.num_bins))
         self.Pshot_phys = np.zeros(self.number_tracers)
         sigma = np.zeros((self.number_tracers,self.num_bins))
             
@@ -229,7 +235,9 @@ class fkp_init(object):
             # Changed to sparse matrix format
             P_ret[i] = ((self.bin_matrix).dot(Fkf2[i]))/(self.counts + small)
             # Quadrupole with factor of 5/2
-            P2a_ret[i] = 2.5*((self.bin_matrix).dot(F2akf2[i]))/(self.counts + small)
+            P2a_ret[i] = 2.5*((self.bin_matrix).dot(F2kf2[i]))/(self.counts + small)
+            # Hexadecapole with factor of 9/2
+            P4_ret[i] = 4.5*((self.bin_matrix).dot(F4kf2[i]))/(self.counts + small)
             
             P_ret[i] = np.abs(P_ret[i] - self.Pshot[i])
 
@@ -243,7 +251,8 @@ class fkp_init(object):
 
             #changing to physical units
             P_ret[i]=P_ret[i]*self.cell_size**3
-            P2a_ret[i]=P2a_ret[i]*self.cell_size**3
+            P2_ret[i]=P2_ret[i]*self.cell_size**3
+            P4_ret[i]=P4_ret[i]*self.cell_size**3
         
             self.Pshot_phys[i]=self.Pshot[i]*self.cell_size**3
             # TESTING
@@ -253,7 +262,8 @@ class fkp_init(object):
             sigma[i] = sigma[i]*self.cell_size**3
             
         self.P_ret = P_ret
-        self.P2a_ret = P2a_ret
+        self.P2_ret = P2_ret
+        self.P4_ret = P4_ret
         self.sigma = sigma
         self.F_ret = F_ret
     
@@ -275,7 +285,14 @@ class fkp_init(object):
                 self.cross_spec2[index] = 2.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small)) 
                 index += 1
 
-	
+	# Defining cross of the quadrupoles
+        self.cross_spec4 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+        index = 0
+        for i in range(ntr):
+            for j in range(i+1,ntr):
+                cross_temp = 0.5*( F4kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F4kflat[j].conj()) ).real
+                self.cross_spec4[index] = 4.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                index += 1
 		
 		
 		
