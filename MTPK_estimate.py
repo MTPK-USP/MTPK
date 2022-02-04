@@ -186,15 +186,15 @@ print()
 print('Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates)
 print()
 
-mass_method = parameters_code['mass_method']
-if mass_method == 'NGP':
+mas_method = parameters_code['mas_method']
+if mas_method == 'NGP':
     mas_power = 1.0
-elif mass_method == 'CIC':
-    mass_power = 2.0
-elif mass_method == 'TSC':
-    mass_power = 3.0
-elif mass_method == 'PCS':
-    mass_power = 4.0
+elif mas_method == 'CIC':
+    mas_power = 2.0
+elif mas_method == 'TSC':
+    mas_power = 3.0
+elif mas_method == 'PCS':
+    mas_power = 4.0
 else:
     print("Please specify an acceptable Mass Assignement Scheme")
     print("Acceptable values: NGP, CIC, TSC and PCS")
@@ -470,7 +470,6 @@ if len(mapnames_sims) != n_maps :
         print ('Aborting now...')
         sys.exit(-1)
 print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
-
 
 ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
 ## We will treat this as an additional MASK (thresh_mask) for data and mocks
@@ -895,7 +894,7 @@ for nm in range(n_maps):
         print ('Check inputs and sims.  Aborting now...')
         print()
         sys.exit(-1)
-    h5map.close
+    h5map.close()
 
     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
 

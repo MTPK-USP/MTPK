@@ -14,13 +14,13 @@ class code_parameters:
     All of these parameters are optional. If a parameter is not provided,
     the code will simply use the default parameter defined below
 
-    mass_method : string
+    mas_method : string
 
     Identifies the mass assignment scheme to use:
-      mass_method = 'NGP' -> Nearest Grid Point
-      mass_method = 'CIC' -> Cloud In Cell
-      mass_method = 'TSC' -> Triangular Shaped Cloud
-      mass_method = 'PCS' -> Piecewise Cubic Spline
+      mas_method = 'NGP' -> Nearest Grid Point
+      mas_method = 'CIC' -> Cloud In Cell
+      mas_method = 'TSC' -> Triangular Shaped Cloud
+      mas_method = 'PCS' -> Piecewise Cubic Spline
 
     use_kdip_phys : bool
 
@@ -202,8 +202,8 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
-            'mass_method'          : 'NGP',
-            'use_kdip_phys'        : False,
+            'mas_method'           : 'CIC',
+            'use_kdip_phys'        : True,
             'kdip_phys'            : 0.005,
             'use_padding'          : False,
             'padding_length'       : [1, 1, 1],
@@ -257,7 +257,7 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
-        self.mass_method = default_params['mass_method']
+        self.mas_method = default_params['mas_method']
         self.use_kdip_phys = default_params['use_kdip_phys']
         self.kdip_phys = default_params['kdip_phys']
         self.use_padding = default_params['use_padding']
