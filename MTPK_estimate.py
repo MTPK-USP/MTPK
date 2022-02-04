@@ -812,415 +812,800 @@ print ('Starting power spectra estimation')
 
 # Initialize outputs
 
-# Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
-# Original (convolved) spectra:
-P0_data = np.zeros((n_maps,ntracers,num_binsk))
-P2_data = np.zeros((n_maps,ntracers,num_binsk))
-P4_data = np.zeros((n_maps,ntracers,num_binsk))
+method = parameters_code['method']
 
-# Traditional (FKP) method
-P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
-P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
-P4_fkp = np.zeros((n_maps,ntracers,num_binsk))
+if method == 'both':
 
-# Cross spectra
-Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-Cross4 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+    # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
+    # Original (convolved) spectra:
+    P0_data = np.zeros((n_maps,ntracers,num_binsk))
+    P2_data = np.zeros((n_maps,ntracers,num_binsk))
+    P4_data = np.zeros((n_maps,ntracers,num_binsk))
 
-# Covariance
-ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
+    # Traditional (FKP) method
+    P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
+    P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
+    P4_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
+    # Cross spectra
+    Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+    Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+    Cross4 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
 
-# Range where we estimate some parameters
-myk_min = np.argsort(np.abs(kph-0.1))[0]
-myk_max = np.argsort(np.abs(kph-0.2))[0]
-myran = np.arange(myk_min,myk_max)
+    # Covariance
+    ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
 
+    # Range where we estimate some parameters
+    myk_min = np.argsort(np.abs(kph-0.1))[0]
+    myk_max = np.argsort(np.abs(kph-0.2))[0]
+    myran = np.arange(myk_min,myk_max)
 
-#################################
-# Initialize the multi-tracer estimation class
-# We can assume many biases for the estimation of the power spectra:
-#
-# 1. Use the original bias
-#fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,bias,cell_size,n_x,n_y,n_z,MRk,powercentral)
-# 2. Use SQRT(monopole) for the bias. Now, we have two choices:
-#
-# 2a. Use the fiducial monopole as the MT bias
-#
-# 2b. Use the monopole estimated using the FKP technique
-#fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,fkpeffbias,cell_size,n_x,n_y,n_z,MRk,powercentral)
-
-# If shot noise is huge, then damp the effective bias of that species 
-# so that it doesn't end up biasing the multi-tracer estimator: 
-# nbar*b^2*P_0 > 0.01 , with P_0 = 2.10^4
-effbias_mt = np.copy(effbias)
-effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
-
-
-print( "Initializing multi-tracer estimation toolbox...")
-
-fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
-
-##
-# UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-print( "Initializing traditional (FKP) estimation toolbox...")
-fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
-
-'''
-Because of the very sensitive nature of shot noise subtraction 
-in the Jing de-aliasing, it may be better to normalize the counts of the 
-selection function to each map, and not to the mean of the maps.
-''' 
-normsel = np.zeros((n_maps,ntracers))
-
-print ("... done. Starting computations for each map (box) now.")
-print()
-
-#################################
-
-
-est_bias_fkp = np.zeros(ntracers)
-est_bias_mt = np.zeros(ntracers)
-
-for nm in range(n_maps):
-    time_start=time()
-    print ('Loading simulated box #', nm)
-    h5map = h5py.File(mapnames_sims[nm],'r')
-    maps = np.asarray(h5map.get(list(h5map.keys())[0]))
-    if not maps.shape == (ntracers,n_x,n_y,n_z):
-        print()
-        print ('Unexpected shape of simulated maps! Found:', maps.shape)
-        print ('Check inputs and sims.  Aborting now...')
-        print()
-        sys.exit(-1)
-    h5map.close()
-
-    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
-
-    ## !! NEW !! Additional mask from low-cell-count threshold
-    if use_cell_low_count_thresh:
-        maps = thresh_mask*maps
-        #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
-    else:
-        pass
-
-    if use_mask:
-        maps = maps * mask
-
-
-    # Apply padding, if it exists
-    if use_padding:
-        n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
-        n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = maps
-        maps = np.copy(n_box)
-        n_box = None
-        del n_box
-    else:
-        pass
-        
-    ##################################################
-    # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
-    # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
-    # Notice that this means that the output of the FKP quadrupole
-    # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
-    ##################################################
-
-    # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-    print ('  Estimating FKP power spectra...')
-    # Use sum instead of mean to take care of empty cells
-    normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
-    # Updated definition of normsel to avoid raising a NaN when there are zero tracers
-    normsel[nm,np.isinf(normsel[nm])]=1.0
-    normsel[nm,np.isnan(normsel[nm])]=1.0
-    
-    if ( (normsel[nm].any() > 2.0) | (normsel[nm].any() < 0.5) ):
-        print("Attention! Your selection function and simulation have very different numbers of objects:")
-        print("Selecion function/map for all tracers:",np.around(normsel[nm],3))
-        normsel[normsel > 2.0] = 2.0
-        normsel[normsel < 0.5] = 0.5
-        print(" Normalized selection function/map at:",np.around(normsel[nm],3))
-    if nm==0:
-        FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
-        P0_fkp[nm] = fkp_many.P_ret
-        P2_fkp[nm] = fkp_many.P2_ret
-        P4_fkp[nm] = fkp_many.P4_ret
-        Cross0[nm] = fkp_many.cross_spec
-        Cross2[nm] = fkp_many.cross_spec2
-        Cross4[nm] = fkp_many.cross_spec4
-        ThCov_fkp[nm] = (fkp_many.sigma)**2
-    else:
-        FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
-        P0_fkp[nm] = fkp_many.P_ret
-        P2_fkp[nm] = fkp_many.P2_ret
-        P4_fkp[nm] = fkp_many.P4_ret
-        Cross0[nm] = fkp_many.cross_spec
-        Cross2[nm] = fkp_many.cross_spec2
-        Cross4[nm] = fkp_many.cross_spec4
-        ThCov_fkp[nm] = (fkp_many.sigma)**2
-        
     #################################
-    # Now, the multi-tracer method
-    print ('  Now estimating multi-tracer spectra...')
-    if nm==0:
-        FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
-        P0_data[nm] = fkp_mult.P0_mu_ret
-        P2_data[nm] = fkp_mult.P2_mu_ret
-        P4_data[nm] = fkp_mult.P4_mu_ret
-    else:
-        FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
-        P0_data[nm] = fkp_mult.P0_mu_ret
-        P2_data[nm] = fkp_mult.P2_mu_ret
-        P4_data[nm] = fkp_mult.P4_mu_ret
+    # Initialize the multi-tracer estimation class
+    # We can assume many biases for the estimation of the power spectra:
+    #
+    # 1. Use the original bias
+    #fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,bias,cell_size,n_x,n_y,n_z,MRk,powercentral)
+    # 2. Use SQRT(monopole) for the bias. Now, we have two choices:
+    #
+    # 2a. Use the fiducial monopole as the MT bias
+    #
+    # 2b. Use the monopole estimated using the FKP technique
+    #fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,fkpeffbias,cell_size,n_x,n_y,n_z,MRk,powercentral)
 
-    #CORRECT FOR BIN AVERAGING
-    P0_data[nm] = P0_data[nm]/k_av_corr
-    P2_data[nm] = P2_data[nm]/k_av_corr
-    P4_data[nm] = P4_data[nm]/k_av_corr
-    P0_fkp[nm] = P0_fkp[nm]/k_av_corr
-    P2_fkp[nm] = P2_fkp[nm]/k_av_corr
-    P4_fkp[nm] = P4_fkp[nm]/k_av_corr
-    Cross0[nm] = Cross0[nm]/k_av_corr
-    Cross2[nm] = Cross2[nm]/k_av_corr
-    Cross4[nm] = Cross4[nm]/k_av_corr
-
-    if nm==0:
-    # If data bias is different from mocks
-        est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-        est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-        print ("  Effective biases of the simulated maps:")
-        print ("   Fiducial=", ["%.3f"%b for b in effbias])
-        print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
-        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-        dt = time() - time_start
-        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-        print(".")
-    else:
-        est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-        est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-        print( "  Effective biases of these maps:")
-        print( "   Fiducial=", ["%.3f"%b for b in effbias])
-        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
-        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
-        dt = time() - time_start
-        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-        print(".")
-
-#Update nbarbar to reflect actual
-nbarbar = nbarbar/np.mean(normsel,axis=0)
-
-# Correct missing factor of 2 in definition
-Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
-
-#del maps
-#maps = None
+    # If shot noise is huge, then damp the effective bias of that species 
+    # so that it doesn't end up biasing the multi-tracer estimator: 
+    # nbar*b^2*P_0 > 0.01 , with P_0 = 2.10^4
+    effbias_mt = np.copy(effbias)
+    effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
 
+    print( "Initializing multi-tracer estimation toolbox...")
 
-################################################################################
-################################################################################
+    fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
 
+    ##
+    # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
+    print( "Initializing traditional (FKP) estimation toolbox...")
+    fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
 
-time_end=time()
-print ('Total time cost for estimation of spectra: ', time_end - time_start)
+    '''
+    Because of the very sensitive nature of shot noise subtraction 
+    in the Jing de-aliasing, it may be better to normalize the counts of the 
+    selection function to each map, and not to the mean of the maps.
+    ''' 
+    normsel = np.zeros((n_maps,ntracers))
 
-################################################################################
-################################################################################
+    print ("... done. Starting computations for each map (box) now.")
+    print()
 
-tempor=time()
-
-################################################################################
-################################################################################
-
-
-
-
-print ('Applying mass assignement window function corrections...')
-
-################################################################################
-#############################################################################
-# Mass assignement correction
-
-# For k smaller than the smallest k_phys, we use the Planck power spectrum.
-# For k larger than the highest k_phys value, we extrapolate using the power law at k_N/2 -- or the highest value of k_phys in the range, whichever is smaller
-kph_min = kph[0]
-kN = np.pi/cell_size  # Nyquist frequency
-
-# Compute the mean power spectra -- I will use the MTOE for the iteration
-
-P0_mean = np.mean(P0_data,axis=0)
-P0_fkp_mean = np.mean(P0_fkp,axis=0)
-Cross0_mean = np.mean(Cross0,axis=0)
-
-# Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
-# We can easily put back the bias by multiplying:
-# CrossX = cross_effbias**2 * CrossX
-cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
-index=0
-for nt in range(ntracers):
-    for ntp in range(nt+1,ntracers):
-        cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
-        index += 1
-
-# FKP and Cross measurements need to have the bias returned in their definitions
-P0_fkp = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
-P2_fkp = np.transpose((effbias**2*np.transpose(P2_fkp,axes=(0,2,1))),axes=(0,2,1))
-P4_fkp = np.transpose((effbias**2*np.transpose(P4_fkp,axes=(0,2,1))),axes=(0,2,1))
-
-C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
-C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
-C4_fkp = np.transpose((cross_effbias**2*np.transpose(Cross4,axes=(0,2,1))),axes=(0,2,1))
-
-# Means
-P0_mean = np.mean(P0_data,axis=0)
-P2_mean = np.mean(P2_data,axis=0)
-P4_mean = np.mean(P4_data,axis=0)
-P0_fkp_mean = np.mean(P0_fkp,axis=0)
-P2_fkp_mean = np.mean(P2_fkp,axis=0)
-P4_fkp_mean = np.mean(P4_fkp,axis=0)
-Cross0_mean = np.mean(C0_fkp,axis=0)
-Cross2_mean = np.mean(C2_fkp,axis=0)
-Cross4_mean = np.mean(C4_fkp,axis=0)
-
-################################################################################
-################################################################################
-################################################################################
-################################################################################
-#
-#   SAVE these spectra
-#
-################################################################################
-################################################################################
-################################################################################
-################################################################################
+    #################################
 
 
-P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
-P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
+    est_bias_fkp = np.zeros(ntracers)
+    est_bias_mt = np.zeros(ntracers)
 
-P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
-P2_fkp_save=np.reshape(P2_fkp,(n_maps,ntracers*pow_bins))
+    for nm in range(n_maps):
+        time_start=time()
+        print ('Loading simulated box #', nm)
+        h5map = h5py.File(mapnames_sims[nm],'r')
+        maps = np.asarray(h5map.get(list(h5map.keys())[0]))
+        if not maps.shape == (ntracers,n_x,n_y,n_z):
+            print()
+            print ('Unexpected shape of simulated maps! Found:', maps.shape)
+            print ('Check inputs and sims.  Aborting now...')
+            print()
+            sys.exit(-1)
+        h5map.close()
 
-P4_save=np.reshape(P4_data,(n_maps,ntracers*pow_bins))
-P4_fkp_save=np.reshape(P4_fkp,(n_maps,ntracers*pow_bins))
+        print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
 
-C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-C4_fkp_save=np.reshape(C4_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+        ## !! NEW !! Additional mask from low-cell-count threshold
+        if use_cell_low_count_thresh:
+            maps = thresh_mask*maps
+            #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
+        else:
+            pass
 
-# Export data
-np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-
-np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-
-np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
-
-np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
-
-np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+        if use_mask:
+            maps = maps * mask
 
 
-np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE_mean.dat',P4_mean,fmt="%6.4f")
+        # Apply padding, if it exists
+        if use_padding:
+            n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
+            n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = maps
+            maps = np.copy(n_box)
+            n_box = None
+            del n_box
+        else:
+            pass
+        
+        ##################################################
+        # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
+        # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
+        # Notice that this means that the output of the FKP quadrupole
+        # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
+        ##################################################
 
-np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP_mean.dat',P4_fkp_mean,fmt="%6.4f")
+        # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
+        print ('  Estimating FKP power spectra...')
+        # Use sum instead of mean to take care of empty cells
+        normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
+        # Updated definition of normsel to avoid raising a NaN when there are zero tracers
+        normsel[nm,np.isinf(normsel[nm])]=1.0
+        normsel[nm,np.isnan(normsel[nm])]=1.0
+    
+        if ( (normsel[nm].any() > 2.0) | (normsel[nm].any() < 0.5) ):
+            print("Attention! Your selection function and simulation have very different numbers of objects:")
+            print("Selecion function/map for all tracers:",np.around(normsel[nm],3))
+            normsel[normsel > 2.0] = 2.0
+            normsel[normsel < 0.5] = 0.5
+            print(" Normalized selection function/map at:",np.around(normsel[nm],3))
+        if nm==0:
+            FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
+            P0_fkp[nm] = fkp_many.P_ret
+            P2_fkp[nm] = fkp_many.P2_ret
+            P4_fkp[nm] = fkp_many.P4_ret
+            Cross0[nm] = fkp_many.cross_spec
+            Cross2[nm] = fkp_many.cross_spec2
+            Cross4[nm] = fkp_many.cross_spec4
+            ThCov_fkp[nm] = (fkp_many.sigma)**2
+        else:
+            FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
+            P0_fkp[nm] = fkp_many.P_ret
+            P2_fkp[nm] = fkp_many.P2_ret
+            P4_fkp[nm] = fkp_many.P4_ret
+            Cross0[nm] = fkp_many.cross_spec
+            Cross2[nm] = fkp_many.cross_spec2
+            Cross4[nm] = fkp_many.cross_spec4
+            ThCov_fkp[nm] = (fkp_many.sigma)**2
+        
+        #################################
+        # Now, the multi-tracer method
+        print ('  Now estimating multi-tracer spectra...')
+        if nm==0:
+            FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
+            P0_data[nm] = fkp_mult.P0_mu_ret
+            P2_data[nm] = fkp_mult.P2_mu_ret
+            P4_data[nm] = fkp_mult.P4_mu_ret
+        else:
+            FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
+            P0_data[nm] = fkp_mult.P0_mu_ret
+            P2_data[nm] = fkp_mult.P2_mu_ret
+            P4_data[nm] = fkp_mult.P4_mu_ret
 
-np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
-np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
+        #CORRECT FOR BIN AVERAGING
+        P0_data[nm] = P0_data[nm]/k_av_corr
+        P2_data[nm] = P2_data[nm]/k_av_corr
+        P4_data[nm] = P4_data[nm]/k_av_corr
+        P0_fkp[nm] = P0_fkp[nm]/k_av_corr
+        P2_fkp[nm] = P2_fkp[nm]/k_av_corr
+        P4_fkp[nm] = P4_fkp[nm]/k_av_corr
+        Cross0[nm] = Cross0[nm]/k_av_corr
+        Cross2[nm] = Cross2[nm]/k_av_corr
+        Cross4[nm] = Cross4[nm]/k_av_corr
 
-#UPDATED SOME PLOT DEFINITIONS
-kN = np.pi/cell_size  # Nyquist frequency
-ikN9 = np.argsort(np.abs(kph-kN))[0]
+        if nm==0:
+            # If data bias is different from mocks
+            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+            print ("  Effective biases of the simulated maps:")
+            print ("   Fiducial=", ["%.3f"%b for b in effbias])
+            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+            dt = time() - time_start
+            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+            print(".")
+        else:
+            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+            print( "  Effective biases of these maps:")
+            print( "   Fiducial=", ["%.3f"%b for b in effbias])
+            print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+            dt = time() - time_start
+            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+            print(".")
+    
+    #Update nbarbar to reflect actual
+    nbarbar = nbarbar/np.mean(normsel,axis=0)
 
-xlim = [0.9*kph[0],1.1*kph[ikN9]]
-ylim = [np.min(effbias**2)*np.min(powtrue)/100.,np.max(effbias**2)*np.max(powtrue)*5]
+    # Correct missing factor of 2 in definition
+    Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
 
-print(".")
-print("Now just a couple of plots to /figs...")
+    #del maps
+    #maps = None
 
-index=0
-pl.loglog(kph,powtrue,'k',linewidth=0.3)
-for nt in range(ntracers):
-    pl.loglog(kph,P0_fkp_mean[nt],'b',linewidth=0.6)
-    pl.loglog(kph,-P0_fkp_mean[nt],'b--',linewidth=0.6)
-    pl.loglog(kph,P2_fkp_mean[nt],'g',linewidth=0.5)
-    pl.loglog(kph,-P2_fkp_mean[nt],'g--',linewidth=0.5)
-    pl.loglog(kph,P4_fkp_mean[nt],'c',linewidth=0.3)
-    pl.loglog(kph,-P4_fkp_mean[nt],'c--',linewidth=0.3)
-    for ntp in range(nt+1,ntracers):
-        pl.loglog(kph,Cross0_mean[index],'b',linewidth=0.2)
-        pl.loglog(kph,Cross2_mean[index],'g',linewidth=0.2)
-        pl.loglog(kph,Cross4_mean[index],'c',linewidth=0.2)
-        index += 1
+    ################################################################################
+    ################################################################################
 
-pl.xlim(xlim)
-pl.ylim(ylim)
-pl.savefig(dir_figs + "/Mean_spec_fkp.png",dpi=200)
-pl.close('all')
 
-index=0
-pl.loglog(kph,powtrue,'k',linewidth=0.3)
-for nt in range(ntracers):
-    pl.loglog(kph,P0_mean[nt],'b',linewidth=0.6)
-    pl.loglog(kph,-P0_mean[nt],'b--',linewidth=0.6)
-    pl.loglog(kph,P2_mean[nt],'g',linewidth=0.5)
-    pl.loglog(kph,-P2_mean[nt],'g--',linewidth=0.5)
-    pl.loglog(kph,P4_mean[nt],'c',linewidth=0.3)
-    pl.loglog(kph,-P4_mean[nt],'c--',linewidth=0.3)
-    for ntp in range(nt+1,ntracers):
-        pl.loglog(kph,Cross0_mean[index],'b',linewidth=0.2)
-        pl.loglog(kph,Cross2_mean[index],'g',linewidth=0.2)
-        pl.loglog(kph,Cross4_mean[index],'c',linewidth=0.2)
-        index += 1
-pl.xlim(xlim)
-pl.ylim(ylim)
-pl.savefig(dir_figs + "/Mean_spec_mt.png",dpi=200)
-pl.close('all')
+    time_end=time()
+    print ('Total time cost for estimation of spectra: ', time_end - time_start)
 
-print(".")
-print(".")
-print()
-print("Done!")
-print()
+    ################################################################################
+    ################################################################################
 
-sys.exit(-1)
+    tempor=time()
 
-#### Some extra plots if needed
+    ################################################################################
+    ################################################################################
 
-mycolor=['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9']
-pl.loglog(kph,powtrue,'k')
-for nt in range(ntracers):
-    pl.loglog(kph,P0_mean[nt],'b',linewidth=0.5)
-    pl.loglog(kph,-P0_mean[nt],'b',linewidth=0.5)
-    pl.loglog(kph,P0_data[0,nt],marker='o',color=mycolor[nt],markersize=4,linewidth=0.2)
-    pl.loglog(kph,P0_fkp[0,nt],marker='x',color=mycolor[nt],markersize=4,linewidth=0.2)
-pl.xlim(xlim)
-pl.ylim(ylim)
-pl.savefig(dir_figs + "/P0_data.png",dpi=200)
-pl.close('all')
 
-ylim2 = [np.min(effbias**2)*np.min(powtrue)/100.,np.max(effbias**2)*np.max(powtrue)]
-pl.loglog(kph,powtrue,'k')
-for nt in range(ntracers):
-    pl.loglog(kph,P2_mean_Jing[nt],'b',linewidth=0.5)
-    pl.loglog(kph,-P2_mean_Jing[nt],'b',linewidth=0.5)
-    pl.loglog(kph,P2_data_Jing[0,nt],marker='o',color=mycolor[nt],markersize=4,linewidth=0.2)
-    pl.loglog(kph,P2_fkp_Jing[0,nt],marker='x',color=mycolor[nt],markersize=4,linewidth=0.2)
-    pl.loglog(kph,-P2_data_Jing[0,nt],marker='o',color=mycolor[nt],markersize=2,linewidth=0.2)
-    pl.loglog(kph,-P2_fkp_Jing[0,nt],marker='x',color=mycolor[nt],markersize=2,linewidth=0.2)
-pl.xlim(xlim)
-pl.ylim(ylim2)
-pl.savefig(dir_figs + "/P2_data.png",dpi=200)
-pl.close('all')
+
+
+    print ('Applying mass assignement window function corrections...')
+
+    ################################################################################
+    #############################################################################
+    # Mass assignement correction
+
+    # For k smaller than the smallest k_phys, we use the Planck power spectrum.
+    # For k larger than the highest k_phys value, we extrapolate using the power law at k_N/2 -- or the highest value of k_phys in the range, whichever is smaller
+    kph_min = kph[0]
+    kN = np.pi/cell_size  # Nyquist frequency
+
+    # Compute the mean power spectra -- I will use the MTOE for the iteration
+
+    P0_mean = np.mean(P0_data,axis=0)
+    P0_fkp_mean = np.mean(P0_fkp,axis=0)
+    Cross0_mean = np.mean(Cross0,axis=0)
+
+    # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
+    # We can easily put back the bias by multiplying:
+    # CrossX = cross_effbias**2 * CrossX
+    cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+    index=0
+    for nt in range(ntracers):
+        for ntp in range(nt+1,ntracers):
+            cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
+            index += 1
+
+    # FKP and Cross measurements need to have the bias returned in their definitions
+    P0_fkp = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
+    P2_fkp = np.transpose((effbias**2*np.transpose(P2_fkp,axes=(0,2,1))),axes=(0,2,1))
+    P4_fkp = np.transpose((effbias**2*np.transpose(P4_fkp,axes=(0,2,1))),axes=(0,2,1))
+
+    C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+    C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
+    C4_fkp = np.transpose((cross_effbias**2*np.transpose(Cross4,axes=(0,2,1))),axes=(0,2,1))
+
+    # Means
+    P0_mean = np.mean(P0_data,axis=0)
+    P2_mean = np.mean(P2_data,axis=0)
+    P4_mean = np.mean(P4_data,axis=0)
+    P0_fkp_mean = np.mean(P0_fkp,axis=0)
+    P2_fkp_mean = np.mean(P2_fkp,axis=0)
+    P4_fkp_mean = np.mean(P4_fkp,axis=0)
+    Cross0_mean = np.mean(C0_fkp,axis=0)
+    Cross2_mean = np.mean(C2_fkp,axis=0)
+    Cross4_mean = np.mean(C4_fkp,axis=0)
+
+elif method == 'FKP':
+
+    # Traditional (FKP) method
+    P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
+    P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
+    P4_fkp = np.zeros((n_maps,ntracers,num_binsk))
+
+    # Cross spectra
+    Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+    Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+    Cross4 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+
+    # Covariance
+    ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
+
+
+    # Range where we estimate some parameters
+    myk_min = np.argsort(np.abs(kph-0.1))[0]
+    myk_max = np.argsort(np.abs(kph-0.2))[0]
+    myran = np.arange(myk_min,myk_max)
+
+    ##
+    # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
+    print( "Initializing traditional (FKP) estimation toolbox...")
+    fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
+
+    '''
+    Because of the very sensitive nature of shot noise subtraction 
+    in the Jing de-aliasing, it may be better to normalize the counts of the 
+    selection function to each map, and not to the mean of the maps.
+    ''' 
+    normsel = np.zeros((n_maps,ntracers))
+
+    print ("... done. Starting computations for each map (box) now.")
+    print()
+
+    #################################
+
+    est_bias_fkp = np.zeros(ntracers)
+
+    for nm in range(n_maps):
+        time_start=time()
+        print ('Loading simulated box #', nm)
+        h5map = h5py.File(mapnames_sims[nm],'r')
+        maps = np.asarray(h5map.get(list(h5map.keys())[0]))
+        if not maps.shape == (ntracers,n_x,n_y,n_z):
+            print()
+            print ('Unexpected shape of simulated maps! Found:', maps.shape)
+            print ('Check inputs and sims.  Aborting now...')
+            print()
+            sys.exit(-1)
+        h5map.close()
+
+        print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+
+        ## !! NEW !! Additional mask from low-cell-count threshold
+        if use_cell_low_count_thresh:
+            maps = thresh_mask*maps
+            #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
+        else:
+            pass
+
+        if use_mask:
+            maps = maps * mask
+
+
+        # Apply padding, if it exists
+        if use_padding:
+            n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
+            n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = maps
+            maps = np.copy(n_box)
+            n_box = None
+            del n_box
+        else:
+            pass
+
+        ##################################################
+        # ATTENTION: The FKP estimator computes P_m(k), effectively dividing by the input bias factor.
+        # Here the effective bias factor is bias*(growth function)*(amplitude of the monopole)
+        # Notice that this means that the output of the FKP quadrupole
+        # is P^2_FKP == (amplitude quadrupole)/(amplitude of the monopole)*P_m(k)
+        ##################################################
+
+        # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
+        print ('  Estimating FKP power spectra...')
+        # Use sum instead of mean to take care of empty cells
+        normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
+        # Updated definition of normsel to avoid raising a NaN when there are zero tracers
+        normsel[nm,np.isinf(normsel[nm])]=1.0
+        normsel[nm,np.isnan(normsel[nm])]=1.0
+    
+        if ( (normsel[nm].any() > 2.0) | (normsel[nm].any() < 0.5) ):
+            print("Attention! Your selection function and simulation have very different numbers of objects:")
+            print("Selecion function/map for all tracers:",np.around(normsel[nm],3))
+            normsel[normsel > 2.0] = 2.0
+            normsel[normsel < 0.5] = 0.5
+            print(" Normalized selection function/map at:",np.around(normsel[nm],3))
+        if nm==0:
+            FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
+            P0_fkp[nm] = fkp_many.P_ret
+            P2_fkp[nm] = fkp_many.P2_ret
+            P4_fkp[nm] = fkp_many.P4_ret
+            Cross0[nm] = fkp_many.cross_spec
+            Cross2[nm] = fkp_many.cross_spec2
+            Cross4[nm] = fkp_many.cross_spec4
+            ThCov_fkp[nm] = (fkp_many.sigma)**2
+        else:
+            FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
+            P0_fkp[nm] = fkp_many.P_ret
+            P2_fkp[nm] = fkp_many.P2_ret
+            P4_fkp[nm] = fkp_many.P4_ret
+            Cross0[nm] = fkp_many.cross_spec
+            Cross2[nm] = fkp_many.cross_spec2
+            Cross4[nm] = fkp_many.cross_spec4
+            ThCov_fkp[nm] = (fkp_many.sigma)**2
+
+        #CORRECT FOR BIN AVERAGING
+        P0_fkp[nm] = P0_fkp[nm]/k_av_corr
+        P2_fkp[nm] = P2_fkp[nm]/k_av_corr
+        P4_fkp[nm] = P4_fkp[nm]/k_av_corr
+        Cross0[nm] = Cross0[nm]/k_av_corr
+        Cross2[nm] = Cross2[nm]/k_av_corr
+        Cross4[nm] = Cross4[nm]/k_av_corr
+
+        if nm==0:
+            # If data bias is different from mocks
+            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+            print ("  Effective biases of the simulated maps:")
+            print ("   Fiducial=", ["%.3f"%b for b in effbias])
+            print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+            dt = time() - time_start
+            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+            print(".")
+        else:
+            est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
+            print( "  Effective biases of these maps:")
+            print( "   Fiducial=", ["%.3f"%b for b in effbias])
+            print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+            dt = time() - time_start
+            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+            print(".")
+    
+    #Update nbarbar to reflect actual
+    nbarbar = nbarbar/np.mean(normsel,axis=0)
+
+    # Correct missing factor of 2 in definition
+    Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
+
+    #del maps
+    #maps = None
+
+    ################################################################################
+    ################################################################################
+
+
+    time_end=time()
+    print ('Total time cost for estimation of spectra: ', time_end - time_start)
+
+    ################################################################################
+    ################################################################################
+
+    tempor=time()
+
+    ################################################################################
+    ################################################################################
+
+
+
+
+    print ('Applying mass assignement window function corrections...')
+
+    ################################################################################
+    #############################################################################
+    # Mass assignement correction
+
+    # For k smaller than the smallest k_phys, we use the Planck power spectrum.
+    # For k larger than the highest k_phys value, we extrapolate using the power law at k_N/2 -- or the highest value of k_phys in the range, whichever is smaller
+    kph_min = kph[0]
+    kN = np.pi/cell_size  # Nyquist frequency
+
+    # Compute the mean power spectra -- I will use the MTOE for the iteration
+
+    P0_fkp_mean = np.mean(P0_fkp,axis=0)
+    Cross0_mean = np.mean(Cross0,axis=0)
+
+    # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
+    # We can easily put back the bias by multiplying:
+    # CrossX = cross_effbias**2 * CrossX
+    cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+    index=0
+    for nt in range(ntracers):
+        for ntp in range(nt+1,ntracers):
+            cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
+            index += 1
+
+    # FKP and Cross measurements need to have the bias returned in their definitions
+    P0_fkp = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
+    P2_fkp = np.transpose((effbias**2*np.transpose(P2_fkp,axes=(0,2,1))),axes=(0,2,1))
+    P4_fkp = np.transpose((effbias**2*np.transpose(P4_fkp,axes=(0,2,1))),axes=(0,2,1))
+
+    C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+    C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
+    C4_fkp = np.transpose((cross_effbias**2*np.transpose(Cross4,axes=(0,2,1))),axes=(0,2,1))
+
+    # Means
+    P0_fkp_mean = np.mean(P0_fkp,axis=0)
+    P2_fkp_mean = np.mean(P2_fkp,axis=0)
+    P4_fkp_mean = np.mean(P4_fkp,axis=0)
+    Cross0_mean = np.mean(C0_fkp,axis=0)
+    Cross2_mean = np.mean(C2_fkp,axis=0)
+    Cross4_mean = np.mean(C4_fkp,axis=0)
+
+elif method == 'MT':
+
+    # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
+    # Original (convolved) spectra:
+    P0_data = np.zeros((n_maps,ntracers,num_binsk))
+    P2_data = np.zeros((n_maps,ntracers,num_binsk))
+    P4_data = np.zeros((n_maps,ntracers,num_binsk))
+
+    # Range where we estimate some parameters
+    myk_min = np.argsort(np.abs(kph-0.1))[0]
+    myk_max = np.argsort(np.abs(kph-0.2))[0]
+    myran = np.arange(myk_min,myk_max)
+
+    #################################
+    # Initialize the multi-tracer estimation class
+    # We can assume many biases for the estimation of the power spectra:
+    #
+    # 1. Use the original bias
+    #fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,bias,cell_size,n_x,n_y,n_z,MRk,powercentral)
+    # 2. Use SQRT(monopole) for the bias. Now, we have two choices:
+    #
+    # 2a. Use the fiducial monopole as the MT bias
+    #
+    # 2b. Use the monopole estimated using the FKP technique
+    #fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,fkpeffbias,cell_size,n_x,n_y,n_z,MRk,powercentral)
+
+
+    # If shot noise is huge, then damp the effective bias of that species 
+    # so that it doesn't end up biasing the multi-tracer estimator: 
+    # nbar*b^2*P_0 > 0.01 , with P_0 = 2.10^4
+    effbias_mt = np.copy(effbias)
+    effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
+
+    print( "Initializing multi-tracer estimation toolbox...")
+
+    fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
+
+    '''
+    Because of the very sensitive nature of shot noise subtraction 
+    in the Jing de-aliasing, it may be better to normalize the counts of the 
+    selection function to each map, and not to the mean of the maps.
+    ''' 
+    normsel = np.zeros((n_maps,ntracers))
+
+    print ("... done. Starting computations for each map (box) now.")
+    print()
+
+    #################################
+
+    est_bias_mt = np.zeros(ntracers)
+
+    for nm in range(n_maps):
+        time_start=time()
+        print ('Loading simulated box #', nm)
+        h5map = h5py.File(mapnames_sims[nm],'r')
+        maps = np.asarray(h5map.get(list(h5map.keys())[0]))
+        if not maps.shape == (ntracers,n_x,n_y,n_z):
+            print()
+            print ('Unexpected shape of simulated maps! Found:', maps.shape)
+            print ('Check inputs and sims.  Aborting now...')
+            print()
+            sys.exit(-1)
+        h5map.close()
+
+        print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+
+        ## !! NEW !! Additional mask from low-cell-count threshold
+        if use_cell_low_count_thresh:
+            maps = thresh_mask*maps
+            #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
+        else:
+            pass
+
+        if use_mask:
+            maps = maps * mask
+
+
+        # Apply padding, if it exists
+        if use_padding:
+            n_box = np.zeros((ntracers,n_x_box,n_y_box,n_z_box))
+            n_box[:,padding_length[0]:-padding_length[0],padding_length[1]:-padding_length[1],padding_length[2]:-padding_length[2]] = maps
+            maps = np.copy(n_box)
+            n_box = None
+            del n_box
+        else:
+            pass
+
+        # Use sum instead of mean to take care of empty cells
+        normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
+        # Updated definition of normsel to avoid raising a NaN when there are zero tracers
+        normsel[nm,np.isinf(normsel[nm])]=1.0
+        normsel[nm,np.isnan(normsel[nm])]=1.0
+        
+        #################################
+        # Now, the multi-tracer method
+        print ('  Now estimating multi-tracer spectra...')
+        if nm==0:
+            FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
+            P0_data[nm] = fkp_mult.P0_mu_ret
+            P2_data[nm] = fkp_mult.P2_mu_ret
+            P4_data[nm] = fkp_mult.P4_mu_ret
+        else:
+            FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
+            P0_data[nm] = fkp_mult.P0_mu_ret
+            P2_data[nm] = fkp_mult.P2_mu_ret
+            P4_data[nm] = fkp_mult.P4_mu_ret
+
+        #CORRECT FOR BIN AVERAGING
+        P0_data[nm] = P0_data[nm]/k_av_corr
+        P2_data[nm] = P2_data[nm]/k_av_corr
+        P4_data[nm] = P4_data[nm]/k_av_corr
+
+        if nm==0:
+            # If data bias is different from mocks
+            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+            print ("  Effective biases of the simulated maps:")
+            print ("   Fiducial=", ["%.3f"%b for b in effbias])
+            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+            dt = time() - time_start
+            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+            print(".")
+        else:
+            est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
+            print( "  Effective biases of these maps:")
+            print( "   Fiducial=", ["%.3f"%b for b in effbias])
+            print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+            dt = time() - time_start
+            print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+            print(".")
+    
+    #Update nbarbar to reflect actual
+    nbarbar = nbarbar/np.mean(normsel,axis=0)
+
+    #del maps
+    #maps = None
+
+    ################################################################################
+    ################################################################################
+
+
+    time_end=time()
+    print ('Total time cost for estimation of spectra: ', time_end - time_start)
+
+    ################################################################################
+    ################################################################################
+
+    tempor=time()
+
+    ################################################################################
+    ################################################################################
+
+    print ('Applying mass assignement window function corrections...')
+
+    ################################################################################
+    #############################################################################
+    # Mass assignement correction
+
+    # For k smaller than the smallest k_phys, we use the Planck power spectrum.
+    # For k larger than the highest k_phys value, we extrapolate using the power law at k_N/2 -- or the highest value of k_phys in the range, whichever is smaller
+    kph_min = kph[0]
+    kN = np.pi/cell_size  # Nyquist frequency
+
+    # Compute the mean power spectra -- I will use the MTOE for the iteration
+
+    P0_mean = np.mean(P0_data,axis=0)
+
+    # Means
+    P0_mean = np.mean(P0_data,axis=0)
+    P2_mean = np.mean(P2_data,axis=0)
+    P4_mean = np.mean(P4_data,axis=0)
+
+    ###AQUI
+    
+# ################################################################################
+# ################################################################################
+# ################################################################################
+# ################################################################################
+# #
+# #   SAVE these spectra
+# #
+# ################################################################################
+# ################################################################################
+# ################################################################################
+# ################################################################################
+
+
+# P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
+# P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
+
+# P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
+# P2_fkp_save=np.reshape(P2_fkp,(n_maps,ntracers*pow_bins))
+
+# P4_save=np.reshape(P4_data,(n_maps,ntracers*pow_bins))
+# P4_fkp_save=np.reshape(P4_fkp,(n_maps,ntracers*pow_bins))
+
+# C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+# C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+# C4_fkp_save=np.reshape(C4_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+
+# # Export data
+# np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE_mean.dat',P4_mean,fmt="%6.4f")
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP_mean.dat',P4_fkp_mean,fmt="%6.4f")
+
+# np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+# np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
+
+# #UPDATED SOME PLOT DEFINITIONS
+# kN = np.pi/cell_size  # Nyquist frequency
+# ikN9 = np.argsort(np.abs(kph-kN))[0]
+
+# xlim = [0.9*kph[0],1.1*kph[ikN9]]
+# ylim = [np.min(effbias**2)*np.min(powtrue)/100.,np.max(effbias**2)*np.max(powtrue)*5]
+
+# print(".")
+# print("Now just a couple of plots to /figs...")
+
+# index=0
+# pl.loglog(kph,powtrue,'k',linewidth=0.3)
+# for nt in range(ntracers):
+#     pl.loglog(kph,P0_fkp_mean[nt],'b',linewidth=0.6)
+#     pl.loglog(kph,-P0_fkp_mean[nt],'b--',linewidth=0.6)
+#     pl.loglog(kph,P2_fkp_mean[nt],'g',linewidth=0.5)
+#     pl.loglog(kph,-P2_fkp_mean[nt],'g--',linewidth=0.5)
+#     pl.loglog(kph,P4_fkp_mean[nt],'c',linewidth=0.3)
+#     pl.loglog(kph,-P4_fkp_mean[nt],'c--',linewidth=0.3)
+#     for ntp in range(nt+1,ntracers):
+#         pl.loglog(kph,Cross0_mean[index],'b',linewidth=0.2)
+#         pl.loglog(kph,Cross2_mean[index],'g',linewidth=0.2)
+#         pl.loglog(kph,Cross4_mean[index],'c',linewidth=0.2)
+#         index += 1
+
+# pl.xlim(xlim)
+# pl.ylim(ylim)
+# pl.savefig(dir_figs + "/Mean_spec_fkp.png",dpi=200)
+# pl.close('all')
+
+# index=0
+# pl.loglog(kph,powtrue,'k',linewidth=0.3)
+# for nt in range(ntracers):
+#     pl.loglog(kph,P0_mean[nt],'b',linewidth=0.6)
+#     pl.loglog(kph,-P0_mean[nt],'b--',linewidth=0.6)
+#     pl.loglog(kph,P2_mean[nt],'g',linewidth=0.5)
+#     pl.loglog(kph,-P2_mean[nt],'g--',linewidth=0.5)
+#     pl.loglog(kph,P4_mean[nt],'c',linewidth=0.3)
+#     pl.loglog(kph,-P4_mean[nt],'c--',linewidth=0.3)
+#     for ntp in range(nt+1,ntracers):
+#         pl.loglog(kph,Cross0_mean[index],'b',linewidth=0.2)
+#         pl.loglog(kph,Cross2_mean[index],'g',linewidth=0.2)
+#         pl.loglog(kph,Cross4_mean[index],'c',linewidth=0.2)
+#         index += 1
+# pl.xlim(xlim)
+# pl.ylim(ylim)
+# pl.savefig(dir_figs + "/Mean_spec_mt.png",dpi=200)
+# pl.close('all')
+
+# print(".")
+# print(".")
+# print()
+# print("Done!")
+# print()
+
+# sys.exit(-1)
+
+# #### Some extra plots if needed
+
+# mycolor=['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9']
+# pl.loglog(kph,powtrue,'k')
+# for nt in range(ntracers):
+#     pl.loglog(kph,P0_mean[nt],'b',linewidth=0.5)
+#     pl.loglog(kph,-P0_mean[nt],'b',linewidth=0.5)
+#     pl.loglog(kph,P0_data[0,nt],marker='o',color=mycolor[nt],markersize=4,linewidth=0.2)
+#     pl.loglog(kph,P0_fkp[0,nt],marker='x',color=mycolor[nt],markersize=4,linewidth=0.2)
+# pl.xlim(xlim)
+# pl.ylim(ylim)
+# pl.savefig(dir_figs + "/P0_data.png",dpi=200)
+# pl.close('all')
+
+# ylim2 = [np.min(effbias**2)*np.min(powtrue)/100.,np.max(effbias**2)*np.max(powtrue)]
+# pl.loglog(kph,powtrue,'k')
+# for nt in range(ntracers):
+#     pl.loglog(kph,P2_mean_Jing[nt],'b',linewidth=0.5)
+#     pl.loglog(kph,-P2_mean_Jing[nt],'b',linewidth=0.5)
+#     pl.loglog(kph,P2_data_Jing[0,nt],marker='o',color=mycolor[nt],markersize=4,linewidth=0.2)
+#     pl.loglog(kph,P2_fkp_Jing[0,nt],marker='x',color=mycolor[nt],markersize=4,linewidth=0.2)
+#     pl.loglog(kph,-P2_data_Jing[0,nt],marker='o',color=mycolor[nt],markersize=2,linewidth=0.2)
+#     pl.loglog(kph,-P2_fkp_Jing[0,nt],marker='x',color=mycolor[nt],markersize=2,linewidth=0.2)
+# pl.xlim(xlim)
+# pl.ylim(ylim2)
+# pl.savefig(dir_figs + "/P2_data.png",dpi=200)
+# pl.close('all')

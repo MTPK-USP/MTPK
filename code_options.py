@@ -14,6 +14,12 @@ class code_parameters:
     All of these parameters are optional. If a parameter is not provided,
     the code will simply use the default parameter defined below
 
+    method : string
+    Choose the method to compute de power spectrum:
+    method = 'FKP'
+    method = 'MT'
+    method = 'both'
+
     mas_method : string
 
     Identifies the mass assignment scheme to use:
@@ -180,6 +186,7 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
+            'method'               : 'MT',#'both',
             'mas_method'           : 'CIC',
             'use_kdip_phys'        : False,
             'kdip_phys'            : 0.005,
@@ -232,6 +239,7 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
+        self.method = default_params['method']
         self.mas_method = default_params['mas_method']
         self.use_kdip_phys = default_params['use_kdip_phys']
         self.kdip_phys = default_params['kdip_phys']
