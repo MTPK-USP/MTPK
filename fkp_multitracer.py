@@ -7,7 +7,6 @@
     Changed by R. Abramo - July-August/2015, Feb. 2016
     Multi-tracer stuff: RA, March 2016
 """
-from time import perf_counter
 import numpy as np
 from scipy.sparse import csc_matrix
 import grid3D as gr
@@ -21,7 +20,7 @@ class fkp_init(object):
     Enters num_bins, n_bar (matrix), bias 
     n_x,n_y, n_z and the bin_matrix
     '''
-    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0):
+    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power):
 
         self.bin_matrix = bin_matrix
         self.num_bins = num_bins
@@ -56,9 +55,10 @@ class fkp_init(object):
 
         # Shift origin of the grid so that it's in the right place
         # NOTE: in units of cells
+        # OBS: displace origin in z direction by fraction of a cell, to avoid division by 0 for map around r=0
         LX0 = n_x_orig
         LY0 = n_y_orig
-        LZ0 = n_z_orig
+        LZ0 = n_z_orig + 0.01
 
         rL0=np.sqrt((LX0 + self.grid.RX)**2 + (LY0 + self.grid.RY)**2 + (LZ0 + self.grid.RZ)**2)
         self.rxhat = (LX0 + self.grid.RX)/rL0
@@ -74,14 +74,9 @@ class fkp_init(object):
         self.ky_half = self.kyhat[:,:,:self.n_z//2+1]
         self.kz_half = self.kzhat[:,:,:self.n_z//2+1]
 
-        # Maybe one day need this?...
-        # self.rxxhat = self.rxhat**2
-        # self.ryyhat = self.ryhat**2
-        # self.rzzhat = self.rzhat**2
-        # self.rxyhat = self.rxhat*self.ryhat
-        # self.rxzhat = self.rxhat*self.rzhat
-        # self.ryzhat = self.ryhat*self.rzhat
-
+        # Mass Assignement Scheme window function -- notice that the numpy function sinc has an implicit factor of PI!
+        self.mas_wfunction = np.power( np.sinc(self.grid.KX[:,:,:self.n_z//2+1])*np.sinc(self.grid.KY[:,:,:self.n_z//2+1])*np.sinc(self.grid.KZ[:,:,:self.n_z//2+1]) , mas_power)
+        
         # These are the random catalogs
         self.nr = np.zeros((number_tracers,n_x,n_y,n_z))
         for nt in range(number_tracers):

@@ -1002,31 +1002,37 @@ for nm in range(n_maps):
         Cross4[nm] = fkp_many.cross_spec4
         ThCov_fkp[nm] = (fkp_many.sigma)**2
         
-#     #################################
-#     # Now, the multi-tracer method
-#     print ('  Now estimating multi-tracer spectra...')
-#     if nm==0:
-#         # If data bias is different from mocks
-#         if use_data_bias:
-#             FKPmult = fkp_mult_data.fkp((normsel[nm]*maps.T).T)
-#             P0_data[nm] = fkp_mult_data.P0_mu_ret
-#             P2_data[nm] = fkp_mult_data.P2_mu_ret
-#         else:
-#             FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
-#             P0_data[nm] = fkp_mult.P0_mu_ret
-#             P2_data[nm] = fkp_mult.P2_mu_ret
-#     else:
-#         FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
-#         P0_data[nm] = fkp_mult.P0_mu_ret
-#         P2_data[nm] = fkp_mult.P2_mu_ret
+    #################################
+    # Now, the multi-tracer method
+    print ('  Now estimating multi-tracer spectra...')
+    if nm==0:
+        # If data bias is different from mocks
+        if use_data_bias:
+            FKPmult = fkp_mult_data.fkp((normsel[nm]*maps.T).T)
+            P0_data[nm] = fkp_mult_data.P0_mu_ret
+            P2_data[nm] = fkp_mult_data.P2_mu_ret
+            P4_data[nm] = fkp_mult_data.P4_mu_ret
+        else:
+            FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
+            P0_data[nm] = fkp_mult.P0_mu_ret
+            P2_data[nm] = fkp_mult.P2_mu_ret
+            P4_data[nm] = fkp_mult.P4_mu_ret
+    else:
+        FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
+        P0_data[nm] = fkp_mult.P0_mu_ret
+        P2_data[nm] = fkp_mult.P2_mu_ret
+        P4_data[nm] = fkp_mult.P4_mu_ret
 
-#     #CORRECT FOR BIN AVERAGING
-#     P0_data[nm] = P0_data[nm]/k_av_corr
-#     P2_data[nm] = P2_data[nm]/k_av_corr
-#     P0_fkp[nm] = P0_fkp[nm]/k_av_corr
-#     P2_fkp[nm] = P2_fkp[nm]/k_av_corr
-#     Cross0[nm] = Cross0[nm]/k_av_corr
-#     Cross2[nm] = Cross2[nm]/k_av_corr
+    #CORRECT FOR BIN AVERAGING
+    P0_data[nm] = P0_data[nm]/k_av_corr
+    P2_data[nm] = P2_data[nm]/k_av_corr
+    P4_data[nm] = P4_data[nm]/k_av_corr
+    P0_fkp[nm] = P0_fkp[nm]/k_av_corr
+    P2_fkp[nm] = P2_fkp[nm]/k_av_corr
+    P4_fkp[nm] = P4_fkp[nm]/k_av_corr
+    Cross0[nm] = Cross0[nm]/k_av_corr
+    Cross2[nm] = Cross2[nm]/k_av_corr
+    Cross4[nm] = Cross4[nm]/k_av_corr
 
 #     if nm==0:
 #         if use_data_bias:
