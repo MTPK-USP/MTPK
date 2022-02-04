@@ -130,14 +130,8 @@ class code_parameters:
     kmin_phys : float
     Min k (in units of h^-1 Mpc) -- this should be > 1.0/box_size. In units of h^-1 Mpc
 
-    k_max_camb : float
-    Max k (in units of h^-1 Mpc) for CAMB
-
-    k_min_CAMB : float
-    Min k (in units of h^-1 Mpc) for CAMB
-
-    zcentral : float
-    Central (mean, or median) redshift of the catalog or simulated data
+    k_min_CAMB, k_max_camb : float
+    Min and max k (in units of h^-1 Mpc) for CAMB
     
     whichspec : integer
     Which spectrum to use in the ln sims and estimation:
