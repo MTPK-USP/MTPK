@@ -140,7 +140,7 @@ class code_parameters:
     ntracers : integer
     Number of halo bins as tracers
 
-    tracers_ids : list of strings
+    tracer_ids : list of strings
     A list of strings to identify each halo bin as tracers
 
     bias_file : string
