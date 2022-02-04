@@ -181,15 +181,27 @@ class fkp_init(object):
         # Weighted overdensity fields
         # Dim: w1[nt] , ng[nt,nx,ny,nz], nr[nt,nx,ny,nz]
         # First, F1:
-        self.F1_mu = (self.bias*((ng - self.alpha*self.nr).T)).T
+        #self.F1_mu = (self.bias*((ng - self.alpha*self.nr).T)).T
+        self.F1_mu = (self.bias*((ng).T)).T
+        self.F1_mu_bar = (self.bias*(( - self.alpha*self.nr).T)).T
         #print('F1_mu :',np.shape(self.F1_mu))
         # Now sum over tracers to get F1tot:
+
+        #self.F1_tot = np.sum(self.F1_mu,axis=0)
         self.F1_tot = np.sum(self.F1_mu,axis=0)
+        self.F1_tot_bar = np.sum(self.F1_mu_bar,axis=0)
         #print('F1_tot :',np.shape(self.F1_tot))
         # Now obtain F_mu
         # self.F_mu = self.F1_mu - ( self.cP_mu/(1.0 + self.cP_tot))*(self.F1_tot)
+        
+        #self.F_mu = self.F1_mu - self.wt * self.F1_tot
         self.F_mu = self.F1_mu - self.wt * self.F1_tot
+        self.F_mu_bar = self.F1_mu_bar - self.wt * self.F1_tot_bar
+        Fmu = self.F_mu + self.F_mu_bar
+        
+        #self.F_tot = np.sum(self.F_mu,axis=0)
         self.F_tot = np.sum(self.F_mu,axis=0)
+        self.F_tot_bar = np.sum(self.F_mu_bar,axis=0)
         
         # No need to F_tot now -- will FFT the F_mu, then sum them
 
@@ -212,29 +224,59 @@ class fkp_init(object):
         lenkf = self.n_x*self.n_y*(self.n_z//2 + 1)
         F0_mu_k_flat = (0.0+0.0j)*np.zeros((number_tracers,lenkf))
         F2_mu_k_flat = (0.0+0.0j)*np.zeros((number_tracers,lenkf))
+        F4_mu_k_flat = (0.0+0.0j)*np.zeros((number_tracers,lenkf))
         
         for nt in range(number_tracers):
-            F_mu_k = np.fft.rfftn(self.F_mu[nt])
+            #F_mu_k = np.fft.rfftn(self.F_mu[nt])
+            F_mu_k = np.fft.rfftn(self.F_mu[nt]) / self.mas_wfunction
+            F_mu_k_bar = np.fft.rfftn(self.F_mu_bar[nt]) #/ self.mas_wfunction
             # Monopole
-            F0_mu_k_flat[nt] = np.ndarray.flatten(F_mu_k)
-            # Compute the physical multipoles
-            Frxx_mu_k = (np.fft.rfftn((self.F_mu[nt])*(self.rxhat)*(self.rxhat)))
-            Frxy_mu_k = (np.fft.rfftn((self.F_mu[nt])*(self.rxhat)*(self.ryhat)))
-            Frxz_mu_k = (np.fft.rfftn((self.F_mu[nt])*(self.rxhat)*(self.rzhat)))
-            Fryy_mu_k = (np.fft.rfftn((self.F_mu[nt])*(self.ryhat)*(self.ryhat)))
-            Fryz_mu_k = (np.fft.rfftn((self.F_mu[nt])*(self.ryhat)*(self.rzhat)))
-            Frzz_mu_k = (np.fft.rfftn((self.F_mu[nt])*(self.rzhat)*(self.rzhat)))
-            # Quadrupole
-            # ATTENTION! Changed this definition wrt previous versions!!
-            F2_mu_k_flat[nt] = - F0_mu_k_flat[nt] + 3.0*np.ndarray.flatten( self.kx_half**2*Frxx_mu_k + self.ky_half**2*Fryy_mu_k + self.kz_half**2*Frzz_mu_k + 2.0*self.kx_half*self.ky_half*Frxy_mu_k + 2.0*self.kx_half*self.kz_half*Frxz_mu_k + 2.0*self.ky_half*self.kz_half*Fryz_mu_k )
+            F0_mu_k_flat[nt] = np.ndarray.flatten( F_mu_k + F_mu_k_bar )
+
+            # Compute the physical quadrupole
+            F2mu = (self.kx_half**2)*(np.fft.rfftn(Fmu[nt]*(self.rxhat)*(self.rxhat)))
+            F2mu+= (self.ky_half**2)*(np.fft.rfftn(Fmu[nt]*(self.ryhat)*(self.ryhat)))
+            F2mu+= (self.kz_half**2)*(np.fft.rfftn(Fmu[nt]*(self.rzhat)*(self.rzhat)))
+            F2mu+= (2.0*self.kx_half*self.ky_half)*(np.fft.rfftn(Fmu[nt]*(self.rxhat)*(self.ryhat)))
+            F2mu+= (2.0*self.kx_half*self.kz_half)*(np.fft.rfftn(Fmu[nt]*(self.rxhat)*(self.rzhat)))
+            F2mu+= (2.0*self.ky_half*self.kz_half)*(np.fft.rfftn(Fmu[nt]*(self.ryhat)*(self.rzhat)))
+
+            F2mu = F2mu/self.mas_wfunction
+
+            # Compute the physical hexadecapole
+            F4mu =  self.kx_half**4 *(np.fft.rfftn(Fmu[nt]*(self.rxhat)**4))
+            F4mu += self.ky_half**4 *(np.fft.rfftn(Fmu[nt]*(self.ryhat)**4))
+            F4mu += self.kz_half**4 *(np.fft.rfftn(Fmu[nt]*(self.rzhat)**4))
+
+            F4mu += 4.0 * self.kx_half**3 * self.ky_half * (np.fft.rfftn(Fmu[nt]*(self.rxhat)**3*(self.ryhat)))
+            F4mu += 4.0 * self.kx_half**3 * self.kz_half * (np.fft.rfftn(Fmu[nt]*(self.rxhat)**3*(self.rzhat)))
+            F4mu += 4.0 * self.ky_half**3 * self.kx_half * (np.fft.rfftn(Fmu[nt]*(self.ryhat)**3*(self.rxhat)))
+            F4mu += 4.0 * self.ky_half**3 * self.kz_half * (np.fft.rfftn(Fmu[nt]*(self.ryhat)**3*(self.rzhat)))
+            F4mu += 4.0 * self.kz_half**3 * self.kx_half * (np.fft.rfftn(Fmu[nt]*(self.rzhat)**3*(self.rxhat)))
+            F4mu += 4.0 * self.kz_half**3 * self.ky_half * (np.fft.rfftn(Fmu[nt]*(self.rzhat)**3*(self.ryhat)))
+
+            F4mu += 6.0 * self.kx_half**2 * self.ky_half**2 * (np.fft.rfftn(Fmu[nt]*(self.rxhat)**2*(self.ryhat)**2))
+            F4mu += 6.0 * self.kx_half**2 * self.kz_half**2 * (np.fft.rfftn(Fmu[nt]*(self.rzhat)**2*(self.rxhat)**2))
+            F4mu += 6.0 * self.ky_half**2 * self.kz_half**2 * (np.fft.rfftn(Fmu[nt]*(self.ryhat)**2*(self.rzhat)**2))
+
+            F4mu += 12.0 * self.kx_half**2 * self.ky_half * self.kz_half * (np.fft.rfftn(Fmu[nt]*(self.rxhat)**2*(self.ryhat)*(self.rzhat)))
+            F4mu += 12.0 * self.kz_half**2 * self.kx_half * self.ky_half * (np.fft.rfftn(Fmu[nt]*(self.rzhat)**2*(self.rxhat)*(self.ryhat)))
+            F4mu += 12.0 * self.ky_half**2 * self.kz_half * self.kx_half * (np.fft.rfftn(Fmu[nt]*(self.ryhat)**2*(self.rxhat)*(self.rzhat)))
+
+            F4mu = F4mu / self.mas_wfunction
+
+            F2_mu_k_flat[nt] = - F0_mu_k_flat[nt] + 3.0*np.ndarray.flatten( F2mu )
+            F4_mu_k_flat[nt] = - 7.0/4.0*F0_mu_k_flat[nt] - 2.5*F2_mu_k_flat[nt] + 35.0/4.0*np.ndarray.flatten(F4mu)
 
         #????????? WTF??... Seems to need these lines... Some python crazy shit?...
         F0_mu_k_flat = F0_mu_k_flat
         F2_mu_k_flat = F2_mu_k_flat
+        F4_mu_k_flat = F4_mu_k_flat
 
         # Sum over nt to obtain F_tot
         F0_tot_k_flat = np.sum(F0_mu_k_flat,axis=0)
         F2_tot_k_flat = np.sum(F2_mu_k_flat,axis=0)
+        F4_tot_k_flat = np.sum(F4_mu_k_flat,axis=0)
 
         # Now combine to obtain monopole and quadrupole of F^2
         # Monopole: F_mu F_tot^* + c.c.
@@ -243,7 +285,10 @@ class fkp_init(object):
         
         # Quadrupole: 1/2 * ( F2_mu F0_tot^* + F0_mu F2_tot^* + c.c.)
         FF2_mu_k_flat = ( F2_mu_k_flat*(F0_tot_k_flat.conj()) + F0_mu_k_flat*(F2_tot_k_flat.conj()) ).real
-        
+
+        # Hexadecapole:
+        FF4_mu_k_flat = ( F4_mu_k_flat*(F0_tot_k_flat.conj()) + F0_mu_k_flat*(F4_tot_k_flat.conj()) ).real
+
         # Here are the bin counts
         counts = (self.bin_matrix).dot(np.ones(lenkf))
         self.counts = counts
@@ -257,71 +302,71 @@ class fkp_init(object):
         # Here it is convenient to use the covariance per unit volume
         Cov_ret = np.reshape( np.kron( Cov_munu , 1.0*(Vk**0 + small) ),(number_tracers,number_tracers,nbinsout) )
 
-        # These are the intermediate estimators Q .
-        # Must average Q_mu for each tracer over the bins independently
-        # Here I actually compute Q_mu / Vk , since that is easier to compare with calculations
-        Q0_mu_flat = np.zeros((number_tracers,nbinsout))
-        Q2_mu_flat = np.zeros((number_tracers,nbinsout))
-        Pshot_mu_flat = np.zeros((number_tracers,nbinsout))
-        # Notice that DeltaQ_mu is already in physical units, so Q0 must also be.
-        # Here I compute the <Q>_k , which is easier to compare with other stuff
-        for nt in range(number_tracers):
-            F0k2 = (self.bin_matrix).dot(FF0_mu_k_flat[nt])
-            Q0_mu_flat[nt] = ((0.25/((self.bias[nt])**2))*F0k2 - 1.0*(self.DeltaQ_mu)[nt]*self.counts)/(self.counts + small)/Vfft_to_Vk
-            F2k2 = ((self.bin_matrix).dot(FF2_mu_k_flat[nt]))
-            Q2_mu_flat[nt] = (0.25/((self.bias[nt])**2))*F2k2/(self.counts + small)/Vfft_to_Vk
-            Pshot_mu_flat[nt] = 1.0*(self.DeltaQ_mu)[nt]*self.counts/(self.counts + small)/Vfft_to_Vk
+#         # These are the intermediate estimators Q .
+#         # Must average Q_mu for each tracer over the bins independently
+#         # Here I actually compute Q_mu / Vk , since that is easier to compare with calculations
+#         Q0_mu_flat = np.zeros((number_tracers,nbinsout))
+#         Q2_mu_flat = np.zeros((number_tracers,nbinsout))
+#         Pshot_mu_flat = np.zeros((number_tracers,nbinsout))
+#         # Notice that DeltaQ_mu is already in physical units, so Q0 must also be.
+#         # Here I compute the <Q>_k , which is easier to compare with other stuff
+#         for nt in range(number_tracers):
+#             F0k2 = (self.bin_matrix).dot(FF0_mu_k_flat[nt])
+#             Q0_mu_flat[nt] = ((0.25/((self.bias[nt])**2))*F0k2 - 1.0*(self.DeltaQ_mu)[nt]*self.counts)/(self.counts + small)/Vfft_to_Vk
+#             F2k2 = ((self.bin_matrix).dot(FF2_mu_k_flat[nt]))
+#             Q2_mu_flat[nt] = (0.25/((self.bias[nt])**2))*F2k2/(self.counts + small)/Vfft_to_Vk
+#             Pshot_mu_flat[nt] = 1.0*(self.DeltaQ_mu)[nt]*self.counts/(self.counts + small)/Vfft_to_Vk
 
-        # Now, FINALLY, obtain the true multi-tracer estimator for the spectra...
-        # Correcting for units of physical volume
-        P0_mu_ret = np.sum(Cov_ret*Q0_mu_flat,axis=1)*Vfft_to_Vk
-        # Quadrupole with factor of 5/2
-        P2_mu_ret = 2.5*np.sum(Cov_ret*Q2_mu_flat,axis=1)*Vfft_to_Vk
-        Pshot_mu_ret = np.sum(Cov_ret*Pshot_mu_flat,axis=1)*Vfft_to_Vk
+#         # Now, FINALLY, obtain the true multi-tracer estimator for the spectra...
+#         # Correcting for units of physical volume
+#         P0_mu_ret = np.sum(Cov_ret*Q0_mu_flat,axis=1)*Vfft_to_Vk
+#         # Quadrupole with factor of 5/2
+#         P2_mu_ret = 2.5*np.sum(Cov_ret*Q2_mu_flat,axis=1)*Vfft_to_Vk
+#         Pshot_mu_ret = np.sum(Cov_ret*Pshot_mu_flat,axis=1)*Vfft_to_Vk
 
-        # Testing: print shot noise
-        print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
+#         # Testing: print shot noise
+#         print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
 
-        ###############################################################
-        # Now calculate the theoretical covariances
-        ###############################################################
+#         ###############################################################
+#         # Now calculate the theoretical covariances
+#         ###############################################################
 
-        # The idea is that Cov(P_mu,P_nu) = (F(P_mu,P_nu))^(-1) .
-        # We have F_inv_munu from above, an nt x nt matrix
-        # computed using the fiducial biases and P(k).
-        # To compute the actual covariance, with
-        # the actual P0_mu_ret obtained above, would be
-        # prohibitive, numerically. We use, for now, F_inv_munu.
+#         # The idea is that Cov(P_mu,P_nu) = (F(P_mu,P_nu))^(-1) .
+#         # We have F_inv_munu from above, an nt x nt matrix
+#         # computed using the fiducial biases and P(k).
+#         # To compute the actual covariance, with
+#         # the actual P0_mu_ret obtained above, would be
+#         # prohibitive, numerically. We use, for now, F_inv_munu.
 
-###############################################################
-######### CONTINUE HERE                    ####################
-######### CONTINUE HERE                    ####################
-######### CONTINUE HERE                    ####################
-######### CONTINUE HERE                    ####################
-###############################################################
+# ###############################################################
+# ######### CONTINUE HERE                    ####################
+# ######### CONTINUE HERE                    ####################
+# ######### CONTINUE HERE                    ####################
+# ######### CONTINUE HERE                    ####################
+# ###############################################################
 
-        # Changing to physical units
-        P0_mu_ret = P0_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
-        P2_mu_ret = P2_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
-        # Now we need the covariance for each bin -- including the bin volumes
-        Cov_ret = np.reshape( np.kron( Cov_munu , 1.0/(Vk + small) ),(number_tracers,number_tracers,nbinsout) )
-        Cov_ret = Cov_ret*((self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)**2)
+#         # Changing to physical units
+#         P0_mu_ret = P0_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
+#         P2_mu_ret = P2_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
+#         # Now we need the covariance for each bin -- including the bin volumes
+#         Cov_ret = np.reshape( np.kron( Cov_munu , 1.0/(Vk + small) ),(number_tracers,number_tracers,nbinsout) )
+#         Cov_ret = Cov_ret*((self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)**2)
 
-        #F0k2_ret = F0k2_flat 
-        #F2k2_ret = F2k2_flat
+#         #F0k2_ret = F0k2_flat 
+#         #F2k2_ret = F2k2_flat
 
-        Q0_mu_ret = Q0_mu_flat 
-        Q2_mu_ret = Q2_mu_flat
+#         Q0_mu_ret = Q0_mu_flat 
+#         Q2_mu_ret = Q2_mu_flat
         
-        # Finalize output
-        self.P0_mu_ret = P0_mu_ret
-        self.P2_mu_ret = P2_mu_ret
+#         # Finalize output
+#         self.P0_mu_ret = P0_mu_ret
+#         self.P2_mu_ret = P2_mu_ret
 
-        self.Q0_mu_ret = Q0_mu_ret
-        self.Q2_mu_ret = Q2_mu_ret
+#         self.Q0_mu_ret = Q0_mu_ret
+#         self.Q2_mu_ret = Q2_mu_ret
 
-        #self.F0k2_ret = F0k2_ret
-        #self.F2k2_ret = F2k2_ret
+#         #self.F0k2_ret = F0k2_ret
+#         #self.F2k2_ret = F2k2_ret
         
-        self.Cov_ret = Cov_ret
-        self.Cov_munu = Cov_munu
+#         self.Cov_ret = Cov_ret
+#         self.Cov_munu = Cov_munu
