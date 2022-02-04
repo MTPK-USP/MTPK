@@ -878,7 +878,7 @@ effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
 print( "Initializing multi-tracer estimation toolbox...")
 
-fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral)
+fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
 
 # If data bias is different from mocks
 if use_data_bias:

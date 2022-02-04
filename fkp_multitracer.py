@@ -302,71 +302,86 @@ class fkp_init(object):
         # Here it is convenient to use the covariance per unit volume
         Cov_ret = np.reshape( np.kron( Cov_munu , 1.0*(Vk**0 + small) ),(number_tracers,number_tracers,nbinsout) )
 
-#         # These are the intermediate estimators Q .
-#         # Must average Q_mu for each tracer over the bins independently
-#         # Here I actually compute Q_mu / Vk , since that is easier to compare with calculations
-#         Q0_mu_flat = np.zeros((number_tracers,nbinsout))
-#         Q2_mu_flat = np.zeros((number_tracers,nbinsout))
-#         Pshot_mu_flat = np.zeros((number_tracers,nbinsout))
-#         # Notice that DeltaQ_mu is already in physical units, so Q0 must also be.
-#         # Here I compute the <Q>_k , which is easier to compare with other stuff
-#         for nt in range(number_tracers):
-#             F0k2 = (self.bin_matrix).dot(FF0_mu_k_flat[nt])
-#             Q0_mu_flat[nt] = ((0.25/((self.bias[nt])**2))*F0k2 - 1.0*(self.DeltaQ_mu)[nt]*self.counts)/(self.counts + small)/Vfft_to_Vk
-#             F2k2 = ((self.bin_matrix).dot(FF2_mu_k_flat[nt]))
-#             Q2_mu_flat[nt] = (0.25/((self.bias[nt])**2))*F2k2/(self.counts + small)/Vfft_to_Vk
-#             Pshot_mu_flat[nt] = 1.0*(self.DeltaQ_mu)[nt]*self.counts/(self.counts + small)/Vfft_to_Vk
-
-#         # Now, FINALLY, obtain the true multi-tracer estimator for the spectra...
-#         # Correcting for units of physical volume
-#         P0_mu_ret = np.sum(Cov_ret*Q0_mu_flat,axis=1)*Vfft_to_Vk
-#         # Quadrupole with factor of 5/2
-#         P2_mu_ret = 2.5*np.sum(Cov_ret*Q2_mu_flat,axis=1)*Vfft_to_Vk
-#         Pshot_mu_ret = np.sum(Cov_ret*Pshot_mu_flat,axis=1)*Vfft_to_Vk
-
-#         # Testing: print shot noise
-#         print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
-
-#         ###############################################################
-#         # Now calculate the theoretical covariances
-#         ###############################################################
-
-#         # The idea is that Cov(P_mu,P_nu) = (F(P_mu,P_nu))^(-1) .
-#         # We have F_inv_munu from above, an nt x nt matrix
-#         # computed using the fiducial biases and P(k).
-#         # To compute the actual covariance, with
-#         # the actual P0_mu_ret obtained above, would be
-#         # prohibitive, numerically. We use, for now, F_inv_munu.
-
-# ###############################################################
-# ######### CONTINUE HERE                    ####################
-# ######### CONTINUE HERE                    ####################
-# ######### CONTINUE HERE                    ####################
-# ######### CONTINUE HERE                    ####################
-# ###############################################################
-
-#         # Changing to physical units
-#         P0_mu_ret = P0_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
-#         P2_mu_ret = P2_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
-#         # Now we need the covariance for each bin -- including the bin volumes
-#         Cov_ret = np.reshape( np.kron( Cov_munu , 1.0/(Vk + small) ),(number_tracers,number_tracers,nbinsout) )
-#         Cov_ret = Cov_ret*((self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)**2)
-
-#         #F0k2_ret = F0k2_flat 
-#         #F2k2_ret = F2k2_flat
-
-#         Q0_mu_ret = Q0_mu_flat 
-#         Q2_mu_ret = Q2_mu_flat
+        # These are the intermediate estimators Q .
+        # Must average Q_mu for each tracer over the bins independently
+        # Here I actually compute Q_mu / Vk , since that is easier to compare with calculations
+        Q0_mu_flat = np.zeros((number_tracers,nbinsout))
+        Q2_mu_flat = np.zeros((number_tracers,nbinsout))
+        Q4_mu_flat = np.zeros((number_tracers,nbinsout))
         
-#         # Finalize output
-#         self.P0_mu_ret = P0_mu_ret
-#         self.P2_mu_ret = P2_mu_ret
+        Pshot_mu_flat = np.zeros((number_tracers,nbinsout))
+        # Notice that DeltaQ_mu is already in physical units, so Q0 must also be.
+        # Here I compute the <Q>_k , which is easier to compare with other stuff
+        for nt in range(number_tracers):
+            F0k2 = (self.bin_matrix).dot(FF0_mu_k_flat[nt])
+            Q0_mu_flat[nt] = ((0.25/((self.bias[nt])**2))*F0k2 - 1.0*(self.DeltaQ_mu)[nt]*self.counts)/(self.counts + small)/Vfft_to_Vk
+            
+            F2k2 = ((self.bin_matrix).dot(FF2_mu_k_flat[nt]))
+            Q2_mu_flat[nt] = (0.25/((self.bias[nt])**2))*F2k2/(self.counts + small)/Vfft_to_Vk
 
-#         self.Q0_mu_ret = Q0_mu_ret
-#         self.Q2_mu_ret = Q2_mu_ret
+            F4k2 = ((self.bin_matrix).dot(FF4_mu_k_flat[nt]))
+            Q4_mu_flat[nt] = (0.25/((self.bias[nt])**2))*F4k2/(self.counts + small)/Vfft_to_Vk
+            
+            Pshot_mu_flat[nt] = 1.0*(self.DeltaQ_mu)[nt]*self.counts/(self.counts + small)/Vfft_to_Vk
 
-#         #self.F0k2_ret = F0k2_ret
-#         #self.F2k2_ret = F2k2_ret
+        # Now, FINALLY, obtain the true multi-tracer estimator for the spectra...
+        # Correcting for units of physical volume
+        P0_mu_ret = np.sum(Cov_ret*Q0_mu_flat,axis=1)*Vfft_to_Vk
+        # Quadrupole with factor of 5/2
+        P2_mu_ret = 2.5*np.sum(Cov_ret*Q2_mu_flat,axis=1)*Vfft_to_Vk
+        # Hexadecapole with factor of 9/2
+        P4_mu_ret = 4.5*np.sum(Cov_ret*Q4_mu_flat,axis=1)*Vfft_to_Vk
         
-#         self.Cov_ret = Cov_ret
-#         self.Cov_munu = Cov_munu
+        Pshot_mu_ret = np.sum(Cov_ret*Pshot_mu_flat,axis=1)*Vfft_to_Vk
+
+        # Testing: print shot noise
+        print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
+
+        ###############################################################
+        # Now calculate the theoretical covariances
+        ###############################################################
+
+        # The idea is that Cov(P_mu,P_nu) = (F(P_mu,P_nu))^(-1) .
+        # We have F_inv_munu from above, an nt x nt matrix
+        # computed using the fiducial biases and P(k).
+        # To compute the actual covariance, with
+        # the actual P0_mu_ret obtained above, would be
+        # prohibitive, numerically. We use, for now, F_inv_munu.
+
+###############################################################
+######### CONTINUE HERE                    ####################
+######### CONTINUE HERE                    ####################
+######### CONTINUE HERE                    ####################
+######### CONTINUE HERE                    ####################
+###############################################################
+
+        # Changing to physical units
+        P0_mu_ret = P0_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
+        P2_mu_ret = P2_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
+        P4_mu_ret = P4_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
+        
+        # Now we need the covariance for each bin -- including the bin volumes
+        Cov_ret = np.reshape( np.kron( Cov_munu , 1.0/(Vk + small) ),(number_tracers,number_tracers,nbinsout) )
+        Cov_ret = Cov_ret*((self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)**2)
+
+        #F0k2_ret = F0k2_flat 
+        #F2k2_ret = F2k2_flat
+
+        Q0_mu_ret = Q0_mu_flat 
+        Q2_mu_ret = Q2_mu_flat
+        Q4_mu_ret = Q4_mu_flat
+        
+        # Finalize output
+        self.P0_mu_ret = P0_mu_ret
+        self.P2_mu_ret = P2_mu_ret
+        self.P4_mu_ret = P4_mu_ret
+
+        self.Q0_mu_ret = Q0_mu_ret
+        self.Q2_mu_ret = Q2_mu_ret
+        self.Q4_mu_ret = Q4_mu_ret
+
+        #self.F0k2_ret = F0k2_ret
+        #self.F2k2_ret = F2k2_ret
+        
+        self.Cov_ret = Cov_ret
+        self.Cov_munu = Cov_munu
