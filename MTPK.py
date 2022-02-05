@@ -29,7 +29,8 @@
 #handle_data = "Highz_z16"
 #handle_data = "Highz_z16_gals"
 #handle_data = "SHUFFLE_Highz_z16_gals"
-handle_data = "ExSHalos"
+# handle_data = "ExSHalos"
+handle_data = "PM"
 
 #handle_data = "Highz_z20"
 #handle_data = "Highz_z20_gals"

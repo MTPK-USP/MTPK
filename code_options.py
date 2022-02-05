@@ -199,11 +199,11 @@ class code_parameters:
             'theory_spectrum_file' : "theory_spectrum_file.txt",
             'use_mask'             : False,
             'mask_filename'        : "mask.hdf5",
-            'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),
-            'halo_bias'            : np.array([1.572, 1.906, 2.442]),
-            'nhalos'               : 3,
+            'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),#np.array([1.0]),
+            'halo_bias'            : np.array([1.572, 1.906, 2.442]),#np.array([1.0]),
+            'nhalos'               : 3,#1,
             'halos_ids'            : ['h1', 'h2', 'h3'],
-            'n_maps'               : 3,
+            'n_maps'               : 3,#1,
             'cell_size'            : 1.0,
             'n_x'                  : 128,
             'n_y'                  : 128,
@@ -213,14 +213,14 @@ class code_parameters:
             'n_z_orig'             : 10000.,
             'sel_fun_data'         : False,
             'sel_fun_file'         : "sel_fun-N128_halos.hdf5",
-            'kmin_bias'            : 0.05, #is it necessary?
-            'kmax_bias'            : 0.15, #is it necessary?
+            'kmin_bias'            : 0.05, #0.1, #is it necessary?
+            'kmax_bias'            : 0.15,#0.5, #is it necessary?
             'kph_central'          : 0.1,
             'dkph_bin'             : 0.01,
             'use_kmin_phys'        : False,
             'kmin_phys'            : 0.05,
             'use_kmax_phys'        : False,
-            'kmax_phys'            : 0.6,
+            'kmax_phys'            : 0.6,#1.0
             'whichspec'            : 1,
             'use_cell_low_count_thresh': False,
             'cell_low_count_thresh': 0.0,
