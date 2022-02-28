@@ -37,6 +37,11 @@ class code_parameters:
 
     Alpha-dipole k_dip [h/Mpc]
 
+    multipoles_order : integer
+      monopole: 0
+      monopole and dipole: 2
+      monopole, dipole and quadrupole: 4
+
     use_padding : bool
 
     True -> do padding
@@ -178,6 +183,7 @@ class code_parameters:
             'kdip_phys'            : 0.005,
             'use_padding'          : False,
             'padding_length'       : [10, 10, 10],
+            'multipoles_order'     : 4,
             'use_theory_spectrum'  : False,
             'theory_spectrum_file' : "theory_spectrum_file.txt",
             'use_mask'             : False,
@@ -227,6 +233,7 @@ class code_parameters:
         self.kdip_phys = default_params['kdip_phys']
         self.use_padding = default_params['use_padding']
         self.padding_length = default_params['padding_length']
+        self.multipoles_order = default_params['multipoles_order']
         self.mask_filename = default_params['mask_filename']
         self.use_theory_spectrum = default_params['use_theory_spectrum']
         self.theory_spectrum_file = default_params['theory_spectrum_file']

@@ -19,7 +19,6 @@ class fkp_init(object):
     n_x,n_y, n_z and the bin_matrix
     '''
     def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power):
-    # def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0):
         # Here bin_matrix is the M-matrix
         self.num_bins = num_bins
         self.n_bar_matrix = n_bar_matrix
