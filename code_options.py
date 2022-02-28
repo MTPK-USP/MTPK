@@ -45,17 +45,6 @@ class code_parameters:
     padding_length : list of integer
     List to indicating how much padding in each direction
 
-    use_power_law : bool
-
-    True -> to use power_law to multiply CAMB's spectrum
-    False -> otherwise
-
-    power_law : integer
-    Number indicating the power law to multiply CAMB's spectrum
-
-    pk_power : integer
-    Number indicating the power of pk
-
     use_theory_spectrum : bool
 
     True -> to include pre-existing power spectrum in file
@@ -146,9 +135,6 @@ class code_parameters:
     ntracers : integer
     Number of halo bins as tracers
 
-    tracer_ids : list of strings
-    A list of strings to identify each halo bin as tracers
-
     bias_file : string
     Path and name of the file that keeps the halo bias as tracers
 
@@ -192,9 +178,6 @@ class code_parameters:
             'kdip_phys'            : 0.005,
             'use_padding'          : False,
             'padding_length'       : [10, 10, 10],
-            'use_power_law'        : False,
-            'power_law'            : 1,
-            'pk_power'             : 1,
             'use_theory_spectrum'  : False,
             'theory_spectrum_file' : "theory_spectrum_file.txt",
             'use_mask'             : False,
@@ -202,7 +185,6 @@ class code_parameters:
             'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),#np.array([1.0]),
             'halo_bias'            : np.array([1.572, 1.906, 2.442]),#np.array([1.0]),
             'nhalos'               : 3,#1,
-            'halos_ids'            : ['h1', 'h2', 'h3'],
             'n_maps'               : 3,#1,
             'cell_size'            : 1.0,
             'n_x'                  : 128,
@@ -246,15 +228,11 @@ class code_parameters:
         self.use_padding = default_params['use_padding']
         self.padding_length = default_params['padding_length']
         self.mask_filename = default_params['mask_filename']
-        self.use_power_law = default_params['use_power_law']
-        self.power_law = default_params['power_law']
-        self.pk_power = default_params['pk_power']
         self.use_theory_spectrum = default_params['use_theory_spectrum']
         self.theory_spectrum_file = default_params['theory_spectrum_file']
         self.mass_fun = default_params['mass_fun']
         self.halo_bias = default_params['halo_bias']
         self.nhalos = default_params['nhalos']
-        self.halos_ids = default_params['halos_ids']
         self.n_maps = default_params['n_maps']
         self.cell_size = default_params['cell_size']
         self.n_x = default_params['n_x']
@@ -280,7 +258,6 @@ class code_parameters:
 
         #Computed Parameters
         self.ntracers = self.nhalos
-        self.tracer_ids = self.halos_ids
         self.bias_file = self.halo_bias
         self.nbar = self.mass_fun*(self.cell_size**3)
         self.ncentral = self.ntracers*[20.0]
