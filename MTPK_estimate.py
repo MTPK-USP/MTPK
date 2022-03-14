@@ -87,12 +87,107 @@ print("##########################")
 print(my_code_options.parameters_print())
 print()
 
-#Some other cosmological quantities
+###################################################
+#Defining all the parameters from new classes here
+###################################################
+#Cosmological quantities
 h = physical_options['h']
 H0 = h*100.
 clight = physical_options['c_light']
 cH = clight*h/my_cosmology.H(physical_options['zcentral'], False) # c/H(z) , in units of h^-1 Mpc
-
+Omegam = physical_options['Omega0_m']
+OmegaDE = physical_options['Omega0_DE']
+Omegab = physical_options['Omega0_b']
+Omegac = physical_options['Omega0_cdm']
+A_s = physical_options['A_s']
+gamma = physical_options['gamma']
+matgrowcentral = physical_options['matgrowcentral']
+w0 = physical_options['w0']
+w1 = physical_options['w1']
+z_re = physical_options['z_re']
+zcentral = physical_options['zcentral']
+n_SA = physical_options['n_s']
+# Velocity dispersion. vdisp is defined on inputs with units of km/s
+vdisp = np.asarray(my_code_options.vdisp) #km/s
+sigma_v = my_code_options.vdisp/my_cosmology.H(physical_options['zcentral'], False) #Mpc/h
+a_vdisp = vdisp/physical_options['c_light'] #Adimensional vdisp
+# Redshift errors. sigz_est is defined on inputs, and is adimensional
+sigz_est = np.asarray(my_code_options.sigz_est)
+sigma_z = sigz_est*physical_options['c_light']/my_cosmology.H(physical_options['zcentral'], False) # Mpc/h
+whichspec = parameters_code['whichspec']
+# Joint factor considering v dispersion and z error
+sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
+a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
+#
+gal_bias = my_code_options.bias_file
+adip = my_code_options.adip
+gal_adip = np.asarray(adip)
+gal_sigz_est = np.asarray(sigz_est)
+gal_vdisp = np.asarray(vdisp)
+a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
+#
+mas_method = parameters_code['mas_method']
+if mas_method == 'NGP':
+    mas_power = 1.0
+elif mas_method == 'CIC':
+    mas_power = 2.0
+elif mas_method == 'TSC':
+    mas_power = 3.0
+elif mas_method == 'PCS':
+    mas_power = 4.0
+else:
+    print("Please specify an acceptable Mass Assignement Scheme")
+    print("Acceptable values: NGP, CIC, TSC and PCS")
+    print("Aborting now...")
+    sys.exit(-1)
+#
+use_mask = parameters_code['use_mask']
+sel_fun_data = parameters_code['sel_fun_data']
+# Save estimations for each assumed k_phys in subdirectories named after k_phys
+strkph = str(parameters_code['kph_central'])
+#
+use_theory_spectrum = parameters_code['use_theory_spectrum']
+theory_spectrum_file = parameters_code['theory_spectrum_file']
+#
+k_min_camb = parameters_code['k_min_CAMB']
+k_max_camb = parameters_code['k_max_CAMB']
+#
+n_x = parameters_code['n_x']
+n_y = parameters_code['n_y']
+n_z = parameters_code['n_z']
+n_x_orig = parameters_code['n_x_orig']
+n_y_orig = parameters_code['n_y_orig']
+n_z_orig = parameters_code['n_z_orig']
+#
+use_padding = parameters_code['use_padding']
+padding_length = parameters_code['padding_length']
+#
+cell_size = parameters_code['cell_size']
+ntracers = my_code_options.ntracers
+nbar = my_code_options.nbar
+ncentral = my_code_options.ncentral
+nsigma = my_code_options.nsigma
+sel_fun_file = parameters_code['sel_fun_file']
+mult_sel_fun = parameters_code['mult_sel_fun']
+shift_sel_fun = parameters_code['shift_sel_fun']
+mass_fun = parameters_code['mass_fun']
+#
+n_maps = parameters_code['n_maps']
+#
+use_cell_low_count_thresh = parameters_code['use_cell_low_count_thresh']
+cell_low_count_thresh = parameters_code['cell_low_count_thresh']
+#
+use_kmax_phys = parameters_code['use_kmax_phys']
+kmax_phys = parameters_code['kmax_phys']
+dkph_bin = parameters_code['dkph_bin']
+use_kmin_phys = parameters_code['use_kmin_phys']
+kmin_phys = parameters_code['kmin_phys']
+use_kdip_phys = parameters_code['use_kdip_phys']
+kdip_phys = parameters_code['kdip_phys']
+#
+method = parameters_code['method']
+multipoles_order = parameters_code['multipoles_order']
+#AQUI
 
 #####################################################
 # Load specs for this run
@@ -109,27 +204,10 @@ print()
 print('Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates)
 print()
 
-mas_method = parameters_code['mas_method']
-if mas_method == 'NGP':
-    mas_power = 1.0
-elif mas_method == 'CIC':
-    mas_power = 2.0
-elif mas_method == 'TSC':
-    mas_power = 3.0
-elif mas_method == 'PCS':
-    mas_power = 4.0
-else:
-    print("Please specify an acceptable Mass Assignement Scheme")
-    print("Acceptable values: NGP, CIC, TSC and PCS")
-    print("Aborting now...")
-    sys.exit(-1)
-
 # Directory with data and simulated maps
 dir_maps = this_dir + '/maps/sims/' + handle_sims
 
 # Directory with data
-use_mask = parameters_code['use_mask']
-sel_fun_data = parameters_code['sel_fun_data']
 dir_data = this_dir + '/maps/data/' + handle_data
 
 
@@ -142,8 +220,6 @@ if not os.path.exists(dir_figs):
     os.makedirs(dir_figs)
 
 # Save estimations for each assumed k_phys in subdirectories named after k_phys
-strkph = str(parameters_code['kph_central'])
-
 dir_specs += '/k=' + strkph
 dir_figs  += '/k=' + strkph
 
@@ -168,44 +244,12 @@ else:
         print ('Aborting now...')
         sys.exit(-1)
 
-########################## Some other cosmological quantities ######################################
-
-Omegam = physical_options['Omega0_m']
-OmegaDE = physical_options['Omega0_DE']
-Omegab = physical_options['Omega0_b']
-Omegac = physical_options['Omega0_cdm']
-A_s = physical_options['A_s']
-gamma = physical_options['gamma']
-matgrowcentral = physical_options['matgrowcentral']
-w0 = physical_options['w0']
-w1 = physical_options['w1']
-z_re = physical_options['z_re']
-zcentral = physical_options['zcentral']
-n_SA = physical_options['n_s']
-
-# Velocity dispersion. vdisp is defined on inputs with units of km/s
-vdisp = np.asarray(my_code_options.vdisp) #km/s
-sigma_v = my_code_options.vdisp/my_cosmology.H(physical_options['zcentral'], False) #Mpc/h
-a_vdisp = vdisp/physical_options['c_light'] #Adimensional vdisp
-
-# Redshift errors. sigz_est is defined on inputs, and is adimensional
-sigz_est = np.asarray(my_code_options.sigz_est)
-sigma_z = sigz_est*physical_options['c_light']/my_cosmology.H(physical_options['zcentral'], False) # Mpc/h
-
-whichspec = parameters_code['whichspec']
-
-# Joint factor considering v dispersion and z error
-sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
-a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
-
 ###################################################################################################
 
 
 #############Calling CAMB for calculations of the spectra#################
 print('Beggining CAMB calculations\n')
 
-use_theory_spectrum = parameters_code['use_theory_spectrum']
-theory_spectrum_file = parameters_code['theory_spectrum_file']
 if use_theory_spectrum:
     print('Using pre-existing power spectrum in file:',theory_spectrum_file)
     kcpkc = np.loadtxt(theory_spectrum_file)
@@ -219,8 +263,6 @@ else:
     print('Computing matter power spectrum for given cosmology...\n')
 
     # It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
-    k_min_camb = parameters_code['k_min_CAMB']
-    k_max_camb = parameters_code['k_max_CAMB']
 
     nklist = 1000
     k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
@@ -239,14 +281,6 @@ pow_interp=interpolate.PchipInterpolator(k_interp,P_interp)
 #####################################################
 #####################################################
 
-gal_bias = my_code_options.bias_file
-adip = my_code_options.adip
-
-gal_adip = np.asarray(adip)
-gal_sigz_est = np.asarray(sigz_est)
-gal_vdisp = np.asarray(vdisp)
-a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
-
 #####################################################
 # Generate real- and Fourier-space grids for FFTs
 #####################################################
@@ -255,15 +289,6 @@ print('.')
 print('Generating the k-space Grid...')
 print('.')
 
-n_x = parameters_code['n_x']
-n_y = parameters_code['n_y']
-n_z = parameters_code['n_z']
-n_x_orig = parameters_code['n_x_orig']
-n_y_orig = parameters_code['n_y_orig']
-n_z_orig = parameters_code['n_z_orig']
-
-use_padding = parameters_code['use_padding']
-padding_length = parameters_code['padding_length']
 if use_padding:
     n_x_box = n_x + 2*padding_length[0]
     n_y_box = n_y + 2*padding_length[1]
@@ -276,18 +301,10 @@ else:
     n_y_box = n_y
     n_z_box = n_z
 
-cell_size = parameters_code['cell_size']
-ntracers = my_code_options.ntracers
-nbar = my_code_options.nbar
-ncentral = my_code_options.ncentral
-nsigma = my_code_options.nsigma
-
 L_x = n_x_box*cell_size ; L_y = n_y_box*cell_size ; L_z = n_z_box*cell_size
 grid = gr.grid3d(n_x_box,n_y_box,n_z_box,L_x,L_y,L_z)
 
 grid_orig = gr.grid3d(n_x,n_y,n_z,n_x*cell_size,n_y*cell_size,n_z*cell_size)
-
-sel_fun_file = parameters_code['sel_fun_file']
 
 # Selection function
 # If given by data
@@ -297,8 +314,6 @@ if sel_fun_data:
         h5data = h5map.get(list(h5map.keys())[0])
         nbm = np.asarray(h5data,dtype='float32')
         #updated to shift selection function by small=1.e-9
-        mult_sel_fun = parameters_code['mult_sel_fun']
-        shift_sel_fun = parameters_code['shift_sel_fun']
         nbm = np.asarray(small + mult_sel_fun*(nbm + shift_sel_fun),dtype='float32')
         h5map.close
     except:
@@ -321,8 +336,6 @@ if sel_fun_data:
         sys.exit(-1)
 else:
     try:
-        mult_sel_fun = parameters_code['mult_sel_fun']
-        mass_fun = parameters_code['mass_fun']
         mass_fun = mult_sel_fun*mass_fun
         nbar = mass_fun*cell_size**3
         ncentral = 10.0*nbar**0
@@ -369,8 +382,7 @@ try:
     del n_box
 except:
     pass
-    
-n_maps = parameters_code['n_maps']
+
 mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
 if len(mapnames_sims)==0 :
     print()
@@ -388,10 +400,7 @@ print ('Will use the N =', n_maps, ' simulation-only maps contained in directory
 
 ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
 ## We will treat this as an additional MASK (thresh_mask) for data and mocks
-use_cell_low_count_thresh = parameters_code['use_cell_low_count_thresh']
-cell_low_count_thresh = parameters_code['cell_low_count_thresh']
 if use_cell_low_count_thresh:
-    cell_low_count_thresh = parameters_code['cell_low_count_thresh']
     thresh_mask = np.ones_like(n_bar_matrix_fid)
     thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
     n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
@@ -449,9 +458,7 @@ kk_bar = np.fft.fftfreq(nn)
 ### K_MAX_MIN
 #  Maximum ***frequency*** allowed
 #  Nyquist frequency is 0.5 (in units of 1/cell)
-use_kmax_phys = parameters_code['use_kmax_phys']
 if use_kmax_phys:
-    kmax_phys = parameters_code['kmax_phys']
     kmaxbar = min(0.5,kmax_phys*cell_size/2.0/np.pi)
     kmax_phys = kmaxbar*2*np.pi/cell_size
 else:
@@ -469,7 +476,6 @@ dk0 = 3.0/np.power(n_x_box*n_y_box*n_z_box,1/3.)/(2.0*np.pi)
 dk_phys = 2.0*np.pi*dk0/cell_size
 
 # Ensure that the binning is at least a certain size
-dkph_bin = parameters_code['dkph_bin']
 dk_phys = max(dk_phys,dkph_bin)
 # Fourier bins in units of frequency
 dk0 = dk_phys*cell_size/2.0/np.pi
@@ -492,9 +498,7 @@ kgrid = grid.grid_k
 kminbar = 1./4.*(kgrid[1,0,0]+kgrid[0,1,0]+kgrid[0,0,1]) + dk0/4.0
 
 ### K_MAX_MIN
-use_kmin_phys = parameters_code['use_kmin_phys']
 if use_kmin_phys:
-    kmin_phys = parameters_code['kmin_phys']
     kminbar = kmin_phys*cell_size/2.0/np.pi
 else:
     pass
@@ -514,9 +518,7 @@ kph = k_bar*2*np.pi/cell_size
 
 ##############################################
 # Define the "effective bias" as the amplitude of the monopole
-use_kdip_phys = parameters_code['use_kdip_phys']
 if use_kdip_phys:
-    kdip_phys = parameters_code['kdip_phys']
     print ('ATTENTION: pre-defined (on input) alpha-dipole k_dip [h/Mpc]=', '%1.4f'%kdip_phys)
     pass
 else:
@@ -726,10 +728,6 @@ print ('Starting power spectra estimation')
 
 
 # Initialize outputs
-
-method = parameters_code['method']
-
-multipoles_order = parameters_code['multipoles_order']
 
 if method == 'both':
 
