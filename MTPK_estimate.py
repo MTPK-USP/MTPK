@@ -26,19 +26,6 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import vstack
 from scipy.ndimage import gaussian_filter
 
-if sys.platform == "darwin":
-    import pylab as pl
-    from matplotlib import cm
-else:
-    import matplotlib
-    matplotlib.use('Agg')
-    from matplotlib import pylab, mlab, pyplot
-    from matplotlib import cm
-    from IPython.display import display
-    from IPython.core.pylabtools import figsize, getfigs
-    pl=pyplot
-
-
 # Add path to /inputs directory in order to load inputs
 # Change as necessary according to your installation
 this_dir = os.getcwd()
@@ -2799,61 +2786,6 @@ if method == 'both':
         np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
         np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
 
-        #UPDATED SOME PLOT DEFINITIONS
-        kN = np.pi/cell_size  # Nyquist frequency
-        ikN9 = np.argsort(np.abs(kph-kN))[0]
-
-        xlim = [0.9*kph[0],1.1*kph[ikN9]]
-        ylim = [np.min(effbias**2)*np.min(powtrue)/100.,np.max(effbias**2)*np.max(powtrue)*5]
-
-        print(".")
-        print("Now just a couple of plots to /figs...")
-
-        index=0
-        pl.loglog(kph,powtrue,'k',linewidth=0.3)
-        for nt in range(ntracers):
-            pl.loglog(kph,P0_fkp_mean[nt],'b',linewidth=0.6)
-            pl.loglog(kph,-P0_fkp_mean[nt],'b--',linewidth=0.6)
-            pl.loglog(kph,P2_fkp_mean[nt],'g',linewidth=0.5)
-            pl.loglog(kph,-P2_fkp_mean[nt],'g--',linewidth=0.5)
-            pl.loglog(kph,P4_fkp_mean[nt],'c',linewidth=0.3)
-            pl.loglog(kph,-P4_fkp_mean[nt],'c--',linewidth=0.3)
-            for ntp in range(nt+1,ntracers):
-                pl.loglog(kph,Cross0_mean[index],'b',linewidth=0.2)
-                pl.loglog(kph,Cross2_mean[index],'g',linewidth=0.2)
-                pl.loglog(kph,Cross4_mean[index],'c',linewidth=0.2)
-                index += 1
-
-        pl.xlim(xlim)
-        pl.ylim(ylim)
-        pl.savefig(dir_figs + "/Mean_spec_fkp.png",dpi=200)
-        pl.close('all')
-
-        index=0
-        pl.loglog(kph,powtrue,'k',linewidth=0.3)
-        for nt in range(ntracers):
-            pl.loglog(kph,P0_mean[nt],'b',linewidth=0.6)
-            pl.loglog(kph,-P0_mean[nt],'b--',linewidth=0.6)
-            pl.loglog(kph,P2_mean[nt],'g',linewidth=0.5)
-            pl.loglog(kph,-P2_mean[nt],'g--',linewidth=0.5)
-            pl.loglog(kph,P4_mean[nt],'c',linewidth=0.3)
-            pl.loglog(kph,-P4_mean[nt],'c--',linewidth=0.3)
-            for ntp in range(nt+1,ntracers):
-                pl.loglog(kph,Cross0_mean[index],'b',linewidth=0.2)
-                pl.loglog(kph,Cross2_mean[index],'g',linewidth=0.2)
-                pl.loglog(kph,Cross4_mean[index],'c',linewidth=0.2)
-                index += 1
-        pl.xlim(xlim)
-        pl.ylim(ylim)
-        pl.savefig(dir_figs + "/Mean_spec_mt.png",dpi=200)
-        pl.close('all')
-
-        print(".")
-        print(".")
-        print()
-        print("Done!")
-        print()
-
         sys.exit(-1)
 
 elif method == 'FKP':
@@ -2957,42 +2889,6 @@ elif method == 'FKP':
         np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
         np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
 
-        #UPDATED SOME PLOT DEFINITIONS
-        kN = np.pi/cell_size  # Nyquist frequency
-        ikN9 = np.argsort(np.abs(kph-kN))[0]
-
-        xlim = [0.9*kph[0],1.1*kph[ikN9]]
-        ylim = [np.min(effbias**2)*np.min(powtrue)/100.,np.max(effbias**2)*np.max(powtrue)*5]
-
-        print(".")
-        print("Now just a couple of plots to /figs...")
-
-        index=0
-        pl.loglog(kph,powtrue,'k',linewidth=0.3)
-        for nt in range(ntracers):
-            pl.loglog(kph,P0_fkp_mean[nt],'b',linewidth=0.6)
-            pl.loglog(kph,-P0_fkp_mean[nt],'b--',linewidth=0.6)
-            pl.loglog(kph,P2_fkp_mean[nt],'g',linewidth=0.5)
-            pl.loglog(kph,-P2_fkp_mean[nt],'g--',linewidth=0.5)
-            pl.loglog(kph,P4_fkp_mean[nt],'c',linewidth=0.3)
-            pl.loglog(kph,-P4_fkp_mean[nt],'c--',linewidth=0.3)
-            for ntp in range(nt+1,ntracers):
-                pl.loglog(kph,Cross0_mean[index],'b',linewidth=0.2)
-                pl.loglog(kph,Cross2_mean[index],'g',linewidth=0.2)
-                pl.loglog(kph,Cross4_mean[index],'c',linewidth=0.2)
-                index += 1
-
-        pl.xlim(xlim)
-        pl.ylim(ylim)
-        pl.savefig(dir_figs + "/Mean_spec_fkp.png",dpi=200)
-        pl.close('all')
-
-        print(".")
-        print(".")
-        print()
-        print("Done!")
-        print()
-
         sys.exit(-1)
 
 elif method == 'MT':
@@ -3069,35 +2965,5 @@ elif method == 'MT':
         np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
         np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
         np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE_mean.dat',P4_mean,fmt="%6.4f")
-
-        #UPDATED SOME PLOT DEFINITIONS
-        kN = np.pi/cell_size  # Nyquist frequency
-        ikN9 = np.argsort(np.abs(kph-kN))[0]
-
-        xlim = [0.9*kph[0],1.1*kph[ikN9]]
-        ylim = [np.min(effbias**2)*np.min(powtrue)/100.,np.max(effbias**2)*np.max(powtrue)*5]
-
-        print(".")
-        print("Now just a couple of plots to /figs...")
-
-        index=0
-        pl.loglog(kph,powtrue,'k',linewidth=0.3)
-        for nt in range(ntracers):
-            pl.loglog(kph,P0_mean[nt],'b',linewidth=0.6)
-            pl.loglog(kph,-P0_mean[nt],'b--',linewidth=0.6)
-            pl.loglog(kph,P2_mean[nt],'g',linewidth=0.5)
-            pl.loglog(kph,-P2_mean[nt],'g--',linewidth=0.5)
-            pl.loglog(kph,P4_mean[nt],'c',linewidth=0.3)
-            pl.loglog(kph,-P4_mean[nt],'c--',linewidth=0.3)
-        pl.xlim(xlim)
-        pl.ylim(ylim)
-        pl.savefig(dir_figs + "/Mean_spec_mt.png",dpi=200)
-        pl.close('all')
-
-        print(".")
-        print(".")
-        print()
-        print("Done!")
-        print()
 
         sys.exit(-1)
