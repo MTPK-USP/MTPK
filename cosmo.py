@@ -129,6 +129,8 @@ class cosmo:
         self.Omega0_m = default_params['Omega0_m']
         self.Omega0_DE = default_params['Omega0_DE']
         self.Omega0_k = default_params['Omega0_k']
+        self.zcentral = default_params['zcentral']
+        self.matgrowcentral = default_params['matgrowcentral']
 
         if 'A_s' in kwargs.keys() and 'ln10e10AsA' in kwargs.keys():
             aux_A_s = np.exp(kwargs['ln10e10AsA'])*1e-10

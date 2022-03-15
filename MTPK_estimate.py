@@ -70,7 +70,7 @@ def est_f(m,q):
 # Parameters for this run
 #####################################################
 my_cosmology = cosmo() #This stantiates the class with default parameters
-physical_options = my_cosmology.default_params #This returns a dictionary with all the default parameters
+# physical_options = my_cosmology.default_params #This returns a dictionary with all the default parameters
 
 print("##########################")
 print('The cosmology is')
@@ -79,7 +79,7 @@ print(my_cosmology.cosmo_print())
 print()
 
 my_code_options = code_parameters() #This stantiates the class
-parameters_code = my_code_options.default_params #This returns a dictionary with all the default parameters
+# parameters_code = my_code_options.default_params #This returns a dictionary with all the default parameters
 
 print("##########################")
 print('The code options are')
@@ -91,30 +91,30 @@ print()
 #Defining all the parameters from new classes here
 ###################################################
 #Cosmological quantities
-h = physical_options['h']
+h = my_cosmology.h
 H0 = h*100.
-clight = physical_options['c_light']
-cH = clight*h/my_cosmology.H(physical_options['zcentral'], False) # c/H(z) , in units of h^-1 Mpc
-Omegam = physical_options['Omega0_m']
-OmegaDE = physical_options['Omega0_DE']
-Omegab = physical_options['Omega0_b']
-Omegac = physical_options['Omega0_cdm']
-A_s = physical_options['A_s']
-gamma = physical_options['gamma']
-matgrowcentral = physical_options['matgrowcentral']
-w0 = physical_options['w0']
-w1 = physical_options['w1']
-z_re = physical_options['z_re']
-zcentral = physical_options['zcentral']
-n_SA = physical_options['n_s']
+clight = my_cosmology.c_light
+cH = clight*h/my_cosmology.H(my_cosmology.zcentral, False) # c/H(z) , in units of h^-1 Mpc
+Omegam = my_cosmology.Omega0_m
+OmegaDE = my_cosmology.Omega0_DE
+Omegab = my_cosmology.Omega0_b
+Omegac = my_cosmology.Omega0_cdm
+A_s = my_cosmology.A_s
+gamma = my_cosmology.gamma
+matgrowcentral = my_cosmology.matgrowcentral
+w0 = my_cosmology.w0
+w1 = my_cosmology.w1
+z_re = my_cosmology.z_re
+zcentral = my_cosmology.zcentral
+n_SA = my_cosmology.n_s
 # Velocity dispersion. vdisp is defined on inputs with units of km/s
 vdisp = np.asarray(my_code_options.vdisp) #km/s
-sigma_v = my_code_options.vdisp/my_cosmology.H(physical_options['zcentral'], False) #Mpc/h
-a_vdisp = vdisp/physical_options['c_light'] #Adimensional vdisp
+sigma_v = my_code_options.vdisp/my_cosmology.H(my_cosmology.zcentral, False) #Mpc/h
+a_vdisp = vdisp/my_cosmology.c_light #Adimensional vdisp
 # Redshift errors. sigz_est is defined on inputs, and is adimensional
 sigz_est = np.asarray(my_code_options.sigz_est)
-sigma_z = sigz_est*physical_options['c_light']/my_cosmology.H(physical_options['zcentral'], False) # Mpc/h
-whichspec = parameters_code['whichspec']
+sigma_z = sigz_est*my_cosmology.c_light/my_cosmology.H(my_cosmology.zcentral, False) # Mpc/h
+whichspec = my_code_options.whichspec
 # Joint factor considering v dispersion and z error
 sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
 a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
@@ -126,7 +126,7 @@ gal_sigz_est = np.asarray(sigz_est)
 gal_vdisp = np.asarray(vdisp)
 a_gal_sig_tot = np.sqrt((gal_vdisp/clight)**2 + gal_sigz_est**2)
 #
-mas_method = parameters_code['mas_method']
+mas_method = my_code_options.mas_method
 if mas_method == 'NGP':
     mas_power = 1.0
 elif mas_method == 'CIC':
@@ -141,59 +141,58 @@ else:
     print("Aborting now...")
     sys.exit(-1)
 #
-use_mask = parameters_code['use_mask']
-sel_fun_data = parameters_code['sel_fun_data']
+use_mask = my_code_options.use_mask
+sel_fun_data = my_code_options.sel_fun_data
 # Save estimations for each assumed k_phys in subdirectories named after k_phys
-strkph = str(parameters_code['kph_central'])
+strkph = str(my_code_options.kph_central)
 #
-use_theory_spectrum = parameters_code['use_theory_spectrum']
-theory_spectrum_file = parameters_code['theory_spectrum_file']
+use_theory_spectrum = my_code_options.use_theory_spectrum
+theory_spectrum_file = my_code_options.theory_spectrum_file
 #
-k_min_camb = parameters_code['k_min_CAMB']
-k_max_camb = parameters_code['k_max_CAMB']
+k_min_camb = my_code_options.k_min_CAMB
+k_max_camb = my_code_options.k_max_CAMB
 #
-n_x = parameters_code['n_x']
-n_y = parameters_code['n_y']
-n_z = parameters_code['n_z']
-n_x_orig = parameters_code['n_x_orig']
-n_y_orig = parameters_code['n_y_orig']
-n_z_orig = parameters_code['n_z_orig']
+n_x = my_code_options.n_x
+n_y = my_code_options.n_y
+n_z = my_code_options.n_z
+n_x_orig = my_code_options.n_x_orig
+n_y_orig = my_code_options.n_y_orig
+n_z_orig = my_code_options.n_z_orig
 #
-use_padding = parameters_code['use_padding']
-padding_length = parameters_code['padding_length']
+use_padding = my_code_options.use_padding
+padding_length = my_code_options.padding_length
 #
-cell_size = parameters_code['cell_size']
+cell_size = my_code_options.cell_size
 ntracers = my_code_options.ntracers
 nbar = my_code_options.nbar
 ncentral = my_code_options.ncentral
 nsigma = my_code_options.nsigma
-sel_fun_file = parameters_code['sel_fun_file']
-mult_sel_fun = parameters_code['mult_sel_fun']
-shift_sel_fun = parameters_code['shift_sel_fun']
-mass_fun = parameters_code['mass_fun']
+sel_fun_file = my_code_options.sel_fun_file
+mult_sel_fun = my_code_options.mult_sel_fun
+shift_sel_fun = my_code_options.shift_sel_fun
+mass_fun = my_code_options.mass_fun
 #
-n_maps = parameters_code['n_maps']
+n_maps = my_code_options.n_maps
 #
-use_cell_low_count_thresh = parameters_code['use_cell_low_count_thresh']
-cell_low_count_thresh = parameters_code['cell_low_count_thresh']
+use_cell_low_count_thresh = my_code_options.use_cell_low_count_thresh
+cell_low_count_thresh = my_code_options.cell_low_count_thresh
 #
-use_kmax_phys = parameters_code['use_kmax_phys']
-kmax_phys = parameters_code['kmax_phys']
-dkph_bin = parameters_code['dkph_bin']
-use_kmin_phys = parameters_code['use_kmin_phys']
-kmin_phys = parameters_code['kmin_phys']
-use_kdip_phys = parameters_code['use_kdip_phys']
-kdip_phys = parameters_code['kdip_phys']
+use_kmax_phys = my_code_options.use_kmax_phys
+kmax_phys = my_code_options.kmax_phys
+dkph_bin = my_code_options.dkph_bin
+use_kmin_phys = my_code_options.use_kmin_phys
+kmin_phys = my_code_options.kmin_phys
+use_kdip_phys = my_code_options.use_kdip_phys
+kdip_phys = my_code_options.kdip_phys
 #
-method = parameters_code['method']
-multipoles_order = parameters_code['multipoles_order']
-#AQUI
+method = my_code_options.method
+multipoles_order = my_code_options.multipoles_order
+###################################################
 
 #####################################################
 # Load specs for this run
 #####################################################
 from MTPK import *
-
 
 ###################
 print()

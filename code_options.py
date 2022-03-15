@@ -181,9 +181,9 @@ class code_parameters:
             'mas_method'           : 'CIC',
             'use_kdip_phys'        : False,
             'kdip_phys'            : 0.005,
+            'multipoles_order'     : 4,
             'use_padding'          : False,
             'padding_length'       : [10, 10, 10],
-            'multipoles_order'     : 4,
             'use_theory_spectrum'  : False,
             'theory_spectrum_file' : "theory_spectrum_file.txt",
             'use_mask'             : False,
@@ -231,12 +231,14 @@ class code_parameters:
         self.mas_method = default_params['mas_method']
         self.use_kdip_phys = default_params['use_kdip_phys']
         self.kdip_phys = default_params['kdip_phys']
+        self.multipoles_order = default_params['multipoles_order']
         self.use_padding = default_params['use_padding']
         self.padding_length = default_params['padding_length']
-        self.multipoles_order = default_params['multipoles_order']
         self.mask_filename = default_params['mask_filename']
         self.use_theory_spectrum = default_params['use_theory_spectrum']
         self.theory_spectrum_file = default_params['theory_spectrum_file']
+        self.use_mask = default_params['use_mask']
+        self.mask_filename = default_params['mask_filename']
         self.mass_fun = default_params['mass_fun']
         self.halo_bias = default_params['halo_bias']
         self.nhalos = default_params['nhalos']
@@ -254,9 +256,12 @@ class code_parameters:
         self.cell_low_count_thresh = default_params['cell_low_count_thresh']
         self.mult_sel_fun = default_params['mult_sel_fun']
         self.shift_sel_fun = default_params['shift_sel_fun']
+        self.k_min_CAMB = default_params['k_min_CAMB']
+        self.k_max_CAMB = default_params['k_max_CAMB']
         self.kmin_bias = default_params['kmin_bias']
         self.kmax_bias = default_params['kmax_bias']
         self.kph_central = default_params['kph_central']
+        self.dkph_bin = default_params['dkph_bin']
         self.use_kmin_phys = default_params['use_kmin_phys']
         self.kmin_phys = default_params['kmin_phys']
         self.use_kmax_phys = default_params['use_kmax_phys']
