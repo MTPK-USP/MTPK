@@ -19,7 +19,7 @@ from scipy.ndimage import gaussian_filter
 
 # My classes -- functions used by the MTPK suite
 import fkp_multitracer as fkpmt
-import fkp_class as fkp  # This is the new class, which computes auto- and cross-spectra
+import fkp_class_beta as fkp  # This is the new class, which computes auto- and cross-spectra
 import pk_multipoles_gauss as pkmg
 import pk_crossmultipoles_gauss as pkmg_cross
 from camb_spec import camb_spectrum
@@ -890,6 +890,22 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
             Cross0_mean = np.mean(C0_fkp,axis=0)
 
+            #   SAVE these spectra
+            P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
+            P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
+            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+
         elif multipoles_order == 2:
             # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
             # Original (convolved) spectra:
@@ -1137,6 +1153,40 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P2_fkp_mean = np.mean(P2_fkp,axis=0)
             Cross0_mean = np.mean(C0_fkp,axis=0)
             Cross2_mean = np.mean(C2_fkp,axis=0)
+
+            # SAVE these spectra
+            P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
+            P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
+
+            P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
+            P2_fkp_save=np.reshape(P2_fkp,(n_maps,ntracers*pow_bins))
+
+            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
 
         else:
             # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
@@ -1399,6 +1449,51 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             Cross2_mean = np.mean(C2_fkp,axis=0)
             Cross4_mean = np.mean(C4_fkp,axis=0)
 
+            # SAVE spectra
+            P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
+            P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
+
+            P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
+            P2_fkp_save=np.reshape(P2_fkp,(n_maps,ntracers*pow_bins))
+
+            P4_save=np.reshape(P4_data,(n_maps,ntracers*pow_bins))
+            P4_fkp_save=np.reshape(P4_fkp,(n_maps,ntracers*pow_bins))
+
+            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            C4_fkp_save=np.reshape(C4_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+            
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+            
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE.dat',P4_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE_mean.dat',P4_mean,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP_mean.dat',P4_fkp_mean,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
+
     elif method == 'FKP':
 
         if multipoles_order == 0:
@@ -1584,6 +1679,23 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             # Means
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
             Cross0_mean = np.mean(C0_fkp,axis=0)
+
+            # SAVE spectra
+            P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
+
+            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
 
         elif multipoles_order == 2:
 
@@ -1779,6 +1891,32 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P2_fkp_mean = np.mean(P2_fkp,axis=0)
             Cross0_mean = np.mean(C0_fkp,axis=0)
             Cross2_mean = np.mean(C2_fkp,axis=0)
+
+            # SAVE spectra
+            P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
+
+            P2_fkp_save=np.reshape(P2_fkp,(n_maps,ntracers*pow_bins))
+
+            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
 
         else:
             # Traditional (FKP) method
@@ -1987,6 +2125,37 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             Cross2_mean = np.mean(C2_fkp,axis=0)
             Cross4_mean = np.mean(C4_fkp,axis=0)
 
+            # SAVE spectra
+            P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
+            P2_fkp_save=np.reshape(P2_fkp,(n_maps,ntracers*pow_bins))
+            P4_fkp_save=np.reshape(P4_fkp,(n_maps,ntracers*pow_bins))
+
+            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            C4_fkp_save=np.reshape(C4_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP_mean.dat',P4_fkp_mean,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
+
     elif method == 'MT':
 
         if multipoles_order == 0:
@@ -2147,6 +2316,19 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             # Means
             P0_mean = np.mean(P0_data,axis=0)
+
+            # SAVE spectra
+            P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
 
         elif multipoles_order == 2:
 
@@ -2310,6 +2492,22 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             # Means
             P0_mean = np.mean(P0_data,axis=0)
             P2_mean = np.mean(P2_data,axis=0)
+
+            # SAVE spectra
+            P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
+            P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
 
         else:
 
@@ -2479,5 +2677,24 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P0_mean = np.mean(P0_data,axis=0)
             P2_mean = np.mean(P2_data,axis=0)
             P4_mean = np.mean(P4_data,axis=0)
+
+            # SAVE spectra
+            P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
+            P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
+            P4_save=np.reshape(P4_data,(n_maps,ntracers*pow_bins))
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE.dat',P4_save,fmt="%6.4f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
+
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE_mean.dat',P4_mean,fmt="%6.4f")
 
     return 0

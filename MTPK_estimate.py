@@ -2696,6 +2696,8 @@ if method == 'both':
 
         np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
         np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+        
+        np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE.dat',P4_save,fmt="%6.4f")
         np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
 
         np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
