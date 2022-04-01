@@ -18,7 +18,8 @@ class fkp_init(object):
     Enters num_bins, n_bar (matrix), bias 
     n_x,n_y, n_z and the bin_matrix
     '''
-    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power):
+    # def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power):
+    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power, multipoles):
         # Here bin_matrix is the M-matrix
         self.num_bins = num_bins
         self.n_bar_matrix = n_bar_matrix
@@ -34,6 +35,8 @@ class fkp_init(object):
         self.phsize_z=float(cell_size*n_z)
         
         self.number_tracers = len(bias)
+
+        self.multipoles = multipoles #AQUI
 
         largenumber = 100000000.
         small = 1.0/largenumber
@@ -106,13 +109,17 @@ class fkp_init(object):
             # Future: recast this in terms of our new definitions - ASL 2015
             #########
 
-    def fkp(self,ng):
+    #AQUI
+    # def fkp(self,ng):
+    def fkp(self, ng):
         '''
         This is the FKP function itself, only entries are the galaxy maps for all tracers
         '''
         largenumber=100000000.
         small = 1.0/largenumber
         alpha = small
+
+        multipoles = self.multipoles#AQUI
     
         lenkf = int(self.n_x*self.n_y*(self.n_z//2+1))
         
@@ -129,179 +136,332 @@ class fkp_init(object):
         Fryy_k = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))
         Fryz_k = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))
         Frzz_k = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))
-        
-        F0kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
-        F2kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
-        F4kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
 
-        for i in range(self.number_tracers):
-            #self.F[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * (ng[i] - alpha*self.nr[i])
-            self.F[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * (ng[i])
-            self.F_bar[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * ( - alpha*self.nr[i])
-            Fk[i] = np.fft.rfftn(self.F[i]) / self.mas_wfunction + np.fft.rfftn(self.F_bar[i])
-            Fi = self.F[i] + self.F_bar[i]
-            #Fk_bar[i] = np.fft.rfftn(self.F_bar[i])
-            #F0kflat[i] = np.ndarray.flatten(Fk[i] + Fk_bar[i])
-            F0kflat[i] = np.ndarray.flatten(Fk[i])
-    
-            # Compute the multipoles
-            Frxx_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.rxhat))
-            Frxy_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.ryhat))
-            Frxz_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.rzhat))
-            Fryy_k[i]=np.fft.rfftn(Fi*(self.ryhat)*(self.ryhat))
-            Fryz_k[i]=np.fft.rfftn(Fi*(self.ryhat)*(self.rzhat))
-            Frzz_k[i]=np.fft.rfftn(Fi*(self.rzhat)*(self.rzhat))
+        if multipoles == 0: #Monopole
+            F0kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
 
-            F2 = (self.kx_half**2*Frxx_k[i] + \
-                self.ky_half**2*Fryy_k[i] + \
-                self.kz_half**2*Frzz_k[i] + \
-                2.0*self.kx_half*self.ky_half*Frxy_k[i] + \
-                2.0*self.kx_half*self.kz_half*Frxz_k[i] + \
-                2.0*self.ky_half*self.kz_half*Fryz_k[i] ) / self.mas_wfunction
+            for i in range(self.number_tracers):                                                        
+                self.F[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * (ng[i])                      
+                self.F_bar[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * ( - alpha*self.nr[i])    
+                Fk[i] = np.fft.rfftn(self.F[i]) / self.mas_wfunction + np.fft.rfftn(self.F_bar[i])      
+                Fi = self.F[i] + self.F_bar[i]                                                          
+                F0kflat[i] = np.ndarray.flatten(Fk[i])                                                  
 
-            # Now, the hexadecapole
-            F4 =  self.kx_half**4 *(np.fft.rfftn(Fi*(self.rxhat)**4))
-            F4 += self.ky_half**4 *(np.fft.rfftn(Fi*(self.ryhat)**4))
-            F4 += self.kz_half**4 *(np.fft.rfftn(Fi*(self.rzhat)**4))
+                # Compute the multipoles                                                                
+                Frxx_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.rxhat))                                    
+                Frxy_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.ryhat))                                    
+                Frxz_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.rzhat))                                    
+                Fryy_k[i]=np.fft.rfftn(Fi*(self.ryhat)*(self.ryhat))                                    
+                Fryz_k[i]=np.fft.rfftn(Fi*(self.ryhat)*(self.rzhat))                                    
+                Frzz_k[i]=np.fft.rfftn(Fi*(self.rzhat)*(self.rzhat))
 
-            F4 += 4.0 * self.kx_half**3 * self.ky_half * (np.fft.rfftn(Fi*(self.rxhat)**3*(self.ryhat)))
-            F4 += 4.0 * self.kx_half**3 * self.kz_half * (np.fft.rfftn(Fi*(self.rxhat)**3*(self.rzhat)))
-            F4 += 4.0 * self.ky_half**3 * self.kx_half * (np.fft.rfftn(Fi*(self.ryhat)**3*(self.rxhat)))
-            F4 += 4.0 * self.ky_half**3 * self.kz_half * (np.fft.rfftn(Fi*(self.ryhat)**3*(self.rzhat)))
-            F4 += 4.0 * self.kz_half**3 * self.kx_half * (np.fft.rfftn(Fi*(self.rzhat)**3*(self.rxhat)))
-            F4 += 4.0 * self.kz_half**3 * self.ky_half * (np.fft.rfftn(Fi*(self.rzhat)**3*(self.ryhat)))
+            F_ret = self.F + self.F_bar
 
-            F4 += 6.0 * self.kx_half**2 * self.ky_half**2 * (np.fft.rfftn(Fi*(self.rxhat)**2*(self.ryhat)**2))
-            F4 += 6.0 * self.kx_half**2 * self.kz_half**2 * (np.fft.rfftn(Fi*(self.rzhat)**2*(self.rxhat)**2))
-            F4 += 6.0 * self.ky_half**2 * self.kz_half**2 * (np.fft.rfftn(Fi*(self.ryhat)**2*(self.rzhat)**2))
-            
-            F4 += 12.0 * self.kx_half**2 * self.ky_half * self.kz_half * (np.fft.rfftn(Fi*(self.rxhat)**2*(self.ryhat)*(self.rzhat)))
-            F4 += 12.0 * self.kz_half**2 * self.kx_half * self.ky_half * (np.fft.rfftn(Fi*(self.rzhat)**2*(self.rxhat)*(self.ryhat)))
-            F4 += 12.0 * self.ky_half**2 * self.kz_half * self.kx_half * (np.fft.rfftn(Fi*(self.ryhat)**2*(self.rxhat)*(self.rzhat)))
+            self.Fk=Fk
 
-            F4 = F4 / self.mas_wfunction
+            ntr = self.number_tracers
+            Fkf2 = np.zeros((ntr,lenkf))
+            for i in range(self.number_tracers):
+                # Monopole: F(0)*F(0)^*
+                Fkf2[i] = ( F0kflat[i]*(F0kflat[i].conj()) ).real
 
-            F2kflat[i] = - F0kflat[i] + 3.0*np.ndarray.flatten(F2)
-            F4kflat[i] = -7.0/4.0*F0kflat[i] - 2.5*F2kflat[i] + 35.0/4.0*np.ndarray.flatten(F4)
-            # F2kflat[i] = - F0kflat[i] + 3.0*np.ndarray.flatten(self.kx_half**2*Frxx_k[i]+ self.ky_half**2*Fryy_k[i]+ self.kz_half**2*Frzz_k[i]+ 2.0*self.kx_half*self.ky_half*Frxy_k[i]+ 2.0*self.kx_half*self.kz_half*Frxz_k[i]+ 2.0*self.ky_half*self.kz_half*Fryz_k[i])
-
-        F_ret = self.F + self.F_bar
-        # F_ret = self.F
-        
-        #numpy.fft is in the same Fourier convention of PVP - no extra normalization needed
-        self.Fk=Fk               
-
-        # Frxx_k=Frxx_k
-        # Frxy_k=Frxy_k
-        # Frxz_k=Frxz_k
-        # Fryy_k=Fryy_k
-        # Fryz_k=Fryz_k
-        # Frzz_k=Frzz_k
-        
-        ntr = self.number_tracers
-        Fkf2 = np.zeros((ntr,lenkf))
-        F2kf2 = np.zeros((ntr,lenkf))
-        F4kf2 = np.zeros((ntr,lenkf))
-        for i in range(self.number_tracers):
-            # Monopole: F(0)*F(0)^*
-            Fkf2[i] = ( F0kflat[i]*(F0kflat[i].conj()) ).real
-            # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
-            F2kf2[i]= 0.5*( F2kflat[i]*(F0kflat[i].conj()) + F0kflat[i]*(F2kflat[i].conj()) ).real
-            # Hexadecapole
-            F4kf2[i]= 0.5*( F4kflat[i]*(F0kflat[i].conj()) + F0kflat[i]*(F4kflat[i].conj()) ).real
-            
-        self.Fkf2 = Fkf2
-        self.F2kf2 = F2kf2
-        self.F4kf2 = F4kf2
-        self.F0kflat = F0kflat
-        ###############################################################
-        counts=np.ones(self.num_bins) #initializing the vector that averages over modes within a bin 
-    
-        # Here are the operations involving the M-matrix = bin_matrix)
-        counts = (self.bin_matrix).dot(np.ones(lenkf))
-        self.counts = counts
-        V_k = counts/((self.n_x*self.n_y)*(self.n_z/2.+1)+small)
-
-        rel_var = np.zeros((self.number_tracers,self.num_bins)) #initializing relative variance vector
-        P_ret = np.zeros((self.number_tracers,self.num_bins))
-        P2_ret = np.zeros((self.number_tracers,self.num_bins))
-        P4_ret = np.zeros((self.number_tracers,self.num_bins))
-        self.Pshot_phys = np.zeros(self.number_tracers)
-        sigma = np.zeros((self.number_tracers,self.num_bins))
-            
-        for i in range(self.number_tracers):
-            # This is <|F(k)|^2> on bins [a]
-            # Changed to sparse matrix format
-            P_ret[i] = ((self.bin_matrix).dot(Fkf2[i]))/(self.counts + small)
-            # Quadrupole with factor of 5/2
-            P2_ret[i] = 2.5*((self.bin_matrix).dot(F2kf2[i]))/(self.counts + small)
-            # Hexadecapole with factor of 9/2
-            P4_ret[i] = 4.5*((self.bin_matrix).dot(F4kf2[i]))/(self.counts + small)
-            
-            P_ret[i] = np.abs(P_ret[i] - self.Pshot[i])
-
+            self.F0kflat = F0kflat  
             ###############################################################
-    
-            pifactor=1./(self.N[i]**4 +small)
-            rel_var[i] = pifactor*(self.N2[i]*(P_ret[i]**2) + 2.*self.N3[i]*P_ret[i] + self.N4[i])
-    
-            rel_var[i] = rel_var[i]/(V_k + small)
-            sigma[i] = np.sqrt(rel_var[i]).real #1-sigma error bars vector
+            counts=np.ones(self.num_bins) #initializing the vector that averages over modes within a bin     
+            # Here are the operations involving the M-matrix = bin_matrix)
+            counts = (self.bin_matrix).dot(np.ones(lenkf))
+            self.counts = counts
+            V_k = counts/((self.n_x*self.n_y)*(self.n_z/2.+1)+small)                                         
+            rel_var = np.zeros((self.number_tracers,self.num_bins)) #initializing relative variance vector
+            P_ret = np.zeros((self.number_tracers,self.num_bins))
+            self.Pshot_phys = np.zeros(self.number_tracers)
+            sigma = np.zeros((self.number_tracers,self.num_bins))
 
-            #changing to physical units
-            P_ret[i]=P_ret[i]*self.cell_size**3
-            P2_ret[i]=P2_ret[i]*self.cell_size**3
-            P4_ret[i]=P4_ret[i]*self.cell_size**3
-        
-            self.Pshot_phys[i]=self.Pshot[i]*self.cell_size**3
-            # TESTING
-            pshotret = (self.Pshot_phys[i])*(self.bias[i])**2
-            print("   FKP shot noise for tracer",i," : ", pshotret)
+            for i in range(self.number_tracers):
+                # This is <|F(k)|^2> on bins [a]
+                # Changed to sparse matrix format
+                P_ret[i] = ((self.bin_matrix).dot(Fkf2[i]))/(self.counts + small)
 
-            sigma[i] = sigma[i]*self.cell_size**3
-            
-        self.P_ret = P_ret
-        self.P2_ret = P2_ret
-        self.P4_ret = P4_ret
-        self.sigma = sigma
-        self.F_ret = F_ret
-    
-        self.cross_spec = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
-        index = 0
-        for i in range(ntr):
-            for j in range(i+1,ntr):
-                cross_temp = np.real( F0kflat[i]*np.conj(F0kflat[j]) )
-                self.cross_spec[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small)) 
-                index += 1
+                P_ret[i] = np.abs(P_ret[i] - self.Pshot[i])
+                ###############################################################
 
-        # Defining cross of the quadrupoles
-        self.cross_spec2 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
-        index = 0
-        for i in range(ntr):
-            for j in range(i+1,ntr):
+                pifactor=1./(self.N[i]**4 +small)
+                rel_var[i] = pifactor*(self.N2[i]*(P_ret[i]**2) + 2.*self.N3[i]*P_ret[i] + self.N4[i])
+
+                rel_var[i] = rel_var[i]/(V_k + small)
+                sigma[i] = np.sqrt(rel_var[i]).real #1-sigma error bars vector
+
+                #changing to physical units
+                P_ret[i]=P_ret[i]*self.cell_size**3
+
+                self.Pshot_phys[i]=self.Pshot[i]*self.cell_size**3
+                # TESTING
+                pshotret = (self.Pshot_phys[i])*(self.bias[i])**2
+                print("   FKP shot noise for tracer",i," : ", pshotret)
+
+                sigma[i] = sigma[i]*self.cell_size**3
+
+            self.P_ret = P_ret                                                                          
+            self.sigma = sigma                                                                          
+            self.F_ret = F_ret
+
+            self.cross_spec = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+            index = 0
+            for i in range(ntr):
+                for j in range(i+1,ntr):
+                    cross_temp = np.real( F0kflat[i]*np.conj(F0kflat[j]) )
+                    self.cross_spec[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                    index += 1
+
+
+        elif multipoles == 2: #Dipole
+            F0kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
+            F2kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
+
+            for i in range(self.number_tracers):                                                        
+                self.F[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * (ng[i])                      
+                self.F_bar[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * ( - alpha*self.nr[i])    
+                Fk[i] = np.fft.rfftn(self.F[i]) / self.mas_wfunction + np.fft.rfftn(self.F_bar[i])      
+                Fi = self.F[i] + self.F_bar[i]                                                          
+                F0kflat[i] = np.ndarray.flatten(Fk[i])                                                  
+
+                # Compute the multipoles                                                                
+                Frxx_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.rxhat))                                    
+                Frxy_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.ryhat))                                    
+                Frxz_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.rzhat))                                    
+                Fryy_k[i]=np.fft.rfftn(Fi*(self.ryhat)*(self.ryhat))                                    
+                Fryz_k[i]=np.fft.rfftn(Fi*(self.ryhat)*(self.rzhat))                                    
+                Frzz_k[i]=np.fft.rfftn(Fi*(self.rzhat)*(self.rzhat))
+
+                F2 = (self.kx_half**2*Frxx_k[i] + \
+                      self.ky_half**2*Fryy_k[i] + \
+                      self.kz_half**2*Frzz_k[i] + \
+                      2.0*self.kx_half*self.ky_half*Frxy_k[i] + \
+                      2.0*self.kx_half*self.kz_half*Frxz_k[i] + \
+                      2.0*self.ky_half*self.kz_half*Fryz_k[i] ) / self.mas_wfunction
+
+                F2kflat[i] = - F0kflat[i] + 3.0*np.ndarray.flatten(F2)
+
+            F_ret = self.F + self.F_bar
+
+            self.Fk=Fk
+
+            ntr = self.number_tracers
+            Fkf2 = np.zeros((ntr,lenkf))
+            F2kf2 = np.zeros((ntr,lenkf))
+            for i in range(self.number_tracers):
+                # Monopole: F(0)*F(0)^*
+                Fkf2[i] = ( F0kflat[i]*(F0kflat[i].conj()) ).real
                 # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
-                cross_temp = 0.5*( F2kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F2kflat[j].conj()) ).real
-                self.cross_spec2[index] = 2.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small)) 
-                index += 1
+                F2kf2[i]= 0.5*( F2kflat[i]*(F0kflat[i].conj()) + F0kflat[i]*(F2kflat[i].conj()) ).real
 
-	# Defining cross of the quadrupoles
-        self.cross_spec4 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
-        index = 0
-        for i in range(ntr):
-            for j in range(i+1,ntr):
-                cross_temp = 0.5*( F4kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F4kflat[j].conj()) ).real
-                self.cross_spec4[index] = 4.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
-                index += 1
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+            self.Fkf2 = Fkf2
+            self.F2kf2 = F2kf2
+            self.F0kflat = F0kflat  
+            ###############################################################
+            counts=np.ones(self.num_bins) #initializing the vector that averages over modes within a bin     
+            # Here are the operations involving the M-matrix = bin_matrix)
+            counts = (self.bin_matrix).dot(np.ones(lenkf))
+            self.counts = counts
+            V_k = counts/((self.n_x*self.n_y)*(self.n_z/2.+1)+small)                                         
+            rel_var = np.zeros((self.number_tracers,self.num_bins)) #initializing relative variance vector
+            P_ret = np.zeros((self.number_tracers,self.num_bins))
+            P2_ret = np.zeros((self.number_tracers,self.num_bins))
+            self.Pshot_phys = np.zeros(self.number_tracers)
+            sigma = np.zeros((self.number_tracers,self.num_bins))
+
+            for i in range(self.number_tracers):
+                # This is <|F(k)|^2> on bins [a]
+                # Changed to sparse matrix format
+                P_ret[i] = ((self.bin_matrix).dot(Fkf2[i]))/(self.counts + small)
+                # Quadrupole with factor of 5/2
+                P2_ret[i] = 2.5*((self.bin_matrix).dot(F2kf2[i]))/(self.counts + small)
+
+                P_ret[i] = np.abs(P_ret[i] - self.Pshot[i])
+                ###############################################################
+
+                pifactor=1./(self.N[i]**4 +small)
+                rel_var[i] = pifactor*(self.N2[i]*(P_ret[i]**2) + 2.*self.N3[i]*P_ret[i] + self.N4[i])
+
+                rel_var[i] = rel_var[i]/(V_k + small)
+                sigma[i] = np.sqrt(rel_var[i]).real #1-sigma error bars vector
+
+                #changing to physical units
+                P_ret[i]=P_ret[i]*self.cell_size**3
+                P2_ret[i]=P2_ret[i]*self.cell_size**3
+
+                self.Pshot_phys[i]=self.Pshot[i]*self.cell_size**3
+                # TESTING
+                pshotret = (self.Pshot_phys[i])*(self.bias[i])**2
+                print("   FKP shot noise for tracer",i," : ", pshotret)
+
+                sigma[i] = sigma[i]*self.cell_size**3
+
+            self.P_ret = P_ret                                                                          
+            self.P2_ret = P2_ret                                                                        
+            self.sigma = sigma                                                                          
+            self.F_ret = F_ret
+
+            self.cross_spec = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+            index = 0
+            for i in range(ntr):
+                for j in range(i+1,ntr):
+                    cross_temp = np.real( F0kflat[i]*np.conj(F0kflat[j]) )
+                    self.cross_spec[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                    index += 1
+
+            # Defining cross of the quadrupoles
+            self.cross_spec2 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+            index = 0
+            for i in range(ntr):
+                for j in range(i+1,ntr):
+                    # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
+                    cross_temp = 0.5*( F2kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F2kflat[j].conj()) ).real
+                    self.cross_spec2[index] = 2.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                    index += 1                                                                              
+
+        else: #Quadrupole
+            F0kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
+            F2kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
+            F4kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
+
+            for i in range(self.number_tracers):                                                        
+                self.F[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * (ng[i])                      
+                self.F_bar[i] = (self.w[i]/(self.N[i]*self.bias[i] + small)) * ( - alpha*self.nr[i])    
+                Fk[i] = np.fft.rfftn(self.F[i]) / self.mas_wfunction + np.fft.rfftn(self.F_bar[i])      
+                Fi = self.F[i] + self.F_bar[i]                                                          
+                F0kflat[i] = np.ndarray.flatten(Fk[i])                                                  
+
+                # Compute the multipoles                                                                
+                Frxx_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.rxhat))                                    
+                Frxy_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.ryhat))                                    
+                Frxz_k[i]=np.fft.rfftn(Fi*(self.rxhat)*(self.rzhat))                                    
+                Fryy_k[i]=np.fft.rfftn(Fi*(self.ryhat)*(self.ryhat))                                    
+                Fryz_k[i]=np.fft.rfftn(Fi*(self.ryhat)*(self.rzhat))                                    
+                Frzz_k[i]=np.fft.rfftn(Fi*(self.rzhat)*(self.rzhat))
+
+                F2 = (self.kx_half**2*Frxx_k[i] + \
+                      self.ky_half**2*Fryy_k[i] + \
+                      self.kz_half**2*Frzz_k[i] + \
+                      2.0*self.kx_half*self.ky_half*Frxy_k[i] + \
+                      2.0*self.kx_half*self.kz_half*Frxz_k[i] + \
+                      2.0*self.ky_half*self.kz_half*Fryz_k[i] ) / self.mas_wfunction
+
+                # Now, the hexadecapole                                                                 
+                F4 =  self.kx_half**4 *(np.fft.rfftn(Fi*(self.rxhat)**4))                               
+                F4 += self.ky_half**4 *(np.fft.rfftn(Fi*(self.ryhat)**4))                               
+                F4 += self.kz_half**4 *(np.fft.rfftn(Fi*(self.rzhat)**4))                               
+
+                F4 += 4.0 * self.kx_half**3 * self.ky_half * (np.fft.rfftn(Fi*(self.rxhat)**3*(self.ryhat))) 
+                F4 += 4.0 * self.kx_half**3 * self.kz_half * (np.fft.rfftn(Fi*(self.rxhat)**3*(self.rzhat))) 
+                F4 += 4.0 * self.ky_half**3 * self.kx_half * (np.fft.rfftn(Fi*(self.ryhat)**3*(self.rxhat))) 
+                F4 += 4.0 * self.ky_half**3 * self.kz_half * (np.fft.rfftn(Fi*(self.ryhat)**3*(self.rzhat))) 
+                F4 += 4.0 * self.kz_half**3 * self.kx_half * (np.fft.rfftn(Fi*(self.rzhat)**3*(self.rxhat))) 
+                F4 += 4.0 * self.kz_half**3 * self.ky_half * (np.fft.rfftn(Fi*(self.rzhat)**3*(self.ryhat))) 
+
+                F4 += 6.0 * self.kx_half**2 * self.ky_half**2 * (np.fft.rfftn(Fi*(self.rxhat)**2*(self.ryhat)**2))
+                F4 += 6.0 * self.kx_half**2 * self.kz_half**2 * (np.fft.rfftn(Fi*(self.rzhat)**2*(self.rxhat)**2))
+                F4 += 6.0 * self.ky_half**2 * self.kz_half**2 * (np.fft.rfftn(Fi*(self.ryhat)**2*(self.rzhat)**2))
+                
+                F4 += 12.0 * self.kx_half**2 * self.ky_half * self.kz_half * (np.fft.rfftn(Fi*(self.rxhat)**2*(self.ryhat)*(self.rzhat)))                                                                         
+                F4 += 12.0 * self.kz_half**2 * self.kx_half * self.ky_half * (np.fft.rfftn(Fi*(self.rzhat)**2*(self.rxhat)*(self.ryhat)))                                                                         
+                F4 += 12.0 * self.ky_half**2 * self.kz_half * self.kx_half * (np.fft.rfftn(Fi*(self.ryhat)**2*(self.rxhat)*(self.rzhat)))                                                                         
+                F4 = F4 / self.mas_wfunction
+
+                F2kflat[i] = - F0kflat[i] + 3.0*np.ndarray.flatten(F2)
+                F4kflat[i] = -7.0/4.0*F0kflat[i] - 2.5*F2kflat[i] + 35.0/4.0*np.ndarray.flatten(F4)
+
+            F_ret = self.F + self.F_bar
+
+            self.Fk=Fk
+
+            ntr = self.number_tracers
+            Fkf2 = np.zeros((ntr,lenkf))
+            F2kf2 = np.zeros((ntr,lenkf))
+            F4kf2 = np.zeros((ntr,lenkf))
+            for i in range(self.number_tracers):
+                # Monopole: F(0)*F(0)^*
+                Fkf2[i] = ( F0kflat[i]*(F0kflat[i].conj()) ).real
+                # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
+                F2kf2[i]= 0.5*( F2kflat[i]*(F0kflat[i].conj()) + F0kflat[i]*(F2kflat[i].conj()) ).real
+                # Hexadecapole
+                F4kf2[i]= 0.5*( F4kflat[i]*(F0kflat[i].conj()) + F0kflat[i]*(F4kflat[i].conj()) ).real
+
+            self.Fkf2 = Fkf2
+            self.F2kf2 = F2kf2
+            self.F4kf2 = F4kf2
+            self.F0kflat = F0kflat  
+            ###############################################################
+            counts=np.ones(self.num_bins) #initializing the vector that averages over modes within a bin     
+            # Here are the operations involving the M-matrix = bin_matrix)
+            counts = (self.bin_matrix).dot(np.ones(lenkf))
+            self.counts = counts
+            V_k = counts/((self.n_x*self.n_y)*(self.n_z/2.+1)+small)                                         
+            rel_var = np.zeros((self.number_tracers,self.num_bins)) #initializing relative variance vector
+            P_ret = np.zeros((self.number_tracers,self.num_bins))
+            P2_ret = np.zeros((self.number_tracers,self.num_bins))
+            P4_ret = np.zeros((self.number_tracers,self.num_bins))
+            self.Pshot_phys = np.zeros(self.number_tracers)
+            sigma = np.zeros((self.number_tracers,self.num_bins))
+
+            for i in range(self.number_tracers):
+                # This is <|F(k)|^2> on bins [a]
+                # Changed to sparse matrix format
+                P_ret[i] = ((self.bin_matrix).dot(Fkf2[i]))/(self.counts + small)
+                # Quadrupole with factor of 5/2
+                P2_ret[i] = 2.5*((self.bin_matrix).dot(F2kf2[i]))/(self.counts + small)
+                # Hexadecapole with factor of 9/2
+                P4_ret[i] = 4.5*((self.bin_matrix).dot(F4kf2[i]))/(self.counts + small)
+
+                P_ret[i] = np.abs(P_ret[i] - self.Pshot[i])
+                ###############################################################
+
+                pifactor=1./(self.N[i]**4 +small)
+                rel_var[i] = pifactor*(self.N2[i]*(P_ret[i]**2) + 2.*self.N3[i]*P_ret[i] + self.N4[i])
+
+                rel_var[i] = rel_var[i]/(V_k + small)
+                sigma[i] = np.sqrt(rel_var[i]).real #1-sigma error bars vector
+
+                #changing to physical units
+                P_ret[i]=P_ret[i]*self.cell_size**3
+                P2_ret[i]=P2_ret[i]*self.cell_size**3
+                P4_ret[i]=P4_ret[i]*self.cell_size**3
+
+                self.Pshot_phys[i]=self.Pshot[i]*self.cell_size**3
+                # TESTING
+                pshotret = (self.Pshot_phys[i])*(self.bias[i])**2
+                print("   FKP shot noise for tracer",i," : ", pshotret)
+
+                sigma[i] = sigma[i]*self.cell_size**3
+
+            self.P_ret = P_ret                                                                          
+            self.P2_ret = P2_ret                                                                        
+            self.P4_ret = P4_ret                                                                        
+            self.sigma = sigma                                                                          
+            self.F_ret = F_ret
+
+            self.cross_spec = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+            index = 0
+            for i in range(ntr):
+                for j in range(i+1,ntr):
+                    cross_temp = np.real( F0kflat[i]*np.conj(F0kflat[j]) )
+                    self.cross_spec[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                    index += 1
+
+            # Defining cross of the quadrupoles
+            self.cross_spec2 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+            index = 0
+            for i in range(ntr):
+                for j in range(i+1,ntr):
+                    # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
+                    cross_temp = 0.5*( F2kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F2kflat[j].conj()) ).real
+                    self.cross_spec2[index] = 2.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                    index += 1                                                                              
+            # Defining cross of the quadrupoles
+            self.cross_spec4 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+            index = 0
+            for i in range(ntr):
+                for j in range(i+1,ntr):
+                    cross_temp = 0.5*( F4kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F4kflat[j].conj()) ).real
+                    self.cross_spec4[index] = 4.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                    index += 1 

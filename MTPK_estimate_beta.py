@@ -35,37 +35,13 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
     Added Halo Model generalization and other changes, 01/2018
     Added cross-spectra -- Francisco Maion, 01/2020
     '''
-    # import numpy as np
-    # import os, sys
-    # import uuid
-    # import h5py
-    # import glob
-    # from time import time , strftime
-    # from scipy import interpolate
-    # from scipy import special
-    # from scipy.optimize import leastsq
-    # from scipy.sparse import csc_matrix
-    # from scipy.sparse import coo_matrix
-    # from scipy.sparse import csr_matrix
-    # from scipy.sparse import vstack
-    # from scipy.ndimage import gaussian_filter
     
     # Add path to /inputs directory in order to load inputs
     # Change as necessary according to your installation
     this_dir = os.getcwd()
     input_dir = this_dir + '/inputs'
     sys.path.append(input_dir)
-    
-    # # My classes -- functions used by the MTPK suite
-    # import fkp_multitracer as fkpmt
-    # import fkp_class as fkp  # This is the new class, which computes auto- and cross-spectra
-    # import pk_multipoles_gauss as pkmg
-    # import pk_crossmultipoles_gauss as pkmg_cross
-    # from camb_spec import camb_spectrum
-    # from cosmo_funcs import matgrow, H
-    # from analytical_selection_function import *
-    # import grid3D as gr
-    
+        
     small=1.e-8
 
     # Bias computed given the monopole and quadrupole.
@@ -731,7 +707,8 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
+            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power) #AQUI
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -962,7 +939,8 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
+            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power) #AQUI
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1212,7 +1190,8 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
+            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power) #AQUI
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1441,7 +1420,8 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
+            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power) #AQUI
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1626,7 +1606,8 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
+            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power) #AQUI
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1822,7 +1803,8 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)
+            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)#AQUI
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
