@@ -207,8 +207,8 @@ class code_parameters:
             'dkph_bin'             : 0.01,
             'use_kmin_phys'        : False,
             'kmin_phys'            : 0.05,
-            'use_kmax_phys'        : False,
-            'kmax_phys'            : 0.6,#1.0
+            'use_kmax_phys'        : True,
+            'kmax_phys'            : 1.0,
             'whichspec'            : 1,
             'use_cell_low_count_thresh': False,
             'cell_low_count_thresh': 0.0,

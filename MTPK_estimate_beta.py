@@ -18,7 +18,7 @@ from scipy.sparse import vstack
 from scipy.ndimage import gaussian_filter
 
 # My classes -- functions used by the MTPK suite
-import fkp_multitracer as fkpmt
+import fkp_multitracer_beta as fkpmt
 import fkp_class_beta as fkp  # This is the new class, which computes auto- and cross-spectra
 import pk_multipoles_gauss as pkmg
 import pk_crossmultipoles_gauss as pkmg_cross
@@ -702,7 +702,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
@@ -950,7 +950,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
@@ -1235,7 +1235,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
@@ -2190,7 +2190,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -2363,7 +2363,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -2543,7 +2543,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
 
             '''
             Because of the very sensitive nature of shot noise subtraction 

@@ -169,7 +169,7 @@ n_y_orig= -64 #-128.
 n_z_orig= 10000.
 
 # Mass Assignement Scheme
-mas_method = "TSC"
+mas_method = "CIC"
 
 # Volume occupied by tracers in this map: 1.635 h^-3 Gpc^3 (74.7% of the full box)
 ################################
@@ -368,15 +368,15 @@ fudge = 0.0000001
 
 ###############################################################################
 #   Cosmological model parameters (used by NumCosmo)
-Omegak=0.0
-w0= - 1.0
-w1= 0.0
-Omegab=0.05
-Omegac=0.262
-H0=67.32117
-n_SA=0.96
-A_s = 2e-9
-z_re=10.0
-k_min_camb = 1.e-4
-k_max_camb = 1.e+0
+Omegak = 0.0
+w0 = - 1.0
+w1 = 0.0
+Omegab = 0.048206
+Omegac = 0.2589
+H0 = 67.8
+n_SA = 0.96
+A_s = 2.1867466842075255e-09
+z_re = 9.99999
+k_min_camb = 0.0001
+k_max_camb = 1.0
 gamma = 0.5454
