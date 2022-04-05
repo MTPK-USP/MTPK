@@ -179,22 +179,12 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
     if not os.path.exists(dir_specs):
         os.makedirs(dir_specs)
     else:
-        print ('Directory ', dir_specs, 'exists!')
-        # print [name for name in os.listdir(dir_specs)]
-        answer = input('Continue anyway? y/n  ')
-        if answer!='y':
-            print ('Aborting now...')
-            sys.exit(-1)
+        pass
 
     if not os.path.exists(dir_figs):
         os.makedirs(dir_figs)
     else:
-        print ('Directory ', dir_figs , 'exists!')
-        # print [name for name in os.listdir(dir_figs)]
-        answer = input('Continue anyway? y/n  ')
-        if answer!='y':
-            print ('Aborting now...')
-            sys.exit(-1)
+        pass
 
     #############Calling CAMB for calculations of the spectra#################
     print('Beggining CAMB calculations\n')
@@ -702,12 +692,11 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power) #AQUI
             fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
@@ -835,9 +824,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             # Correct missing factor of 2 in definition
             Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
 
-            #del maps
-            #maps = None
-
             ################################################################################
             ################################################################################
     
@@ -950,12 +936,11 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power) #AQUI
             fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
@@ -1093,9 +1078,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             # Correct missing factor of 2 in definition
             Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
-
-            #del maps
-            #maps = None
 
             ################################################################################
             ################################################################################
@@ -1235,12 +1217,11 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power) #AQUI
             fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
@@ -1385,9 +1366,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             # Correct missing factor of 2 in definition
             Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
 
-            #del maps
-            #maps = None
-
             ################################################################################
             ################################################################################
 
@@ -1515,7 +1493,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power) #AQUI
             fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
@@ -1627,9 +1604,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             # Correct missing factor of 2 in definition
             Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
 
-            #del maps
-            #maps = None
-
             ################################################################################
             ################################################################################
 
@@ -1718,7 +1692,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power) #AQUI
             fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
@@ -1836,9 +1809,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             # Correct missing factor of 2 in definition
             Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
 
-            #del maps
-            #maps = None
-
             ################################################################################
             ################################################################################
 
@@ -1941,7 +1911,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            # fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power)#AQUI
             fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
 
             '''
@@ -2065,9 +2034,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             # Correct missing factor of 2 in definition
             Theor_Cov_FKP = 2.0*np.mean(ThCov_fkp,axis=0)
 
-            #del maps
-            #maps = None
-
             ################################################################################
             ################################################################################
 
@@ -2190,7 +2156,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -2282,9 +2248,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
 
-            #del maps
-            #maps = None
-
             ################################################################################
             ################################################################################
 
@@ -2363,7 +2326,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -2457,9 +2420,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
 
-            #del maps
-            #maps = None
-
             ################################################################################
             ################################################################################
 
@@ -2543,7 +2503,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             print( "Initializing multi-tracer estimation toolbox...")
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order) #AQUI
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -2639,9 +2599,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
     
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
-
-            #del maps
-            #maps = None
 
             ################################################################################
             ################################################################################
