@@ -18,7 +18,6 @@ class fkp_init(object):
     Enters num_bins, n_bar (matrix), bias 
     n_x,n_y, n_z and the bin_matrix
     '''
-    # def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power):
     def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power, multipoles):
         # Here bin_matrix is the M-matrix
         self.num_bins = num_bins
@@ -36,7 +35,7 @@ class fkp_init(object):
         
         self.number_tracers = len(bias)
 
-        self.multipoles = multipoles #AQUI
+        self.multipoles = multipoles
 
         largenumber = 100000000.
         small = 1.0/largenumber
@@ -109,8 +108,6 @@ class fkp_init(object):
             # Future: recast this in terms of our new definitions - ASL 2015
             #########
 
-    #AQUI
-    # def fkp(self,ng):
     def fkp(self, ng):
         '''
         This is the FKP function itself, only entries are the galaxy maps for all tracers
@@ -119,16 +116,14 @@ class fkp_init(object):
         small = 1.0/largenumber
         alpha = small
 
-        multipoles = self.multipoles#AQUI
+        multipoles = self.multipoles
     
         lenkf = int(self.n_x*self.n_y*(self.n_z//2+1))
         
         # Weighted overdensity field -- eq. 6 in PVP
         self.F = np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z))
         self.F_bar = np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z))
-        Fk = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))
-        # Fk = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))
-        
+        Fk = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))        
         
         Frxx_k = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))
         Frxy_k = (1.+ 0.0*1j)*np.zeros((self.number_tracers, self.n_x, self.n_y, self.n_z//2+1))

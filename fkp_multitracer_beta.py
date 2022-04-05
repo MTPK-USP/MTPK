@@ -118,15 +118,12 @@ class fkp_init(object):
         # Notice that w1 and wt have different dimensions:
         # wt is an array [nt,nx,ny,nz]
         self.wt = (self.cP_mu)/(1.0 + self.cP_tot)
-        # wt is an array [nt,nx*ny*nz]
-        #self.wt_flat = (self.cP_mu_flat)/(1.0 + self.cP_tot_flat)
 
         # Estimator bias, \Delta Q : [nt]
-        # self.DeltaQ_mu = self.norm_Q * (0.5*(1.0 + self.alpha)*np.sum( self.n_bar_flat/np.power(1.0 + self.cP_tot_flat,2) , axis=1) )
         self.DeltaQ_mu = 0.5*(1.0 + self.alpha)*np.sum( self.n_bar_flat/np.power(1.0 + self.cP_tot_flat,2) , axis=1)
 
         #Multipoles
-        self.multipoles = multipoles #AQUI
+        self.multipoles = multipoles
 
         # Multi-tracer Fisher matrix
         # I1_mu : [nt]
@@ -154,21 +151,6 @@ class fkp_init(object):
         #print('wt_flat :',np.shape(self.wt_flat))
         #print('DeltaQ_mu :',np.shape(self.DeltaQ_mu))
 
-        ##################### OLD STUFF -- REMOVE LATER, AFTER FINAL TESTS
-        # Normalization N -- PVP ,Eq. 7:
-        # N^2 = \int dV n^2 w^2 = \int dV (n b^2 P/(1 + n b^2 P))^2
-        # self.N = np.sqrt(np.sum((n_bar_matrix**2)*(self.w**2)))
-        
-        # Other normalizations used for sigmas
-        # self.N2 = np.sum((n_bar_matrix**4.)*(self.w**4.))               # \int dV n^4 w^4
-        # self.N3 = np.sum((n_bar_matrix**3.)*(self.w**4.)/(bias**2.))    # \int dV n^3 w^4/b^2
-        # self.N4 = np.sum((n_bar_matrix**2.)*(self.w**4.)/(bias**4.))    # \int dV n^2 w^4/b^4
-        
-        # Shot noise -- PVP, Eq. 16:
-        # P_shot = (1+alpha)/N^2 * \int dV n w^2/b^2
-        # self.Pshot = ((1+self.alpha)/(self.N**2 + small)) * np.sum(n_bar_matrix*((self.w**2)/(bias**2 + small)))
-        
-
     def fkp(self,ng):
         '''
         This is the FKP function itself, only entry is the galaxy map
@@ -187,43 +169,21 @@ class fkp_init(object):
         #self.F1_mu = (self.bias*((ng - self.alpha*self.nr).T)).T
         self.F1_mu = (self.bias*((ng).T)).T
         self.F1_mu_bar = (self.bias*(( - self.alpha*self.nr).T)).T
-        #print('F1_mu :',np.shape(self.F1_mu))
         # Now sum over tracers to get F1tot:
 
-        #self.F1_tot = np.sum(self.F1_mu,axis=0)
         self.F1_tot = np.sum(self.F1_mu,axis=0)
         self.F1_tot_bar = np.sum(self.F1_mu_bar,axis=0)
-        #print('F1_tot :',np.shape(self.F1_tot))
         # Now obtain F_mu
-        # self.F_mu = self.F1_mu - ( self.cP_mu/(1.0 + self.cP_tot))*(self.F1_tot)
         
-        #self.F_mu = self.F1_mu - self.wt * self.F1_tot
         self.F_mu = self.F1_mu - self.wt * self.F1_tot
         self.F_mu_bar = self.F1_mu_bar - self.wt * self.F1_tot_bar
         Fmu = self.F_mu + self.F_mu_bar
         
-        #self.F_tot = np.sum(self.F_mu,axis=0)
         self.F_tot = np.sum(self.F_mu,axis=0)
         self.F_tot_bar = np.sum(self.F_mu_bar,axis=0)
-        
-        # No need to F_tot now -- will FFT the F_mu, then sum them
-
-        # OLD FKP STUFF -- keep it for checking later
-        # self.F=(self.w/(self.N*self.bias + small)) * (ng - self.alpha*self.nr)
-        # ALSO KEEP THIS OLD STUFF TO CHECK LATER
-        # This mu is only in order to introduce a multipole "by hand"
-        # mu = 1.0/(np.sqrt(3.0))*(self.kxhat+self.kyhat+self.kzhat)
-        # mu = 1.0/(np.sqrt(2.0))*(0*self.kxhat+self.kyhat+self.kzhat)
-        # should be this:
-        # mu = self.kzhat
-        # mu = np.abs(mu)
-        # Fk=Fk*(1.0 + 2.0*self.quad*(-0.5+1.5*mu**2))/np.sqrt(1 + (2.0*self.quad)**2/20.0)
-        
-        # FFts: will need F_tot and F_mu only
-        # Need to carry out one for each tracer, independently!
 
         #Multipoles
-        multipoles = self.multipoles#AQUI
+        multipoles = self.multipoles
         
         #F_mu_k = np.zeros((self.n_x,self.n_y,self.n_z))
         # These are the flattened arrays for the multipoles of F_mu field:
@@ -245,11 +205,11 @@ class fkp_init(object):
             F_mu_k = np.fft.rfftn(self.F_mu[nt]) / self.mas_wfunction
             F_mu_k_bar = np.fft.rfftn(self.F_mu_bar[nt]) #/ self.mas_wfunction
 
-            if multipoles == 0:#AQUI
+            if multipoles == 0:
                 # Monopole
                 F0_mu_k_flat[nt] = np.ndarray.flatten( F_mu_k + F_mu_k_bar )
 
-            if multipoles == 2:#AQUI
+            if multipoles == 2:
                 # Monopole
                 F0_mu_k_flat[nt] = np.ndarray.flatten( F_mu_k + F_mu_k_bar )
 
@@ -265,7 +225,7 @@ class fkp_init(object):
 
                 F2_mu_k_flat[nt] = - F0_mu_k_flat[nt] + 3.0*np.ndarray.flatten( F2mu )
 
-            if multipoles == 4:#AQUI
+            if multipoles == 4:
                 # Monopole
                 F0_mu_k_flat[nt] = np.ndarray.flatten( F_mu_k + F_mu_k_bar )
 
@@ -304,7 +264,7 @@ class fkp_init(object):
                 F2_mu_k_flat[nt] = - F0_mu_k_flat[nt] + 3.0*np.ndarray.flatten( F2mu )
                 F4_mu_k_flat[nt] = - 7.0/4.0*F0_mu_k_flat[nt] - 2.5*F2_mu_k_flat[nt] + 35.0/4.0*np.ndarray.flatten(F4mu)
 
-        if multipoles == 0:#AQUI
+        if multipoles == 0:
 
             #????????? WTF??... Seems to need these lines... Some python crazy shit?...
             F0_mu_k_flat = F0_mu_k_flat
@@ -364,13 +324,6 @@ class fkp_init(object):
             # the actual P0_mu_ret obtained above, would be
             # prohibitive, numerically. We use, for now, F_inv_munu.
 
-            ###############################################################
-            ######### CONTINUE HERE                    ####################
-            ######### CONTINUE HERE                    ####################
-            ######### CONTINUE HERE                    ####################
-            ######### CONTINUE HERE                    ####################
-            ###############################################################
-
             # Changing to physical units
             P0_mu_ret = P0_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
         
@@ -378,24 +331,18 @@ class fkp_init(object):
             Cov_ret = np.reshape( np.kron( Cov_munu , 1.0/(Vk + small) ),(number_tracers,number_tracers,nbinsout) )
             Cov_ret = Cov_ret*((self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)**2)
 
-            #F0k2_ret = F0k2_flat 
-            #F2k2_ret = F2k2_flat
-
             Q0_mu_ret = Q0_mu_flat 
         
             # Finalize output
             self.P0_mu_ret = P0_mu_ret
 
             self.Q0_mu_ret = Q0_mu_ret
-
-            #self.F0k2_ret = F0k2_ret
-            #self.F2k2_ret = F2k2_ret
         
             self.Cov_ret = Cov_ret
             self.Cov_munu = Cov_munu
 
 
-        elif multipoles == 2:#AQUI
+        elif multipoles == 2:
 
             #????????? WTF??... Seems to need these lines... Some python crazy shit?...
             F0_mu_k_flat = F0_mu_k_flat
@@ -466,13 +413,6 @@ class fkp_init(object):
             # the actual P0_mu_ret obtained above, would be
             # prohibitive, numerically. We use, for now, F_inv_munu.
 
-            ###############################################################
-            ######### CONTINUE HERE                    ####################
-            ######### CONTINUE HERE                    ####################
-            ######### CONTINUE HERE                    ####################
-            ######### CONTINUE HERE                    ####################
-            ###############################################################
-
             # Changing to physical units
             P0_mu_ret = P0_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
             P2_mu_ret = P2_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
@@ -480,9 +420,6 @@ class fkp_init(object):
             # Now we need the covariance for each bin -- including the bin volumes
             Cov_ret = np.reshape( np.kron( Cov_munu , 1.0/(Vk + small) ),(number_tracers,number_tracers,nbinsout) )
             Cov_ret = Cov_ret*((self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)**2)
-
-            #F0k2_ret = F0k2_flat 
-            #F2k2_ret = F2k2_flat
 
             Q0_mu_ret = Q0_mu_flat 
             Q2_mu_ret = Q2_mu_flat
@@ -493,10 +430,7 @@ class fkp_init(object):
 
             self.Q0_mu_ret = Q0_mu_ret
             self.Q2_mu_ret = Q2_mu_ret
-
-            #self.F0k2_ret = F0k2_ret
-            #self.F2k2_ret = F2k2_ret
-        
+   
             self.Cov_ret = Cov_ret
             self.Cov_munu = Cov_munu
 
@@ -582,13 +516,6 @@ class fkp_init(object):
             # the actual P0_mu_ret obtained above, would be
             # prohibitive, numerically. We use, for now, F_inv_munu.
 
-            ###############################################################
-            ######### CONTINUE HERE                    ####################
-            ######### CONTINUE HERE                    ####################
-            ######### CONTINUE HERE                    ####################
-            ######### CONTINUE HERE                    ####################
-            ###############################################################
-
             # Changing to physical units
             P0_mu_ret = P0_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
             P2_mu_ret = P2_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)
@@ -597,9 +524,6 @@ class fkp_init(object):
             # Now we need the covariance for each bin -- including the bin volumes
             Cov_ret = np.reshape( np.kron( Cov_munu , 1.0/(Vk + small) ),(number_tracers,number_tracers,nbinsout) )
             Cov_ret = Cov_ret*((self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z)**2)
-
-            #F0k2_ret = F0k2_flat 
-            #F2k2_ret = F2k2_flat
 
             Q0_mu_ret = Q0_mu_flat 
             Q2_mu_ret = Q2_mu_flat
@@ -614,8 +538,5 @@ class fkp_init(object):
             self.Q2_mu_ret = Q2_mu_ret
             self.Q4_mu_ret = Q4_mu_ret
 
-            #self.F0k2_ret = F0k2_ret
-            #self.F2k2_ret = F2k2_ret
-        
             self.Cov_ret = Cov_ret
             self.Cov_munu = Cov_munu
