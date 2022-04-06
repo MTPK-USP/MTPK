@@ -26,19 +26,7 @@
 # This is the directory where the data files and data selection function are stored
 # This is only called if either sims_only=False, or if sel_fun_data=True
 
-#handle_data = "Highz_z16"
-#handle_data = "Highz_z16_gals"
-#handle_data = "SHUFFLE_Highz_z16_gals"
-# handle_data = "ExSHalos"
-handle_data = "PM"
-
-#handle_data = "Highz_z20"
-#handle_data = "Highz_z20_gals"
-#handle_data = "SHUFFLE_Highz_z20_gals"
-
-#handle_data = "Highz_z24"
-#handle_data = "Highz_z24_gals"
-#handle_data = "SHUFFLE_Highz_z24_gals"
+handle_data = "ExSHalos"
 
 # ATTENTION: data files should be stored in hdf5 (N_tracers,nx,ny,nz) tables,
 # with names ending in ..._DATA.hdf5
@@ -53,10 +41,6 @@ handle_data = "PM"
 
 handle_sims = handle_data
 
-#handle_sims = "SDSSHalos2_z3_H"
-#handle_sims= "MD_Big_box_Vm_age"
-#handle_sims= "MD_Big_box_Vm_c200"
-#handle_sims= "MD_Big_box_Vm_spin"
 #########################################################
 
 
@@ -67,15 +51,6 @@ handle_sims = handle_data
 # the estimations of the power spectra, the figures, and mains results.
 
 handle_estimates = handle_data
-#handle_estimates = "Renan_2tracers_JPAS_z035_v11_comb"
-
-
-#handle_estimates= "JPAS_z_05_halos"
-#handle_estimates= "JPAS_z_05"
-
-#handle_estimates = "MD_Small_box_Vm_age"
-#handle_estimates = "MD_Small_box_Vm_c200"
-#handle_estimates = "MD_Small_box_Vm_spin"
 
 #########################################################
 
