@@ -132,6 +132,7 @@ class cosmo:
         self.zcentral = default_params['zcentral']
         self.matgrowcentral = default_params['matgrowcentral']
 
+        #Error for incompatible A_s and ln10e10AsA
         if 'A_s' in kwargs.keys() and 'ln10e10AsA' in kwargs.keys():
             aux_A_s = np.exp(kwargs['ln10e10AsA'])*1e-10
             if not np.allclose(aux_A_s, kwargs['A_s'], rtol = 1e-13, atol = 1e-13):
@@ -140,6 +141,7 @@ class cosmo:
             if not np.allclose(aux_ln10e10AsA, kwargs['ln10e10AsA'], rtol = 1e-13, atol = 1e-13):
                 raise ValueError("Your keys A_s and ln10e10AsA are incompatible")
 
+        #Errors for incompatibility in the cosmological parameters
         if 'Omega0_b' in kwargs.keys() and 'Omega0_cdm' in kwargs.keys() and 'Omega0_m' in kwargs.keys():
             aux_Omega0_m = kwargs['Omega0_b'] + kwargs['Omega0_cdm']
             if not np.allclose(aux_Omega0_m, kwargs['Omega0_m'], rtol = 1e-13, atol = 1e-13):
@@ -156,15 +158,6 @@ class cosmo:
             if type(default_params[key]) != type(value):
                 raise TypeError(f"Expected {type(default_params[key])}, got {type(value)} in key '{key}'")
             default_params[key] = value
-
-        if self.A_s != default_params['A_s'] and 'ln10e10AsA' not in kwargs.keys():
-            self.A_s = default_params['A_s']
-            self.ln10e10AsA = np.log(self.A_s*1e10)
-            default_params['ln10e10AsA'] = self.ln10e10AsA
-        if self.ln10e10AsA != default_params['ln10e10AsA'] and 'A_s' not in kwargs.keys():
-            self.ln10e10AsA = default_params['ln10e10AsA']
-            self.A_s = np.exp(self.ln10e10AsA)*1e-10
-            default_params['A_s'] = self.A_s
 
         if self.Omega0_DE != default_params['Omega0_DE'] and 'Omega0_k' not in kwargs.keys():
             self.Omega0_DE = default_params['Omega0_DE']
@@ -216,6 +209,17 @@ class cosmo:
             self.Omega0_DE = default_params['Omega0_DE']
             default_params['Omega0_k'] = 1. - self.Omega0_m - self.Omega0_DE
 
+        #Computing A_s or ln10e10AsA when the user pass one or another
+        if self.A_s != default_params['A_s'] and 'ln10e10AsA' not in kwargs.keys():
+            self.A_s = default_params['A_s']
+            self.ln10e10AsA = np.log(self.A_s*1e10)
+            default_params['ln10e10AsA'] = self.ln10e10AsA
+        if self.ln10e10AsA != default_params['ln10e10AsA'] and 'A_s' not in kwargs.keys():
+            self.ln10e10AsA = default_params['ln10e10AsA']
+            self.A_s = np.exp(self.ln10e10AsA)*1e-10
+            default_params['A_s'] = self.A_s
+
+        #Computed Parameters
         self.h          = default_params['h']
         self.Omega0_b   = default_params['Omega0_b']
         self.Omega0_cdm = default_params['Omega0_cdm']
@@ -232,6 +236,7 @@ class cosmo:
         
         self.default_params = default_params
 
+        #Defining flatness
         if(self.flat):
             if(self.default_params['Omega0_m'] + self.default_params['Omega0_DE'] != 1):
                 raise ValueError(r"This is not a flat cosmology, Omega0_m + Omega0_DE = {}".format(self.default_params['Omega0_m'] + self.default_params['Omega0_DE']) )
@@ -265,7 +270,7 @@ class cosmo:
         a = 1/(1+z)
         w = w0 + (1-a)*w1
 
-        return( ( Omega0_m*a**(-3.)/( Omega0_m*a**(-3.) + Omega0_DE*a**(-3.*(1.+w)) ) )**(gamma) )
+        return ( ( Omega0_m*a**(-3.)/( Omega0_m*a**(-3.) + Omega0_DE*a**(-3.*(1.+w)) ) )**(gamma) )
 
     def f_phenomenological(self):
         '''
@@ -309,7 +314,7 @@ class cosmo:
         a  = 1 / (1+z)
         w  = w0 + (1-a)*w1
 
-        return( H0*np.sqrt( Omega0_m*a**(-3) + Omega0_DE*a**(-3*(1+w)) ) )
+        return ( H0*np.sqrt( Omega0_m*a**(-3) + Omega0_DE*a**(-3*(1+w)) ) )
 
     def comoving(self, z, h_units):
         # from scipy.integrate import simps
