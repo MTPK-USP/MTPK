@@ -49,8 +49,8 @@ else:
 
 # Or, use glob and read all catalogs in some directory 
 
-#Natali
-roound = int(sys.argv[1])
+# #Natali
+# roound = int(sys.argv[1])
 
 this_dir = os.getcwd()
 

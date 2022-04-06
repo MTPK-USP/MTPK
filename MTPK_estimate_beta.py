@@ -84,6 +84,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
     a_vdisp = vdisp/my_cosmology.c_light #Adimensional vdisp
     sigz_est = np.asarray(my_code_options.sigz_est) #adimensional
     sigma_z = sigz_est*my_cosmology.c_light/my_cosmology.H(my_cosmology.zcentral, False) # Mpc/h
+    #Code options
     whichspec = my_code_options.whichspec
     sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
     a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
