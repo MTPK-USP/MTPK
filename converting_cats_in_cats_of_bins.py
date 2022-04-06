@@ -30,6 +30,9 @@ class converting_cats_in_cats_of_bins:
     skiprows: integer
            Number of rows to skip, in the case of cats containing headers or other info
 
+    V: float
+           Volume of the box considered
+
     path_to_save: string
            Path to save the new catalogs
 
@@ -59,6 +62,7 @@ class converting_cats_in_cats_of_bins:
             'm_max'         : 10**(13),
             'n_bins'        : 3,
             'skiprows'      : 1,
+            'V'             : 128.**3,
             'path_to_save'  : 'data/ExSHalos/'
         }
 
@@ -72,6 +76,7 @@ class converting_cats_in_cats_of_bins:
         self.m_max = default_params['m_max']
         self.n_bins = default_params['n_bins']
         self.skiprows = default_params['skiprows']
+        self.V = default_params['V']
         self.path_to_save = default_params['path_to_save']
 
         for key, value in kwargs.items():
@@ -96,6 +101,8 @@ class converting_cats_in_cats_of_bins:
     def to_bins(self):
         '''
         Method to split the halos in bins according to their masses
+
+        It return the Mass Function of the catalogs
         '''
         cats = self.default_params['cats']
         m_col = self.default_params['m_col']
@@ -106,16 +113,22 @@ class converting_cats_in_cats_of_bins:
         m_max = self.default_params['m_max']
         n_bins = self.default_params['n_bins']
         skiprows = self.default_params['skiprows']
+        V = self.default_params['V']
         path_to_save = self.default_params['path_to_save']
         
         m_lims = np.logspace(np.log10(m_min), np.log10(m_max), n_bins + 1)
         dataj = {}
+        MF = []
         for i in range( len(cats) ):
             data = np.loadtxt(cats[i], skiprows = skiprows)
             for j in range(n_bins):
                 dataj[j] = data[ np.where( (data[:, m_col] > m_lims[j] ) & (data[:, m_col] <= m_lims[j+1]) ) ]
+                MF.append( dataj[j].shape[0] )
                 np.savetxt(path_to_save+f'seed{i}_bin{j}.dat', dataj[j][:, [x_col, y_col, z_col] ])
-        return print('Catalogs created!')
+        MF = np.array(MF)
+        MF = MF.reshape( (len(cats), n_bins) )
+        print('Catalogs created!')
+        return np.mean(MF, axis = 0)/V
 
     def central_masses(self):
         '''
