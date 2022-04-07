@@ -266,10 +266,6 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
         dir_out = this_dir + "/maps/sims/" + input_filename + "/"
         filenames_out = "Data"
 
-        # File to save mean total number of tracers in maps
-        file_ntot = this_dir + "/inputs/Ntot_halos.txt"
-        file_MF = this_dir + "/inputs/"+input_filename+"_MF.dat"
-
         print()
         print("Will load maps stored in files:")
         print(filenames_catalogs)
@@ -467,11 +463,6 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
         mean_counts = mean_counts/Ncats
         tot_counts = np.sum(mean_counts,axis=0)
 
-        # Mean total number of halos of each type in box
-        np.savetxt(file_ntot, np.sum(mean_counts, axis=(1,2,3) ) )
-        # Mass Function in box
-        np.savetxt(file_MF, np.sum(mean_counts, axis=(1,2,3) )/V )
-
         if save_mean_sel_fun:
 	        nf1=len(tot_counts[tot_counts!=0])
 
@@ -517,4 +508,4 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
         print("++++++++++++++++++++")
         print()
         
-        return 0
+        return

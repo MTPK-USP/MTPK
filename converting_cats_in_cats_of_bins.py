@@ -91,7 +91,7 @@ class converting_cats_in_cats_of_bins:
         '''
         for key in self.default_params:
             print('{} = {}'.format(key, self.default_params[key] ) )
-        return ''
+        return
 
     def to_bins(self, cat_specs):
         '''
