@@ -176,6 +176,9 @@ class code_parameters:
        True -> Use redshifts collumn                                                                    
        False -> Otherwise
 
+    col_m: integer                                                                                      
+      It is the collumn in the catalog corresponding to the mass of the halos
+
     col_x, col_y, col_z : integers                                                                      
       Necessary to create the catalogs
       Specify columns for x, y, z in the catalogs 
@@ -197,6 +200,12 @@ class code_parameters:
       While creating the catalogs
        True -> Save rough/estimated selection function from mean of catalogs                           
        False -> Otherwise 
+
+    m_min, m_max: floats                                                                               
+      Correspond to the mininum and maximum mass to be considered   
+
+    V: float                                                                                           
+      Volume of the box considered 
 
     Yields
     ------
@@ -251,6 +260,7 @@ class code_parameters:
             'k_min_CAMB'           : 1.e-4,
             'k_max_CAMB'           : 1.e+0,
             'use_redshifts'        : False,
+            'col_m'                : 6,
             'col_x'                : 0,
             'col_y'                : 1,
             'col_z'                : 2,
@@ -262,7 +272,10 @@ class code_parameters:
             'z_cat_max'            : 128.,
             'mask_redshift'        : False,
             'save_mask'            : False,
-            'save_mean_sel_fun'    : False
+            'save_mean_sel_fun'    : False,
+            'm_min'                : 10**(11.5),
+            'm_max'                : 10**(13.),
+            'V'                    : 128.**3,
         }
 
         #Error for type and wrong/new parameters
@@ -316,6 +329,7 @@ class code_parameters:
         self.kmax_phys = default_params['kmax_phys']
         self.whichspec = default_params['whichspec']
         self.use_redshifts = default_params['use_redshifts']
+        self.col_m = default_params['col_m']
         self.col_x = default_params['col_x']
         self.col_y = default_params['col_y']
         self.col_z = default_params['col_z']
@@ -328,6 +342,9 @@ class code_parameters:
         self.mask_redshift = default_params['mask_redshift']
         self.save_mask = default_params['save_mask']
         self.save_mean_sel_fun = default_params['save_mean_sel_fun']
+        self.m_min = default_params['m_min']
+        self.m_max = default_params['m_max']
+        self.V = default_params['V']
 
         #Computed Parameters
         self.ntracers = self.nhalos

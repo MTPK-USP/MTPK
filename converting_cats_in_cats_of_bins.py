@@ -1,6 +1,17 @@
 '''
 This class convert complete halo catalogs (given their positions, velocities, mass, etc.)
 in catalogs of halos with different masses to be used in the MTPK code
+
+--------
+Inputs
+--------
+ .dat halo catalogs contaning their masses, ..., and positions
+
+--------
+Outputs
+--------
+ Halo position catalogs splited according to their masses
+
 '''
 
 import numpy as np
@@ -15,16 +26,16 @@ class converting_cats_in_cats_of_bins:
     cats : list of strings
            Contain the paths to the initial catalogs
 
-    m_col: integer
+    col_m: integer
            It is the collumn in the catalog corresponding to the mass of the halos
 
-    x_col, y_col, z_col: integers
+    col_x, col_y, col_z: integers
            Represent the collumn corresponding to the positions x, y and z
 
     m_min, m_max: floats
            Correspond to the mininum and maximum mass to be considered
 
-    n_bins: integer
+    nhalos: integer
            Number of bins to split the halos in the catalog
 
     skiprows: integer
@@ -54,29 +65,13 @@ class converting_cats_in_cats_of_bins:
                                'data/ExSHalos/L128_001_halos.dat',
                                'data/ExSHalos/L128_002_halos.dat',
                                'data/ExSHalos/L128_003_halos.dat'],
-            'm_col'         : 6,
-            'x_col'         : 0,
-            'y_col'         : 1,
-            'z_col'         : 2,
-            'm_min'         : 10**(11.5),
-            'm_max'         : 10**(13),
-            'n_bins'        : 3,
             'skiprows'      : 1,
-            'V'             : 128.**3,
             'path_to_save'  : 'data/ExSHalos/'
         }
 
         self.default_params = default_params
         self.cats = default_params['cats']
-        self.m_col = default_params['m_col']
-        self.x_col = default_params['x_col']
-        self.y_col = default_params['y_col']
-        self.z_col = default_params['z_col']
-        self.m_min = default_params['m_min']
-        self.m_max = default_params['m_max']
-        self.n_bins = default_params['n_bins']
         self.skiprows = default_params['skiprows']
-        self.V = default_params['V']
         self.path_to_save = default_params['path_to_save']
 
         for key, value in kwargs.items():
@@ -98,49 +93,49 @@ class converting_cats_in_cats_of_bins:
             print('{} = {}'.format(key, self.default_params[key] ) )
         return ''
 
-    def to_bins(self):
+    def to_bins(self, my_code_options):
         '''
         Method to split the halos in bins according to their masses
 
         It return the Mass Function of the catalogs
         '''
         cats = self.default_params['cats']
-        m_col = self.default_params['m_col']
-        x_col = self.default_params['x_col']
-        y_col = self.default_params['y_col']
-        z_col = self.default_params['z_col']
-        m_min = self.default_params['m_min']
-        m_max = self.default_params['m_max']
-        n_bins = self.default_params['n_bins']
+        col_m = my_code_options.col_m
+        col_x = my_code_options.col_x
+        col_y = my_code_options.col_y
+        col_z = my_code_options.col_z
+        m_min = my_code_options.m_min
+        m_max = my_code_options.m_max
+        nhalos = my_code_options.nhalos
         skiprows = self.default_params['skiprows']
-        V = self.default_params['V']
+        V = my_code_options.V
         path_to_save = self.default_params['path_to_save']
         
-        m_lims = np.logspace(np.log10(m_min), np.log10(m_max), n_bins + 1)
+        m_lims = np.logspace(np.log10(m_min), np.log10(m_max), nhalos + 1)
         dataj = {}
         MF = []
         for i in range( len(cats) ):
             data = np.loadtxt(cats[i], skiprows = skiprows)
-            for j in range(n_bins):
-                dataj[j] = data[ np.where( (data[:, m_col] > m_lims[j] ) & (data[:, m_col] <= m_lims[j+1]) ) ]
+            for j in range(nhalos):
+                dataj[j] = data[ np.where( (data[:, col_m] > m_lims[j] ) & (data[:, col_m] <= m_lims[j+1]) ) ]
                 MF.append( dataj[j].shape[0] )
-                np.savetxt(path_to_save+f'seed{i}_bin{j}.dat', dataj[j][:, [x_col, y_col, z_col] ])
+                np.savetxt(path_to_save+f'seed{i}_bin{j}.dat', dataj[j][:, [col_x, col_y, col_z] ])
         MF = np.array(MF)
-        MF = MF.reshape( (len(cats), n_bins) )
+        MF = MF.reshape( (len(cats), nhalos) )
         print('Catalogs created!')
         return np.mean(MF, axis = 0)/V
 
-    def central_masses(self):
+    def central_masses(self, my_code_options):
         '''
         Method to given the central masses of halos
         '''
-        m_min = self.default_params['m_min']
-        m_max = self.default_params['m_max']
-        n_bins = self.default_params['n_bins']
+        m_min = my_code_options.m_min
+        m_max = my_code_options.m_max
+        nhalos = my_code_options.nhalos
 
-        m_lims = np.logspace(np.log10(m_min), np.log10(m_max), n_bins + 1)
+        m_lims = np.logspace(np.log10(m_min), np.log10(m_max), nhalos + 1)
         m_ctrs = []
-        for i in range(n_bins):
+        for i in range(nhalos):
             m_ctrs.append( (m_lims[i+1]+m_lims[i])/2 )
 
         return m_ctrs
