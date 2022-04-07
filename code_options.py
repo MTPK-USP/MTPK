@@ -12,163 +12,165 @@ class code_parameters:
     ----------
     
     All of these parameters are optional. If a parameter is not provided,
-    the code will simply use the default parameter defined below
+    the code will simply use the default parameter defined below.
+    However, you have to specify your code options, unless you are running the example.
 
     method : string
-    Choose the method to compute de power spectrum:
-    method = 'FKP'
-    method = 'MT'
-    method = 'both'
+      Choose the method to compute de power spectrum:
+       method = 'FKP'
+       method = 'MT'
+       method = 'both'
 
     mas_method : string
-
-    Identifies the mass assignment scheme to use:
-      mas_method = 'NGP' -> Nearest Grid Point
-      mas_method = 'CIC' -> Cloud In Cell
-      mas_method = 'TSC' -> Triangular Shaped Cloud
-      mas_method = 'PCS' -> Piecewise Cubic Spline
+      Identifies the mass assignment scheme to use:
+       mas_method = 'NGP' -> Nearest Grid Point
+       mas_method = 'CIC' -> Cloud In Cell
+       mas_method = 'TSC' -> Triangular Shaped Cloud
+       mas_method = 'PCS' -> Piecewise Cubic Spline
 
     use_kdip_phys : bool
-
-    True -> use kdip_phys
-    False -> the code will compute it
+      True -> use kdip_phys
+      False -> the code will compute it
 
     kdip_phys : float
-
-    Alpha-dipole k_dip [h/Mpc]
+      Alpha-dipole k_dip [h/Mpc]
 
     multipoles_order : integer
-      monopole: 0
-      monopole and dipole: 2
-      monopole, dipole and quadrupole: 4
+      Parameter to specify the order of the multipoles that you want to compute:
+       monopole: 0
+       monopole and dipole: 2
+       monopole, dipole and quadrupole: 4
 
     do_cross_spectra : bool
-      True -> only for more than one tracer
-      False -> if the user do not need it
+      Up to now we only compute the cross spectra for FKP method
+       True -> only for more than one tracer
+       False -> if the user do not need it
 
     use_padding : bool
-
-    True -> do padding
-    False -> otherwise
+      When you want to compute your spectra within a box with empty borders
+       True -> do padding
+       False -> otherwise
 
     padding_length : list of integer
-    List to indicating how much padding in each direction
+      List to indicate how much padding do tou want in each direction
 
     use_theory_spectrum : bool
-
-    True -> to include pre-existing power spectrum in file
-    False -> to compute matter power spectrum for given cosmology
+      True -> to include pre-existing power spectrum in file
+      False -> to compute matter power spectrum for given cosmology
 
     theory_spectrum_file : string
-
-    Name of the theory spectrum file
+      Name of the theory spectrum file
 
     use_mask : bool
-
-    True -> to include a mask to data
-    False -> otherwise
+      When do you want to include survey's or any other mask
+       True -> to include a mask to data
+       False -> otherwise
 
     mask_filename : string
-
-    Name of the mask filename
+      Name of the mask filename
+      Remember that your mask has to have the dimensions of the number of grid cells that you are
+     using to compute the power spectrum of your box. E.g., for a box of 128 cells in each direction
+     and cell_size of 2 Mpc/h, your mask should have the dimension of 64 x 64 x 64.
         
     mass_fun : ndarray of floats
-    It is a list that keeps the mass function of each tracer
+      It is a list that keeps the mass function of each tracer
             
     halo_bias : ndarray of floats
-    It is a list that keeps the bias of each tracer
+      It is a list that keeps the bias of each tracer
             
     nhalos : integer
-    Number of halo bins
+      Number of halo bins/number of tracers to consider
                         
     n_maps : integer
-    Number maps
+      Number maps
             
     cell_size : float
-    Cell physical size, in units of h^-1 Mpc
+      Cell physical size, in units of h^-1 Mpc
             
     n_x, n_y, nz : integer
-    Number of cells in x,y and z directions
+      Number of cells in x, y and z directions
             
     n_x_orig, n_y_orig, n_z_orig : float
-    Displacement of the origin (0,0,0) of the box with respect to Earth (in cell units)
+      Displacement of the origin (0,0,0) of the box with respect to Earth (in cell units)
             
     sel_fun_data : bool
-    True -> If the tracer selection function is given by a separate map
-    False -> Otherwise
+      True -> If the tracer selection function is given by a separate map
+      False -> Otherwise
 
     sel_fun_file : string
-    Name of the map of the selection function
+      Name of the map of the selection function
                         
     use_cell_low_count_thresh : bool
-    True -> to use the cell low count threshold
-    False -> otherwise
+      True -> to use the cell low count threshold
+      False -> otherwise
 
     cell_low_count_thresh : float
-    If low-count cells must be masked out, then cells with counts below this threshold will be eliminated from the mocks AND from the data
+      If low-count cells must be masked out, then cells with counts below this threshold will be 
+     eliminated from the mocks AND from the data
 
     mult_sel_fun, shift_sel_fun : float
-    One may add a shift and/or a multiplicative factor, for testing: 
-    n_bar --> factor * (n_bar + shift)
+      One may add a shift and/or a multiplicative factor, for testing: 
+       n_bar --> factor * (n_bar + shift)
 
     kmin_bias, kmax_bias: float
-    Interval in k that to estimate the bias
+      Interval in k that to estimate the bias
             
     kph_central : float
-    Target value of k where the power estimation will be optimal (units of h/Mpc)
+      Target value of k where the power estimation will be optimal (units of h/Mpc)
 
     dkph_bin : float
-    Binning in k (in units of h^-1 Mpc) -- this should be ~ 1.4/(smallest side of box)
+      Binning in k (in units of h^-1 Mpc) -- this should be ~ 1.4/(smallest side of box)
 
     use_kmax_phys : bool
-    True -> use the specified kmax_phys parameter
-    False -> will compute it, according to Nyquist frequency
+      True -> use the specified kmax_phys parameter
+      False -> will compute it, according to Nyquist frequency
 
     kmax_phys : float
-    Max k (in units of h^-1 Mpc) -- this should be < 2 \pi * Nyquist frequency = \pi /cell_size
+      Max k (in units of h^-1 Mpc) -- this should be < 2 \pi * Nyquist frequency = \pi /cell_size
 
     use_kmin_phys : bool
-    True -> Use the specified value for kmin_phys and compute kminbar using it
-    False -> Use the computed kminbar
+      True -> Use the specified value for kmin_phys and compute kminbar using it
+      False -> Use the computed kminbar
 
     kmin_phys : float
-    Min k (in units of h^-1 Mpc) -- this should be > 1.0/box_size. In units of h^-1 Mpc
+      Min k (in units of h^-1 Mpc) -- this should be > 1.0/box_size. In units of h^-1 Mpc
 
     k_min_CAMB, k_max_camb : float
-    Min and max k (in units of h^-1 Mpc) for CAMB
+      Min and max k (in units of h^-1 Mpc) for CAMB
     
     whichspec : integer
-    Which spectrum to use in the ln sims and estimation:
-    (0) linear (1) HaloFit (2) PkEqual
+      Which spectrum to use in the ln sims and estimation:
+       (0) linear 
+       (1) HaloFit 
+       (2) PkEqual
 
     ntracers : integer
-    Number of halo bins as tracers
+      Number of halo bins as tracers. It is defined to be equal to nbins
 
     bias_file : string
-    Path and name of the file that keeps the halo bias as tracers
+      Path and name of the file that keeps the halo bias as tracers
 
     nbar : list of floats
-    It is the mass function times cell_size^3
+      It is the mass function times cell_size^3
 
     ncentral : list of float
-    It is the ncentral times a list
+      It is the ncentral times a list
 
     nsigma : list of float
-    It is the ncentral times a list
+      It is the ncentral times a list
          
     sigz_est : list of floats
-    Gaussian redshift errors of GALAXIES/TRACERS created by HOD. It is in units of the cell size
+      Gaussian redshift errors of GALAXIES/TRACERS created by HOD. It is in units of the cell size
 
     adip : list of floats
-    Alpha-type dipoles
+      Alpha-type dipoles
 
     vdisp : list of floats
-    Velocity dispersions for RSDs
+      Velocity dispersions for RSDs
 
     halos_sigz_est : list of floats
-    edshift errors and dipoles of halos
+      edshift errors and dipoles of halos
 
-    
     Yields
     ------
             
@@ -193,10 +195,10 @@ class code_parameters:
             'theory_spectrum_file' : "theory_spectrum_file.txt",
             'use_mask'             : False,
             'mask_filename'        : "mask.hdf5",
-            'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),#np.array([1.0]),
-            'halo_bias'            : np.array([1.572, 1.906, 2.442]),#np.array([1.0]),
-            'nhalos'               : 3,#1,
-            'n_maps'               : 3,#1,
+            'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),
+            'halo_bias'            : np.array([1.572, 1.906, 2.442]),
+            'nhalos'               : 3,
+            'n_maps'               : 3,
             'cell_size'            : 1.0,
             'n_x'                  : 128,
             'n_y'                  : 128,
@@ -206,8 +208,8 @@ class code_parameters:
             'n_z_orig'             : 10000.,
             'sel_fun_data'         : False,
             'sel_fun_file'         : "sel_fun-N128_halos.hdf5",
-            'kmin_bias'            : 0.05, #0.1, #is it necessary?
-            'kmax_bias'            : 0.15,#0.5, #is it necessary?
+            'kmin_bias'            : 0.05, 
+            'kmax_bias'            : 0.15, 
             'kph_central'          : 0.1,
             'dkph_bin'             : 0.01,
             'use_kmin_phys'        : False,
@@ -223,7 +225,7 @@ class code_parameters:
             'k_max_CAMB'           : 1.e+0,
         }
 
-        #Errors
+        #Error for type and wrong/new parameters
         for key, value in kwargs.items():
             if key not in default_params.keys():
                 raise KeyError(f"You may not create new parameters. Available parameters are {list(default_params.keys())}. You passed '{key}' as key.")
@@ -288,6 +290,10 @@ class code_parameters:
         self.halos_vdisp = self.halos_sigz_est
 
         self.default_params = default_params
+
+        #Error between number of halos and cross spec computation
+        if self.do_cross_spectra == True and self.nhalos == 1:
+            raise KeyError("You can only compute the cross spectrum for more than one halo!")
 
     def parameters_print(self):
         '''

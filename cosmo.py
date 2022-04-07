@@ -1,5 +1,5 @@
 '''
-Class to contain cosmological parameters. 
+Class to contain cosmological parameters
 This code also implements certain very common cosmological functions,
 as methods: 
    - matgrow: when not defined as a new value
@@ -152,6 +152,7 @@ class cosmo:
             if not np.allclose(aux_Omega0_m, kwargs['Omega0_m'], rtol = 1e-13, atol = 1e-13):
                 raise ValueError("Please, define your values for Omega0_b and Omega0_cdm in order that Omega0_m are its sum.")
 
+	#Error for type and wrong/new parameters
         for key, value in kwargs.items():
             if key not in default_params.keys():
                 raise KeyError(f"You may not create new parameters. Available parameters are {list(default_params.keys())}. You passed '{key}' as key.")
