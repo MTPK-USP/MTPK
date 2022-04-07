@@ -1,6 +1,4 @@
 '''
-This will be a function (or a class) to substitute the create_grids_from_xyz_cats.py program
-
 This code creates a grid (nx , ny, nz) of cells of size cell_size, 
 containint the selection functions of any number of tracers (Nt).
 
@@ -37,10 +35,21 @@ input_filename : string
 filenames_catalogs : string
  Path to the catalogs using *
 
+Yields
+------
+
+NameError
+ Raised when an object could not be found
+
+TypeError
+ Raised when a function or operation is applied to an object of an incorrect type
+
+ValueError 
+ Raised when a function gets an argument of correct type but improper value
+
 '''
 
-def cic(value, x, nx, y=None, ny=1, z=None, nz=1,
-		wraparound=False, average=True):
+def cic(value, x, nx, y = None, ny=1, z = None, nz=1, wraparound = False, average = True):
 	""" 
 
         Clouds-in-Cells
@@ -171,8 +180,6 @@ def cic(value, x, nx, y=None, ny=1, z=None, nz=1,
 		The elements to update and their values are inferred from
 		a,b,c and value.
 		"""
-		#print('Updating field vals')
-		#print(a)
 		# indices for field - doesn't include all combinations
 		indices = a['ind'] + b['ind'] * nx + c['ind'] * nxny
 		# weight per coordinate
@@ -186,8 +193,6 @@ def cic(value, x, nx, y=None, ny=1, z=None, nz=1,
 		else:
 			for i,ind in enumerate(indices):
 				field[ind] += value[i]
-			#if debug: print ind, weights[i], value[i], field[ind]
-
 
 	nx, ny, nz = (int(i) for i in (nx, ny, nz))
 	nxny = nx * ny
@@ -239,10 +244,9 @@ def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename, fi
 
         this_dir = os.getcwd()
 
-        if len(filenames_catalogs)==0 :
-	        print ('Files not found! Aborting now...')
-	        sys.exit(-1)
-
+        if len(filenames_catalogs) == 0:
+                raise NameError('Files not to create found!')
+                
         Ncats = my_code_options.n_maps
         Ntracers = my_code_options.nhalos
         use_redshifts = my_code_options.use_redshifts
@@ -355,9 +359,7 @@ def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename, fi
         elif mystr[-4:] == ".txt":
 	        use_h5py = False
         else:
-	        print('Sorry, I cannot recognize the format of the catalogs (should be .hdf5 , .dat , .cat , .txt)')
-	        print("Aborting now")
-	        sys.exit(-1)
+                raise TypeError('Wrong format of the catalogs. They should be .hdf5, .dat, .cat, or .txt.')
 
         if grid_method == 1:
 	        print()
@@ -368,10 +370,7 @@ def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename, fi
 	        print("Mass assignement: Clouds in Cell (CiC)...")
 	        print()
         else:
-	        print("Sorry, I don't recognize the gridding method (grid_method). Please check code preamble above.")
-	        print("Aborting now...")
-	        print()
-	        sys.exit(-1)
+                raise ValueError("Wrong gridding method (mas_method)")
 
         zmin = np.around(zcentral - zbinwidth,5)
         zmax = np.around(zcentral + zbinwidth,5)
@@ -385,10 +384,6 @@ def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename, fi
 	        for nt in range(Ntracers):
 		        print("Reading catalog for tracer",nt)
 		        try:
-			        #h5map = h5py.File(filenames_catalogs[nc,nt], 'r')
-			        #h5data = h5map.get(list(h5map.keys())[0])
-			        #cat = np.asarray(h5data,dtype='float32')
-			        #h5map.close
 			        if use_h5py:
 				        f = h5py.File(filenames_catalogs[nc,nt], 'r')
 				        if use_redshifts:
@@ -415,8 +410,7 @@ def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename, fi
 					        tracer_y = tracer_y[mask]
 					        tracer_z = tracer_z[mask]
 		        except:
-			        print("Could not read file:" , filenames_catalogs[nc,nt])
-			        sys.exit(-1)
+                                raise AttributeError("Could not read file:" , filenames_catalogs[nc,nt])
 
 		        #ntot = len(cat)
 		        ntot = len(tracer_x)
@@ -451,10 +445,7 @@ def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename, fi
 			        counts[nt] = cic_grid
 			        mean_counts[nt] += cic_grid
 		        else:
-			        print("Sorry, I don't recognize the gridding method (grid_method). Please check preamble above.")
-			        print("Aborting now...")
-			        print()
-			        sys.exit(-1)
+                                raise ValueError("Wrong gridding method (mas_method)")
 
 		        del tracer_x, tracer_y, tracer_z
 
@@ -467,7 +458,6 @@ def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename, fi
 		        map_num = '0' + str(nc)
 	        else:
 		        map_num = str(nc)
-
 
 	        print("Saving grid of counts to file:",dir_out + filenames_out + "_grid_" + map_num + ".hdf5")
 	        h5f = h5py.File(dir_out + filenames_out + "_grid_" + map_num + ".hdf5",'w')
