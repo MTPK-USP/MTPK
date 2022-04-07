@@ -224,7 +224,7 @@ def cic(value, x, nx, y = None, ny=1, z = None, nz=1, wraparound = False, averag
 	return field.reshape((nz, ny, nx)).transpose()
 
 def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
-                               input_filename, filenames_catalogs):
+                               input_filename, filenames_catalogs, dir_out):
 
         '''
         Create grids from xyz cats
@@ -236,8 +236,6 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
         # Files containing the catalogs
 
         # Or, use glob and read all catalogs in some directory 
-
-        this_dir = os.getcwd()
 
         if len(filenames_catalogs) == 0:
                 raise NameError('Files not found!')
@@ -263,7 +261,6 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
         filenames_catalogs = np.reshape(filenames_catalogs, (Ncats, Ntracers))
 
         # Which directory to write grids to:
-        dir_out = this_dir + "/maps/sims/" + input_filename + "/"
         filenames_out = "Data"
 
         print()
@@ -272,11 +269,6 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 
         if not os.path.exists(dir_out):
 	        os.makedirs(dir_out)
-
-        # Read input file
-        this_dir = os.getcwd()
-        input_dir = this_dir + '/inputs'
-        sys.path.append(input_dir)
 
         ###################################################
         #Defining all the parameters from new classes here
@@ -501,11 +493,5 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 	        h5f = h5py.File(dir_out + "mask.hdf5",'w')
 	        h5f.create_dataset('grid', data=mask, dtype='float32', compression='gzip')
 	        h5f.close()
-
-        print()
-        print("...done!")
-        print()
-        print("++++++++++++++++++++")
-        print()
         
-        return
+        return print("Done!")

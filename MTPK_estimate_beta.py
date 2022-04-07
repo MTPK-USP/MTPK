@@ -32,7 +32,7 @@ from camb_spec import camb_spectrum
 from analytical_selection_function import *
 import grid3D as gr
 
-def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHalos"):
+def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, dir_specs, handle_data = "ExSHalos"):
     '''
     Initial code started by Arthur E. da Mota Loureiro, 04/2015 
     Additonal changes by R. Abramo 07/2015, 02/2016
@@ -41,11 +41,9 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
     Added cross-spectra -- Francisco Maion, 01/2020
     '''
     
-    # Add path to /inputs directory in order to load inputs
-    # Change as necessary according to your installation
-    this_dir = os.getcwd()
-    input_dir = this_dir + '/inputs'
-    sys.path.append(input_dir)
+    # # Add path to /inputs directory in order to load inputs
+    # # Change as necessary according to your installation
+    # this_dir = os.getcwd()
         
     small=1.e-8
 
@@ -162,34 +160,9 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
     print('Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates)
     print()
 
-    # Directory with data and simulated maps
-    dir_maps = this_dir + '/maps/sims/' + handle_sims
-
-    # Directory with data
-    dir_data = this_dir + '/maps/data/' + handle_data
-
-    # Will save results of the estimations to these directories:
-    dir_specs = this_dir + '/spectra/' + handle_estimates
-    dir_figs = this_dir + '/figures/' + handle_estimates
+    # If directories do not exist, create them now
     if not os.path.exists(dir_specs):
         os.makedirs(dir_specs)
-    if not os.path.exists(dir_figs):
-        os.makedirs(dir_figs)
-
-    # Save estimations for each assumed k_phys in subdirectories named after k_phys
-    dir_specs += '/k=' + strkph
-    dir_figs  += '/k=' + strkph
-
-    # If directories do not exist, create them now...
-    if not os.path.exists(dir_specs):
-        os.makedirs(dir_specs)
-    else:
-        pass
-
-    if not os.path.exists(dir_figs):
-        os.makedirs(dir_figs)
-    else:
-        pass
 
     #############Calling CAMB for calculations of the spectra#################
     print('Beggining CAMB calculations\n')
@@ -873,14 +846,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             else:
                 pass
 
-            # Means
-            P0_mean = np.mean(P0_data,axis=0)
-            P0_fkp_mean = np.mean(P0_fkp,axis=0)
-            if do_cross_spectra == True and nhalos > 1:
-                Cross0_mean = np.mean(C0_fkp,axis=0)
-            else:
-                pass
-
             #   SAVE these spectra
             P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
             P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
@@ -889,17 +854,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             else:
                 pass
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
             if do_cross_spectra == True and nhalos > 1:
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
             else:
                 pass
             
@@ -1153,17 +1112,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             else:
                 pass
 
-            # Means
-            P0_mean = np.mean(P0_data,axis=0)
-            P2_mean = np.mean(P2_data,axis=0)
-            P0_fkp_mean = np.mean(P0_fkp,axis=0)
-            P2_fkp_mean = np.mean(P2_fkp,axis=0)
-            if do_cross_spectra == True and nhalos > 1:
-                Cross0_mean = np.mean(C0_fkp,axis=0)
-                Cross2_mean = np.mean(C2_fkp,axis=0)
-            else:
-                pass
-
             # SAVE these spectra
             P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
             P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
@@ -1177,33 +1125,17 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             else:
                 pass
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
-
-            if do_cross_spectra == True and nhalos > 1:
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
-            else:
-                pass
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
 
             if do_cross_spectra == True and nhalos > 1:
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
             else:
                 pass
 
@@ -1501,36 +1433,21 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             else:
                 pass
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
             
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
             
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
             
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE.dat',P4_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE_mean.dat',P4_mean,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP_mean.dat',P4_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P4_MTOE.dat',P4_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
 
             if do_cross_spectra == True and nhalos > 1:
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
             else:
                 pass
 
@@ -1742,18 +1659,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             else:
                 pass
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
 
             if do_cross_spectra == True and nhalos > 1:
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
             else:
                 pass
 
@@ -1974,23 +1884,14 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             else:
                 pass
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
 
             if do_cross_spectra == True and nhalos > 1:
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
             else:
                 pass
 
@@ -2228,27 +2129,16 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             else:
                 pass
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
             
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP_mean.dat',P4_fkp_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
 
             if do_cross_spectra == True and nhalos > 1:
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
-                np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
             else:
                 pass
 
@@ -2408,15 +2298,9 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             # SAVE spectra
             P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
             
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
 
         elif multipoles_order == 2:
 
@@ -2577,17 +2461,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
             P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
             
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
 
         else:
 
@@ -2755,18 +2632,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHa
             P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
             P4_save=np.reshape(P4_data,(n_maps,ntracers*pow_bins))
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
             
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE.dat',P4_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+            np.savetxt(dir_specs + handle_estimates + '_P4_MTOE.dat',P4_save,fmt="%6.4f")
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE_mean.dat',P2_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE_mean.dat',P4_mean,fmt="%6.4f")
-
-    return
+    return print('Done!')

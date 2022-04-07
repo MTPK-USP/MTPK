@@ -15,6 +15,7 @@ Outputs
 '''
 
 import numpy as np
+import os
 
 class converting_cats_in_cats_of_bins:
     '''
@@ -26,23 +27,8 @@ class converting_cats_in_cats_of_bins:
     cats : list of strings
            Contain the paths to the initial catalogs
 
-    col_m: integer
-           It is the collumn in the catalog corresponding to the mass of the halos
-
-    col_x, col_y, col_z: integers
-           Represent the collumn corresponding to the positions x, y and z
-
-    m_min, m_max: floats
-           Correspond to the mininum and maximum mass to be considered
-
-    nhalos: integer
-           Number of bins to split the halos in the catalog
-
     skiprows: integer
            Number of rows to skip, in the case of cats containing headers or other info
-
-    V: float
-           Volume of the box considered
 
     path_to_save: string
            Path to save the new catalogs
@@ -111,6 +97,9 @@ class converting_cats_in_cats_of_bins:
         skiprows = self.default_params['skiprows']
         V = cat_specs.V
         path_to_save = self.default_params['path_to_save']
+
+        if not os.path.exists(path_to_save):
+            os.makedirs(path_to_save)
         
         m_lims = np.logspace(np.log10(m_min), np.log10(m_max), nhalos + 1)
         dataj = {}
