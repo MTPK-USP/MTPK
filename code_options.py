@@ -42,6 +42,10 @@ class code_parameters:
       monopole and dipole: 2
       monopole, dipole and quadrupole: 4
 
+    do_cross_spectra : bool
+      True -> only for more than one tracer
+      False -> if the user do not need it
+
     use_padding : bool
 
     True -> do padding
@@ -182,6 +186,7 @@ class code_parameters:
             'use_kdip_phys'        : False,
             'kdip_phys'            : 0.005,
             'multipoles_order'     : 4,
+            'do_cross_spectra'     : True,
             'use_padding'          : False,
             'padding_length'       : [10, 10, 10],
             'use_theory_spectrum'  : False,
@@ -232,6 +237,7 @@ class code_parameters:
         self.use_kdip_phys = default_params['use_kdip_phys']
         self.kdip_phys = default_params['kdip_phys']
         self.multipoles_order = default_params['multipoles_order']
+        self.do_cross_spectra = default_params['do_cross_spectra']
         self.use_padding = default_params['use_padding']
         self.padding_length = default_params['padding_length']
         self.mask_filename = default_params['mask_filename']

@@ -144,6 +144,8 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
     kdip_phys = my_code_options.kdip_phys
     method = my_code_options.method
     multipoles_order = my_code_options.multipoles_order
+    do_cross_spectra = my_code_options.do_cross_spectra
+    nhalos = my_code_options.nhalos
 
     #Backing to the code
     handle_sims = handle_data
@@ -660,7 +662,10 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
             # Cross spectra
-            Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            else:
+                pass
 
             # Covariance
             ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
@@ -698,7 +703,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -774,12 +779,18 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 if nm==0:
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
-                    Cross0[nm] = fkp_many.cross_spec
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
                 else:
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
-                    Cross0[nm] = fkp_many.cross_spec
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
 
                 #################################
@@ -795,7 +806,10 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 #CORRECT FOR BIN AVERAGING
                 P0_data[nm] = P0_data[nm]/k_av_corr
                 P0_fkp[nm] = P0_fkp[nm]/k_av_corr
-                Cross0[nm] = Cross0[nm]/k_av_corr
+                if do_cross_spectra == True and nhalos > 1:
+                    Cross0[nm] = Cross0[nm]/k_av_corr
+                else:
+                    pass
 
                 if nm==0:
                     # If data bias is different from mocks
@@ -855,44 +869,62 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             P0_mean = np.mean(P0_data,axis=0)
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
-            Cross0_mean = np.mean(Cross0,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(Cross0,axis=0)
+            else:
+                pass
 
             # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
             # We can easily put back the bias by multiplying:
             # CrossX = cross_effbias**2 * CrossX
-            cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
-            index=0
-            for nt in range(ntracers):
-                for ntp in range(nt+1,ntracers):
-                    cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
-                    index += 1
+            if do_cross_spectra == True and nhalos > 1:
+                cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+                index=0
+                for nt in range(ntracers):
+                    for ntp in range(nt+1,ntracers):
+                        cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
+                        index += 1
+            else:
+                pass        
 
             # FKP and Cross measurements need to have the bias returned in their definitions
             P0_fkp = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
 
-            C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+            else:
+                pass
 
             # Means
             P0_mean = np.mean(P0_data,axis=0)
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
-            Cross0_mean = np.mean(C0_fkp,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(C0_fkp,axis=0)
+            else:
+                pass
 
             #   SAVE these spectra
             P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
             P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
-            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            else:
+                pass
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_effbias.dat',effbias,fmt="%2.3f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P0_MTOE_mean.dat',P0_mean,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
-
+            if do_cross_spectra == True and nhalos > 1:
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+            else:
+                pass
+            
         elif multipoles_order == 2:
             # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
             # Original (convolved) spectra:
@@ -904,9 +936,12 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
             # Cross spectra
-            Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-            Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+                Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            else:
+                pass
+            
             # Covariance
             ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
@@ -942,7 +977,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1021,15 +1056,21 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
                     P2_fkp[nm] = fkp_many.P2_ret
-                    Cross0[nm] = fkp_many.cross_spec
-                    Cross2[nm] = fkp_many.cross_spec2
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                        Cross2[nm] = fkp_many.cross_spec2
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
                 else:
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
                     P2_fkp[nm] = fkp_many.P2_ret
-                    Cross0[nm] = fkp_many.cross_spec
-                    Cross2[nm] = fkp_many.cross_spec2
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                        Cross2[nm] = fkp_many.cross_spec2
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
 
                 #################################
@@ -1049,8 +1090,9 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 P2_data[nm] = P2_data[nm]/k_av_corr
                 P0_fkp[nm] = P0_fkp[nm]/k_av_corr
                 P2_fkp[nm] = P2_fkp[nm]/k_av_corr
-                Cross0[nm] = Cross0[nm]/k_av_corr
-                Cross2[nm] = Cross2[nm]/k_av_corr
+                if do_cross_spectra == True and nhalos > 1:
+                    Cross0[nm] = Cross0[nm]/k_av_corr
+                    Cross2[nm] = Cross2[nm]/k_av_corr
 
                 if nm==0:
                     # If data bias is different from mocks
@@ -1110,32 +1152,44 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             P0_mean = np.mean(P0_data,axis=0)
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
-            Cross0_mean = np.mean(Cross0,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(Cross0,axis=0)
+            else:
+                pass
 
             # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
             # We can easily put back the bias by multiplying:
             # CrossX = cross_effbias**2 * CrossX
-            cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
-            index=0
-            for nt in range(ntracers):
-                for ntp in range(nt+1,ntracers):
-                    cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
-                    index += 1
+            if do_cross_spectra == True and nhalos > 1:
+                cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+                index=0
+                for nt in range(ntracers):
+                    for ntp in range(nt+1,ntracers):
+                        cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
+                        index += 1
+            else:
+                pass        
 
             # FKP and Cross measurements need to have the bias returned in their definitions
             P0_fkp = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
             P2_fkp = np.transpose((effbias**2*np.transpose(P2_fkp,axes=(0,2,1))),axes=(0,2,1))
 
-            C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
-            C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+                C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
+            else:
+                pass
 
             # Means
             P0_mean = np.mean(P0_data,axis=0)
             P2_mean = np.mean(P2_data,axis=0)
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
             P2_fkp_mean = np.mean(P2_fkp,axis=0)
-            Cross0_mean = np.mean(C0_fkp,axis=0)
-            Cross2_mean = np.mean(C2_fkp,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(C0_fkp,axis=0)
+                Cross2_mean = np.mean(C2_fkp,axis=0)
+            else:
+                pass
 
             # SAVE these spectra
             P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
@@ -1144,8 +1198,11 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
             P2_fkp_save=np.reshape(P2_fkp,(n_maps,ntracers*pow_bins))
 
-            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-            C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+                C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            else:
+                pass
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
 
@@ -1155,8 +1212,11 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             np.savetxt(dir_specs + '/' + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+            if do_cross_spectra == True and nhalos > 1:
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+            else:
+                pass
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
@@ -1168,8 +1228,11 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+            if do_cross_spectra == True and nhalos > 1:
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+            else:
+                pass
 
         else:
             # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
@@ -1184,13 +1247,15 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P4_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
             # Cross spectra
-            Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-            Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-            Cross4 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+                Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+                Cross4 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            else:
+                pass
 
             # Covariance
             ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
-
 
             # Range where we estimate some parameters
             myk_min = np.argsort(np.abs(kph-0.1))[0]
@@ -1223,7 +1288,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1302,16 +1367,24 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                     P0_fkp[nm] = fkp_many.P_ret
                     P2_fkp[nm] = fkp_many.P2_ret
                     P4_fkp[nm] = fkp_many.P4_ret
-                    Cross0[nm] = fkp_many.cross_spec
-                    Cross2[nm] = fkp_many.cross_spec2
-                    Cross4[nm] = fkp_many.cross_spec4
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                        Cross2[nm] = fkp_many.cross_spec2
+                        Cross4[nm] = fkp_many.cross_spec4
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
                 else:
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
                     P2_fkp[nm] = fkp_many.P2_ret
-                    Cross0[nm] = fkp_many.cross_spec
-                    Cross2[nm] = fkp_many.cross_spec2
+                    P4_fkp[nm] = fkp_many.P4_ret
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                        Cross2[nm] = fkp_many.cross_spec2
+                        Cross4[nm] = fkp_many.cross_spec4
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
 
                 #################################
@@ -1335,9 +1408,12 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 P0_fkp[nm] = P0_fkp[nm]/k_av_corr
                 P2_fkp[nm] = P2_fkp[nm]/k_av_corr
                 P4_fkp[nm] = P4_fkp[nm]/k_av_corr
-                Cross0[nm] = Cross0[nm]/k_av_corr
-                Cross2[nm] = Cross2[nm]/k_av_corr
-                Cross4[nm] = Cross4[nm]/k_av_corr
+                if do_cross_spectra == True and nhalos > 1:
+                    Cross0[nm] = Cross0[nm]/k_av_corr
+                    Cross2[nm] = Cross2[nm]/k_av_corr
+                    Cross4[nm] = Cross4[nm]/k_av_corr
+                else:
+                    pass
 
                 if nm==0:
                     # If data bias is different from mocks
@@ -1396,26 +1472,35 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             P0_mean = np.mean(P0_data,axis=0)
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
-            Cross0_mean = np.mean(Cross0,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(Cross0,axis=0)
+            else:
+                pass
 
             # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
             # We can easily put back the bias by multiplying:
             # CrossX = cross_effbias**2 * CrossX
-            cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
-            index=0
-            for nt in range(ntracers):
-                for ntp in range(nt+1,ntracers):
-                    cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
-                    index += 1
+            if do_cross_spectra == True and nhalos > 1:
+                cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+                index=0
+                for nt in range(ntracers):
+                    for ntp in range(nt+1,ntracers):
+                        cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
+                        index += 1
+            else:
+                pass        
 
             # FKP and Cross measurements need to have the bias returned in their definitions
             P0_fkp = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
             P2_fkp = np.transpose((effbias**2*np.transpose(P2_fkp,axes=(0,2,1))),axes=(0,2,1))
             P4_fkp = np.transpose((effbias**2*np.transpose(P4_fkp,axes=(0,2,1))),axes=(0,2,1))
 
-            C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
-            C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
-            C4_fkp = np.transpose((cross_effbias**2*np.transpose(Cross4,axes=(0,2,1))),axes=(0,2,1))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+                C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
+                C4_fkp = np.transpose((cross_effbias**2*np.transpose(Cross4,axes=(0,2,1))),axes=(0,2,1))
+            else:
+                pass
 
             # Means
             P0_mean = np.mean(P0_data,axis=0)
@@ -1424,9 +1509,12 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
             P2_fkp_mean = np.mean(P2_fkp,axis=0)
             P4_fkp_mean = np.mean(P4_fkp,axis=0)
-            Cross0_mean = np.mean(C0_fkp,axis=0)
-            Cross2_mean = np.mean(C2_fkp,axis=0)
-            Cross4_mean = np.mean(C4_fkp,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(C0_fkp,axis=0)
+                Cross2_mean = np.mean(C2_fkp,axis=0)
+                Cross4_mean = np.mean(C4_fkp,axis=0)
+            else:
+                pass
 
             # SAVE spectra
             P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
@@ -1438,9 +1526,12 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P4_save=np.reshape(P4_data,(n_maps,ntracers*pow_bins))
             P4_fkp_save=np.reshape(P4_fkp,(n_maps,ntracers*pow_bins))
 
-            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-            C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-            C4_fkp_save=np.reshape(C4_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+                C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+                C4_fkp_save=np.reshape(C4_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            else:
+                pass
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
             
@@ -1452,10 +1543,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             
             np.savetxt(dir_specs + '/' + handle_estimates + '_P4_MTOE.dat',P4_save,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
@@ -1469,9 +1556,15 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP_mean.dat',P4_fkp_mean,fmt="%6.4f")
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
+            if do_cross_spectra == True and nhalos > 1:
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
+            else:
+                pass
 
     elif method == 'FKP':
 
@@ -1481,7 +1574,10 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
             # Cross spectra
-            Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            else:
+                pass
 
             # Covariance
             ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
@@ -1494,7 +1590,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1569,17 +1665,26 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 if nm==0:
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
-                    Cross0[nm] = fkp_many.cross_spec
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
                 else:
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
-                    Cross0[nm] = fkp_many.cross_spec
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
 
                 #CORRECT FOR BIN AVERAGING
                 P0_fkp[nm] = P0_fkp[nm]/k_av_corr
-                Cross0[nm] = Cross0[nm]/k_av_corr
+                if do_cross_spectra == True and nhalos > 1:
+                    Cross0[nm] = Cross0[nm]/k_av_corr
+                else:
+                    pass
 
                 if nm==0:
                     # If data bias is different from mocks
@@ -1633,36 +1738,49 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             # Compute the mean power spectra -- I will use the MTOE for the iteration
             
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
-            Cross0_mean = np.mean(Cross0,axis=0)
-
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(Cross0,axis=0)
+            else:
+                pass
 
             # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
             # We can easily put back the bias by multiplying:
             # CrossX = cross_effbias**2 * CrossX
-            cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
-            index=0
-            for nt in range(ntracers):
-                for ntp in range(nt+1,ntracers):
-                    cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
-                    index += 1
+            if do_cross_spectra == True and nhalos > 1:
+                cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+                index=0
+                for nt in range(ntracers):
+                    for ntp in range(nt+1,ntracers):
+                        cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
+                        index += 1
+            else:
+                pass
 
             # FKP and Cross measurements need to have the bias returned in their definitions
             P0_fkp = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
 
-            C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+            else:
+                pass
 
             # Means
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
-            Cross0_mean = np.mean(C0_fkp,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(C0_fkp,axis=0)
+            else:
+                pass
 
             # SAVE spectra
             P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
 
-            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            else:
+                pass
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
@@ -1670,7 +1788,11 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+            if do_cross_spectra == True and nhalos > 1:
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+            else:
+                pass
 
         elif multipoles_order == 2:
 
@@ -1679,8 +1801,11 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P2_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
             # Cross spectra
-            Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-            Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+                Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            else:
+                pass
 
             # Covariance
             ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
@@ -1693,7 +1818,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1769,22 +1894,29 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
                     P2_fkp[nm] = fkp_many.P2_ret
-                    Cross0[nm] = fkp_many.cross_spec
-                    Cross2[nm] = fkp_many.cross_spec2
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                        Cross2[nm] = fkp_many.cross_spec2
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
                 else:
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
                     P2_fkp[nm] = fkp_many.P2_ret
-                    Cross0[nm] = fkp_many.cross_spec
-                    Cross2[nm] = fkp_many.cross_spec2
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                        Cross2[nm] = fkp_many.cross_spec2
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
 
                 #CORRECT FOR BIN AVERAGING
                 P0_fkp[nm] = P0_fkp[nm]/k_av_corr
                 P2_fkp[nm] = P2_fkp[nm]/k_av_corr
-                Cross0[nm] = Cross0[nm]/k_av_corr
-                Cross2[nm] = Cross2[nm]/k_av_corr
+                if do_cross_spectra == True and nhalos > 1:
+                    Cross0[nm] = Cross0[nm]/k_av_corr
+                    Cross2[nm] = Cross2[nm]/k_av_corr
 
                 if nm==0:
                     # If data bias is different from mocks
@@ -1838,46 +1970,56 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             # Compute the mean power spectra -- I will use the MTOE for the iteration
 
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
-            Cross0_mean = np.mean(Cross0,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(Cross0,axis=0)
+            else:
+                pass
             
             # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
             # We can easily put back the bias by multiplying:
             # CrossX = cross_effbias**2 * CrossX
-            cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
-            index=0
-            for nt in range(ntracers):
-                for ntp in range(nt+1,ntracers):
-                    cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
-                    index += 1
+            if do_cross_spectra == True and nhalos > 1:
+                cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+                index=0
+                for nt in range(ntracers):
+                    for ntp in range(nt+1,ntracers):
+                        cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
+                        index += 1
 
             # FKP and Cross measurements need to have the bias returned in their definitions
             P0_fkp = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
             P2_fkp = np.transpose((effbias**2*np.transpose(P2_fkp,axes=(0,2,1))),axes=(0,2,1))
 
-            C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
-            C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+                C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
+            else:
+                pass
 
             # Means
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
             P2_fkp_mean = np.mean(P2_fkp,axis=0)
-            Cross0_mean = np.mean(C0_fkp,axis=0)
-            Cross2_mean = np.mean(C2_fkp,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(C0_fkp,axis=0)
+                Cross2_mean = np.mean(C2_fkp,axis=0)
+            else:
+                pass
 
             # SAVE spectra
             P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
 
             P2_fkp_save=np.reshape(P2_fkp,(n_maps,ntracers*pow_bins))
 
-            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-            C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+                C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            else:
+                pass
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
@@ -1886,8 +2028,13 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP_mean.dat',P0_fkp_mean,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+            if do_cross_spectra == True and nhalos > 1:
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+            else:
+                pass
 
         else:
             # Traditional (FKP) method
@@ -1896,9 +2043,12 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             P4_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
             # Cross spectra
-            Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-            Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
-            Cross4 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+                Cross2 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+                Cross4 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+            else:
+                pass
 
             # Covariance
             ThCov_fkp = np.zeros((n_maps,ntracers,num_binsk))
@@ -1912,7 +2062,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
             print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order)
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1989,27 +2139,36 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                     P0_fkp[nm] = fkp_many.P_ret
                     P2_fkp[nm] = fkp_many.P2_ret
                     P4_fkp[nm] = fkp_many.P4_ret
-                    Cross0[nm] = fkp_many.cross_spec
-                    Cross2[nm] = fkp_many.cross_spec2
-                    Cross4[nm] = fkp_many.cross_spec4
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross0[nm] = fkp_many.cross_spec
+                        Cross2[nm] = fkp_many.cross_spec2
+                        Cross4[nm] = fkp_many.cross_spec4
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
                 else:
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
                     P2_fkp[nm] = fkp_many.P2_ret
-                    Cross4[nm] = fkp_many.cross_spec4
-                    Cross0[nm] = fkp_many.cross_spec
-                    Cross2[nm] = fkp_many.cross_spec2
-                    Cross4[nm] = fkp_many.cross_spec4
+                    if do_cross_spectra == True and nhalos > 1:
+                        Cross4[nm] = fkp_many.cross_spec4
+                        Cross0[nm] = fkp_many.cross_spec
+                        Cross2[nm] = fkp_many.cross_spec2
+                        Cross4[nm] = fkp_many.cross_spec4
+                    else:
+                        pass
                     ThCov_fkp[nm] = (fkp_many.sigma)**2
 
                 #CORRECT FOR BIN AVERAGING
                 P0_fkp[nm] = P0_fkp[nm]/k_av_corr
                 P2_fkp[nm] = P2_fkp[nm]/k_av_corr
                 P4_fkp[nm] = P4_fkp[nm]/k_av_corr
-                Cross0[nm] = Cross0[nm]/k_av_corr
-                Cross2[nm] = Cross2[nm]/k_av_corr
-                Cross4[nm] = Cross4[nm]/k_av_corr
+                if do_cross_spectra == True and nhalos > 1:
+                    Cross0[nm] = Cross0[nm]/k_av_corr
+                    Cross2[nm] = Cross2[nm]/k_av_corr
+                    Cross4[nm] = Cross4[nm]/k_av_corr
+                else:
+                    pass
 
                 if nm==0:
                     # If data bias is different from mocks
@@ -2063,53 +2222,64 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             # Compute the mean power spectra -- I will use the MTOE for the iteration
 
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
-            Cross0_mean = np.mean(Cross0,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(Cross0,axis=0)
+            else:
+                pass
 
             # Cross0 and Cross2 are outputs of the FKP code, so they come out without the bias.
             # We can easily put back the bias by multiplying:
             # CrossX = cross_effbias**2 * CrossX
-            cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
-            index=0
-            for nt in range(ntracers):
-                for ntp in range(nt+1,ntracers):
-                    cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
-                    index += 1
+            if do_cross_spectra == True and nhalos > 1:
+                cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+                index=0
+                for nt in range(ntracers):
+                    for ntp in range(nt+1,ntracers):
+                        cross_effbias[index] = np.sqrt(effbias[nt]*effbias[ntp])
+                        index += 1
+            else:
+                pass
 
             # FKP and Cross measurements need to have the bias returned in their definitions
             P0_fkp = np.transpose((effbias**2*np.transpose(P0_fkp,axes=(0,2,1))),axes=(0,2,1))
             P2_fkp = np.transpose((effbias**2*np.transpose(P2_fkp,axes=(0,2,1))),axes=(0,2,1))
             P4_fkp = np.transpose((effbias**2*np.transpose(P4_fkp,axes=(0,2,1))),axes=(0,2,1))
 
-            C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
-            C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
-            C4_fkp = np.transpose((cross_effbias**2*np.transpose(Cross4,axes=(0,2,1))),axes=(0,2,1)) 
-
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp = np.transpose((cross_effbias**2*np.transpose(Cross0,axes=(0,2,1))),axes=(0,2,1))
+                C2_fkp = np.transpose((cross_effbias**2*np.transpose(Cross2,axes=(0,2,1))),axes=(0,2,1))
+                C4_fkp = np.transpose((cross_effbias**2*np.transpose(Cross4,axes=(0,2,1))),axes=(0,2,1))
+            else:
+                pass
+                
             # Means
             P0_fkp_mean = np.mean(P0_fkp,axis=0)
             P2_fkp_mean = np.mean(P2_fkp,axis=0)
             P4_fkp_mean = np.mean(P4_fkp,axis=0)
-            Cross0_mean = np.mean(C0_fkp,axis=0)
-            Cross2_mean = np.mean(C2_fkp,axis=0)
-            Cross4_mean = np.mean(C4_fkp,axis=0)
+            if do_cross_spectra == True and nhalos > 1:
+                Cross0_mean = np.mean(C0_fkp,axis=0)
+                Cross2_mean = np.mean(C2_fkp,axis=0)
+                Cross4_mean = np.mean(C4_fkp,axis=0)
+            else:
+                pass
 
             # SAVE spectra
             P0_fkp_save=np.reshape(P0_fkp,(n_maps,ntracers*pow_bins))
             P2_fkp_save=np.reshape(P2_fkp,(n_maps,ntracers*pow_bins))
             P4_fkp_save=np.reshape(P4_fkp,(n_maps,ntracers*pow_bins))
 
-            C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-            C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
-            C4_fkp_save=np.reshape(C4_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            if do_cross_spectra == True and nhalos > 1:
+                C0_fkp_save=np.reshape(C0_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+                C2_fkp_save=np.reshape(C2_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+                C4_fkp_save=np.reshape(C4_fkp,(n_maps,ntracers*(ntracers-1)//2*pow_bins))
+            else:
+                pass
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
             
             np.savetxt(dir_specs + '/' + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
-
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
 
             np.savetxt(dir_specs + '/' + handle_estimates + '_nbar_mean.dat',nbarbar,fmt="%2.6f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_bias.dat',gal_bias,fmt="%2.3f")
@@ -2119,9 +2289,15 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             np.savetxt(dir_specs + '/' + handle_estimates + '_P2_FKP_mean.dat',P2_fkp_mean,fmt="%6.4f")
             np.savetxt(dir_specs + '/' + handle_estimates + '_P4_FKP_mean.dat',P4_fkp_mean,fmt="%6.4f")
 
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
-            np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
+            if do_cross_spectra == True and nhalos > 1:
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C0_FKP_mean.dat',Cross0_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C2_FKP_mean.dat',Cross2_mean,fmt="%6.4f")
+                np.savetxt(dir_specs + '/' + handle_estimates + '_C4_FKP_mean.dat',Cross4_mean,fmt="%6.4f")
+            else:
+                pass
 
     elif method == 'MT':
 

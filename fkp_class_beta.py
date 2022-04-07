@@ -18,7 +18,7 @@ class fkp_init(object):
     Enters num_bins, n_bar (matrix), bias 
     n_x,n_y, n_z and the bin_matrix
     '''
-    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power, multipoles):
+    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power, multipoles, do_cross_spectra, nhalos):
         # Here bin_matrix is the M-matrix
         self.num_bins = num_bins
         self.n_bar_matrix = n_bar_matrix
@@ -36,6 +36,8 @@ class fkp_init(object):
         self.number_tracers = len(bias)
 
         self.multipoles = multipoles
+        self.do_cross_spectra = do_cross_spectra
+        self.nhalos = nhalos
 
         largenumber = 100000000.
         small = 1.0/largenumber
@@ -117,6 +119,8 @@ class fkp_init(object):
         alpha = small
 
         multipoles = self.multipoles
+        do_cross_spectra = self.do_cross_spectra
+        nhalos = self.nhalos
     
         lenkf = int(self.n_x*self.n_y*(self.n_z//2+1))
         
@@ -200,13 +204,17 @@ class fkp_init(object):
             self.sigma = sigma                                                                          
             self.F_ret = F_ret
 
-            self.cross_spec = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
-            index = 0
-            for i in range(ntr):
-                for j in range(i+1,ntr):
-                    cross_temp = np.real( F0kflat[i]*np.conj(F0kflat[j]) )
-                    self.cross_spec[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
-                    index += 1
+            #Cross spectra
+            if do_cross_spectra == True and nhalos > 1:
+                self.cross_spec = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+                index = 0
+                for i in range(ntr):
+                    for j in range(i+1,ntr):
+                        cross_temp = np.real( F0kflat[i]*np.conj(F0kflat[j]) )
+                        self.cross_spec[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                        index += 1
+            else:
+                pass
 
 
         elif multipoles == 2: #Dipole
@@ -297,23 +305,27 @@ class fkp_init(object):
             self.sigma = sigma                                                                          
             self.F_ret = F_ret
 
-            self.cross_spec = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
-            index = 0
-            for i in range(ntr):
-                for j in range(i+1,ntr):
-                    cross_temp = np.real( F0kflat[i]*np.conj(F0kflat[j]) )
-                    self.cross_spec[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
-                    index += 1
+            #Cross spectra
+            if do_cross_spectra == True and nhalos > 1:
+                self.cross_spec = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+                index = 0
+                for i in range(ntr):
+                    for j in range(i+1,ntr):
+                        cross_temp = np.real( F0kflat[i]*np.conj(F0kflat[j]) )
+                        self.cross_spec[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                        index += 1
 
-            # Defining cross of the quadrupoles
-            self.cross_spec2 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
-            index = 0
-            for i in range(ntr):
-                for j in range(i+1,ntr):
-                    # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
-                    cross_temp = 0.5*( F2kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F2kflat[j].conj()) ).real
-                    self.cross_spec2[index] = 2.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
-                    index += 1                                                                              
+                # Defining cross of the quadrupoles
+                self.cross_spec2 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+                index = 0
+                for i in range(ntr):
+                    for j in range(i+1,ntr):
+                        # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
+                        cross_temp = 0.5*( F2kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F2kflat[j].conj()) ).real
+                        self.cross_spec2[index] = 2.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                        index += 1
+            else:
+                pass
 
         else: #Quadrupole
             F0kflat = (1.+0.0*1j)*np.zeros((self.number_tracers, lenkf))
@@ -435,28 +447,32 @@ class fkp_init(object):
             self.sigma = sigma                                                                          
             self.F_ret = F_ret
 
-            self.cross_spec = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
-            index = 0
-            for i in range(ntr):
-                for j in range(i+1,ntr):
-                    cross_temp = np.real( F0kflat[i]*np.conj(F0kflat[j]) )
-                    self.cross_spec[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
-                    index += 1
+            #Cross spectra
+            if do_cross_spectra == True and nhalos > 1:
+                self.cross_spec = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+                index = 0
+                for i in range(ntr):
+                    for j in range(i+1,ntr):
+                        cross_temp = np.real( F0kflat[i]*np.conj(F0kflat[j]) )
+                        self.cross_spec[index] = self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                        index += 1
 
-            # Defining cross of the quadrupoles
-            self.cross_spec2 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
-            index = 0
-            for i in range(ntr):
-                for j in range(i+1,ntr):
-                    # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
-                    cross_temp = 0.5*( F2kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F2kflat[j].conj()) ).real
-                    self.cross_spec2[index] = 2.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
-                    index += 1                                                                              
-            # Defining cross of the quadrupoles
-            self.cross_spec4 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
-            index = 0
-            for i in range(ntr):
-                for j in range(i+1,ntr):
-                    cross_temp = 0.5*( F4kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F4kflat[j].conj()) ).real
-                    self.cross_spec4[index] = 4.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
-                    index += 1 
+                # Defining cross of the quadrupoles
+                self.cross_spec2 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+                index = 0
+                for i in range(ntr):
+                    for j in range(i+1,ntr):
+                        # Quadrupole, standard: Re[F(2)*F(0)^*] = (1/2)[F(2)*F(0)^* + c.c.]
+                        cross_temp = 0.5*( F2kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F2kflat[j].conj()) ).real
+                        self.cross_spec2[index] = 2.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                        index += 1                                                                              
+                # Defining cross of the quadrupoles
+                self.cross_spec4 = np.zeros(( ntr*(ntr-1)//2, self.num_bins ))
+                index = 0
+                for i in range(ntr):
+                    for j in range(i+1,ntr):
+                        cross_temp = 0.5*( F4kflat[i]*(F0kflat[j].conj()) + F0kflat[i]*(F4kflat[j].conj()) ).real
+                        self.cross_spec4[index] = 4.5*self.cell_size**3.*((self.bin_matrix).dot(cross_temp)/(self.counts + small))
+                        index += 1
+            else:
+                pass        
