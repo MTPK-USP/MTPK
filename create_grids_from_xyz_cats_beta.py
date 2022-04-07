@@ -11,18 +11,12 @@ INPUTS:
    (x) (y) (z)
 '''
 
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import numpy as np
 import h5py
 import sys
 import os
-from cosmo_funcs import *
 import glob
 from scipy.ndimage import gaussian_filter
-from cosmo import cosmo #definining the cosmological parameters
-from code_options import code_parameters #defining the code options
 
 '''
 -----------
@@ -229,7 +223,8 @@ def cic(value, x, nx, y = None, ny=1, z = None, nz=1, wraparound = False, averag
 		field[good] /= totalweight[good]
 	return field.reshape((nz, ny, nx)).transpose()
 
-def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename, filenames_catalogs):
+def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
+                               input_filename, filenames_catalogs):
 
         '''
         Create grids from xyz cats
@@ -245,20 +240,20 @@ def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename, fi
         this_dir = os.getcwd()
 
         if len(filenames_catalogs) == 0:
-                raise NameError('Files not to create found!')
+                raise NameError('Files not found!')
                 
-        Ncats = my_code_options.n_maps
-        Ntracers = my_code_options.nhalos
+        Ncats = cat_specs.n_maps
+        Ntracers = cat_specs.nhalos
         use_redshifts = my_code_options.use_redshifts
-        col_x = my_code_options.col_x
-        col_y = my_code_options.col_y
-        col_z = my_code_options.col_z
-        x_cat_min = my_code_options.x_cat_min
-        y_cat_min = my_code_options.y_cat_min
-        z_cat_min = my_code_options.z_cat_min
-        x_cat_max = my_code_options.x_cat_max
-        y_cat_max = my_code_options.y_cat_max
-        z_cat_max = my_code_options.z_cat_max
+        col_x = cat_specs.col_x
+        col_y = cat_specs.col_y
+        col_z = cat_specs.col_z
+        x_cat_min = cat_specs.x_cat_min
+        y_cat_min = cat_specs.y_cat_min
+        z_cat_min = cat_specs.z_cat_min
+        x_cat_max = cat_specs.x_cat_max
+        y_cat_max = cat_specs.y_cat_max
+        z_cat_max = cat_specs.z_cat_max
         mask_redshift = my_code_options.mask_redshift
         save_mask = my_code_options.save_mask
         save_mean_sel_fun = my_code_options.save_mean_sel_fun

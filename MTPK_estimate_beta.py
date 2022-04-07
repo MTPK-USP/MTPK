@@ -1,33 +1,38 @@
 '''
-This will be a function (or a class) to substitute the MTPK_estimate.py program
+This code computes the power spectrum for the catalogues
+
+------
+Yields
+------
+
+ValueError 
+ Raised when a function gets an argument of correct type but improper value
+
+NameError
+ Raised when an object could not be found
+
 '''
 
 import numpy as np
 import os, sys
-import uuid
 import h5py
 import glob
-from time import time , strftime
+from time import time
 from scipy import interpolate
-from scipy import special
-from scipy.optimize import leastsq
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
-from scipy.sparse import csr_matrix
 from scipy.sparse import vstack
-from scipy.ndimage import gaussian_filter
 
 # My classes -- functions used by the MTPK suite
 import fkp_multitracer_beta as fkpmt
-import fkp_class_beta as fkp  # This is the new class, which computes auto- and cross-spectra
+import fkp_class_beta as fkp
 import pk_multipoles_gauss as pkmg
 import pk_crossmultipoles_gauss as pkmg_cross
 from camb_spec import camb_spectrum
-from cosmo_funcs import matgrow, H
 from analytical_selection_function import *
 import grid3D as gr
 
-def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
+def MTPK_estimate(cat_specs, my_cosmology, my_code_options, handle_data = "ExSHalos"):
     '''
     Initial code started by Arthur E. da Mota Loureiro, 04/2015 
     Additonal changes by R. Abramo 07/2015, 02/2016
@@ -104,10 +109,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
     elif mas_method == 'PCS':
         mas_power = 4.0
     else:
-        print("Please specify an acceptable Mass Assignement Scheme")
-        print("Acceptable values: NGP, CIC, TSC and PCS")
-        print("Aborting now...")
-        sys.exit(-1)
+        raise ValueError("Wrong gridding method (mas_method)")
     use_mask = my_code_options.use_mask
     sel_fun_data = my_code_options.sel_fun_data
     strkph = str(my_code_options.kph_central) #Save estimations
@@ -132,7 +134,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
     mult_sel_fun = my_code_options.mult_sel_fun
     shift_sel_fun = my_code_options.shift_sel_fun
     mass_fun = my_code_options.mass_fun
-    n_maps = my_code_options.n_maps
+    n_maps = cat_specs.n_maps
     use_cell_low_count_thresh = my_code_options.use_cell_low_count_thresh
     cell_low_count_thresh = my_code_options.cell_low_count_thresh
     use_kmax_phys = my_code_options.use_kmax_phys
@@ -145,7 +147,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
     method = my_code_options.method
     multipoles_order = my_code_options.multipoles_order
     do_cross_spectra = my_code_options.do_cross_spectra
-    nhalos = my_code_options.nhalos
+    nhalos = cat_specs.nhalos
 
     #Backing to the code
     handle_sims = handle_data
@@ -256,23 +258,16 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             nbm = np.asarray(small + mult_sel_fun*(nbm + shift_sel_fun),dtype='float32')
             h5map.close
         except:
-            print ('Could not find file with data selection function!')
-            print ('Check your directory ', dir_data)
-            print ('Aborting now...')
-            sys.exit(-1)
+            raise NameError('Files with data selection function not to found! Check your directory ', dir_data)
         if len(nbm.shape)==3:
             n_bar_matrix_fid = np.zeros((1,n_x,n_y,n_z))
             n_bar_matrix_fid[0] = nbm
         elif len(nbm.shape)==4:
             n_bar_matrix_fid = nbm
             if (np.shape(n_bar_matrix_fid)[1] != n_x) or (np.shape(n_bar_matrix_fid)[2] != n_y) or (np.shape(n_bar_matrix_fid)[3] != n_z):
-                print ('WARNING!!! Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
-                print ('Please correct/check input files and/or maps. Aborting now.')
-                sys.exit(-1)
+                raise ValueError('Dimensions of data selection function box =', n_bar_matrix_fid.shape, ' , differ from input file!')
         else:
-            print ('WARNING!!! Data selection function has funny dimensions:', nbm.shape)
-            print ('Please check, something is not right here. Aborting now...')
-            sys.exit(-1)
+            raise ValueError('Data selection function has funny dimensions:', nbm.shape)
 
     else:
         try:
@@ -302,14 +297,9 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
             mask = np.asarray(h5data,dtype='int32')
             h5map.close
         except:
-            print ('Could not find file with mask!')
-            print ('Check your directory ', dir_data)
-            print ('Aborting now...')
-            sys.exit(-1)
+            raise NameError('Mask not found! Check your directory ', dir_data)
         if (np.shape(mask)[0] != n_x) or (np.shape(mask)[1] != n_y) or (np.shape(mask)[2] != n_z):
-            print ('WARNING!!! Dimensions of mask, =', mask.shape, ' , differ from input file!')
-            print ('Please correct/check input files and/or maps. Aborting now.')
-            sys.exit(-1)
+            raise ValueError('Dimensions of mask, =', mask.shape, ' , differ from input file!')
         n_bar_matrix_fid = n_bar_matrix_fid * mask
 
     # Apply padding, if it exists
@@ -324,11 +314,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
 
     mapnames_sims = sorted(glob.glob(dir_maps + '/*.hdf5'))
     if len(mapnames_sims)==0 :
-        print()
-        print ('Simulated map files not found! Check input simulation files.')
-        print ('Exiting program...')
-        print ()
-        sys.exit(-1)
+        raise NameError('Simulated map files not found! Check input simulation files.')
     if len(mapnames_sims) != n_maps :
         print ('You are using', n_maps, ' mocks out of the existing', len(mapnames_sims))
         answer = input('Continue anyway? y/n  ')
@@ -602,9 +588,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
     print ('Done with k-binning matrices. Time cost: ', np.int32((time()-tempor)*1000)/1000., 's')
     print ('Memory occupied by the binning matrix: ', MRk.nnz)
 
-    #print('Bin counts in k, using M(k):')
-    #print(kkbar_counts[10:15])
-
     #R We defined "target" k's , but <k> on bins may be slightly different
     kkav=(((MRk*kflat))/(kkbar_counts+0.00001))
     print ('Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ])
@@ -725,11 +708,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
-                    print()
-                    print ('Unexpected shape of simulated maps! Found:', maps.shape)
-                    print ('Check inputs and sims.  Aborting now...')
-                    print()
-                    sys.exit(-1)
+                    raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
                 print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
@@ -737,7 +716,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
                     maps = thresh_mask*maps
-                    #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
                 else:
                     pass
 
@@ -1001,11 +979,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
-                    print()
-                    print ('Unexpected shape of simulated maps! Found:', maps.shape)
-                    print ('Check inputs and sims.  Aborting now...')
-                    print()
-                    sys.exit(-1)
+                    raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
                 print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
@@ -1013,7 +987,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
                     maps = thresh_mask*maps
-                    #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
                 else:
                     pass
 
@@ -1312,11 +1285,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
-                    print()
-                    print ('Unexpected shape of simulated maps! Found:', maps.shape)
-                    print ('Check inputs and sims.  Aborting now...')
-                    print()
-                    sys.exit(-1)
+                    raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
                 print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
@@ -1324,7 +1293,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
                     maps = thresh_mask*maps
-                    #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
                 else:
                     pass
 
@@ -1612,11 +1580,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
-                    print()
-                    print ('Unexpected shape of simulated maps! Found:', maps.shape)
-                    print ('Check inputs and sims.  Aborting now...')
-                    print()
-                    sys.exit(-1)
+                    raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
                 print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
@@ -1624,7 +1588,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
                     maps = thresh_mask*maps
-                    #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
                 else:
                     pass
 
@@ -1840,11 +1803,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
-                    print()
-                    print ('Unexpected shape of simulated maps! Found:', maps.shape)
-                    print ('Check inputs and sims.  Aborting now...')
-                    print()
-                    sys.exit(-1)
+                    raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
                 print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
@@ -1852,7 +1811,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
                     maps = thresh_mask*maps
-                    #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
                 else:
                     pass
 
@@ -2084,11 +2042,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
-                    print()
-                    print ('Unexpected shape of simulated maps! Found:', maps.shape)
-                    print ('Check inputs and sims.  Aborting now...')
-                    print()
-                    sys.exit(-1)
+                    raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
                 print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
@@ -2096,7 +2050,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
                     maps = thresh_mask*maps
-                    #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
                 else:
                     pass
 
@@ -2355,11 +2308,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
-                    print()
-                    print ('Unexpected shape of simulated maps! Found:', maps.shape)
-                    print ('Check inputs and sims.  Aborting now...')
-                    print()
-                    sys.exit(-1)
+                    raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
                 print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
@@ -2367,7 +2316,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
                     maps = thresh_mask*maps
-                    #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
                 else:
                     pass
 
@@ -2525,11 +2473,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
-                    print()
-                    print ('Unexpected shape of simulated maps! Found:', maps.shape)
-                    print ('Check inputs and sims.  Aborting now...')
-                    print()
-                    sys.exit(-1)
+                    raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
                 
                 print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
@@ -2537,7 +2481,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
                     maps = thresh_mask*maps
-                    #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
                 else:
                     pass
 
@@ -2702,11 +2645,7 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
-                    print()
-                    print ('Unexpected shape of simulated maps! Found:', maps.shape)
-                    print ('Check inputs and sims.  Aborting now...')
-                    print()
-                    sys.exit(-1)
+                    raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
                 print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
@@ -2714,7 +2653,6 @@ def MTPK_estimate(my_cosmology, my_code_options, handle_data = "ExSHalos"):
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
                     maps = thresh_mask*maps
-                    #print ("Total number of objects AFTER additional threshold mask:", np.sum(maps,axis=(1,2,3)))
                 else:
                     pass
 

@@ -28,6 +28,9 @@ class code_parameters:
        mas_method = 'TSC' -> Triangular Shaped Cloud
        mas_method = 'PCS' -> Piecewise Cubic Spline
 
+   nhalos : integer                                                                                     
+      Number of halo bins/number of tracers to consider
+
     use_kdip_phys : bool
       True -> use kdip_phys
       False -> the code will compute it
@@ -77,13 +80,7 @@ class code_parameters:
             
     halo_bias : ndarray of floats
       It is a list that keeps the bias of each tracer
-            
-    nhalos : integer
-      Number of halo bins/number of tracers to consider
-                        
-    n_maps : integer
-      Number maps
-            
+   
     cell_size : float
       Cell physical size, in units of h^-1 Mpc
             
@@ -169,22 +166,12 @@ class code_parameters:
       Velocity dispersions for RSDs
 
     halos_sigz_est : list of floats
-      edshift errors and dipoles of halos
+      Redshift errors and dipoles of halos
 
     use_redshifts: bool
       Necessary to create the catalogs
        True -> Use redshifts collumn                                                                    
        False -> Otherwise
-
-    col_m: integer                                                                                      
-      It is the collumn in the catalog corresponding to the mass of the halos
-
-    col_x, col_y, col_z : integers                                                                      
-      Necessary to create the catalogs
-      Specify columns for x, y, z in the catalogs 
-
-    x_cat_min , y_cat_min , z_cat_min, x_cat_max , y_cat_max , z_cat_max : float                        
-      Min and max of coordinates for the catalogs 
 
     mask_redshift : bool
       While creating the catalogs
@@ -201,12 +188,6 @@ class code_parameters:
        True -> Save rough/estimated selection function from mean of catalogs                           
        False -> Otherwise 
 
-    m_min, m_max: floats                                                                               
-      Correspond to the mininum and maximum mass to be considered   
-
-    V: float                                                                                           
-      Volume of the box considered 
-
     Yields
     ------
             
@@ -221,6 +202,7 @@ class code_parameters:
         default_params = {
             'method'               : 'both',
             'mas_method'           : 'CIC',
+            'nhalos'               : 3,
             'use_kdip_phys'        : False,
             'kdip_phys'            : 0.005,
             'multipoles_order'     : 4,
@@ -233,8 +215,6 @@ class code_parameters:
             'mask_filename'        : "mask.hdf5",
             'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),
             'halo_bias'            : np.array([1.572, 1.906, 2.442]),
-            'nhalos'               : 3,
-            'n_maps'               : 3,
             'cell_size'            : 1.0,
             'n_x'                  : 128,
             'n_y'                  : 128,
@@ -260,22 +240,9 @@ class code_parameters:
             'k_min_CAMB'           : 1.e-4,
             'k_max_CAMB'           : 1.e+0,
             'use_redshifts'        : False,
-            'col_m'                : 6,
-            'col_x'                : 0,
-            'col_y'                : 1,
-            'col_z'                : 2,
-            'x_cat_min'            : 0.,
-            'y_cat_min'            : 0.,
-            'z_cat_min'            : 0.,
-            'x_cat_max'            : 128.,
-            'y_cat_max'            : 128.,
-            'z_cat_max'            : 128.,
             'mask_redshift'        : False,
             'save_mask'            : False,
-            'save_mean_sel_fun'    : False,
-            'm_min'                : 10**(11.5),
-            'm_max'                : 10**(13.),
-            'V'                    : 128.**3,
+            'save_mean_sel_fun'    : False
         }
 
         #Error for type and wrong/new parameters
@@ -289,6 +256,7 @@ class code_parameters:
         #Main Parameters
         self.method = default_params['method']
         self.mas_method = default_params['mas_method']
+        self.nhalos = default_params['nhalos']
         self.use_kdip_phys = default_params['use_kdip_phys']
         self.kdip_phys = default_params['kdip_phys']
         self.multipoles_order = default_params['multipoles_order']
@@ -302,8 +270,6 @@ class code_parameters:
         self.mask_filename = default_params['mask_filename']
         self.mass_fun = default_params['mass_fun']
         self.halo_bias = default_params['halo_bias']
-        self.nhalos = default_params['nhalos']
-        self.n_maps = default_params['n_maps']
         self.cell_size = default_params['cell_size']
         self.n_x = default_params['n_x']
         self.n_y = default_params['n_y']
@@ -329,22 +295,9 @@ class code_parameters:
         self.kmax_phys = default_params['kmax_phys']
         self.whichspec = default_params['whichspec']
         self.use_redshifts = default_params['use_redshifts']
-        self.col_m = default_params['col_m']
-        self.col_x = default_params['col_x']
-        self.col_y = default_params['col_y']
-        self.col_z = default_params['col_z']
-        self.x_cat_min = default_params['x_cat_min']
-        self.y_cat_min = default_params['y_cat_min']
-        self.z_cat_min = default_params['z_cat_min']
-        self.x_cat_max = default_params['x_cat_max']
-        self.y_cat_max = default_params['y_cat_max']
-        self.z_cat_max = default_params['z_cat_max']
         self.mask_redshift = default_params['mask_redshift']
         self.save_mask = default_params['save_mask']
         self.save_mean_sel_fun = default_params['save_mean_sel_fun']
-        self.m_min = default_params['m_min']
-        self.m_max = default_params['m_max']
-        self.V = default_params['V']
 
         #Computed Parameters
         self.ntracers = self.nhalos
@@ -371,7 +324,7 @@ class code_parameters:
         '''
         for key in self.default_params:
             print('{} = {}'.format(key, self.default_params[key] ) )
-        return ''
+        return
 
     #To print without calling parameters_print to print
     __repr__ = parameters_print

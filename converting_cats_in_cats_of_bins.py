@@ -93,22 +93,23 @@ class converting_cats_in_cats_of_bins:
             print('{} = {}'.format(key, self.default_params[key] ) )
         return ''
 
-    def to_bins(self, my_code_options):
+    def to_bins(self, cat_specs):
         '''
         Method to split the halos in bins according to their masses
 
         It return the Mass Function of the catalogs
         '''
+        
         cats = self.default_params['cats']
-        col_m = my_code_options.col_m
-        col_x = my_code_options.col_x
-        col_y = my_code_options.col_y
-        col_z = my_code_options.col_z
-        m_min = my_code_options.m_min
-        m_max = my_code_options.m_max
-        nhalos = my_code_options.nhalos
+        col_m = cat_specs.col_m
+        col_x = cat_specs.col_x
+        col_y = cat_specs.col_y
+        col_z = cat_specs.col_z
+        m_min = cat_specs.m_min
+        m_max = cat_specs.m_max
+        nhalos = cat_specs.nhalos
         skiprows = self.default_params['skiprows']
-        V = my_code_options.V
+        V = cat_specs.V
         path_to_save = self.default_params['path_to_save']
         
         m_lims = np.logspace(np.log10(m_min), np.log10(m_max), nhalos + 1)
@@ -125,13 +126,13 @@ class converting_cats_in_cats_of_bins:
         print('Catalogs created!')
         return np.mean(MF, axis = 0)/V
 
-    def central_masses(self, my_code_options):
+    def central_masses(self, cat_specs):
         '''
         Method to given the central masses of halos
         '''
-        m_min = my_code_options.m_min
-        m_max = my_code_options.m_max
-        nhalos = my_code_options.nhalos
+        m_min = cat_specs.m_min
+        m_max = cat_specs.m_max
+        nhalos = cat_specs.nhalos
 
         m_lims = np.logspace(np.log10(m_min), np.log10(m_max), nhalos + 1)
         m_ctrs = []

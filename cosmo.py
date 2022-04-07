@@ -247,16 +247,16 @@ class cosmo:
         METHODS
     '''
 
-    def cosmo_print(self):
+    def parameters_print(self):
         ''' 
         Method to print the cosmological parameters
         '''
         for key in self.default_params:
             print('{} = {}'.format(key, self.default_params[key] ) )
-        return ''
+        return
 
     #To print without calling cosmo_print to print
-    __repr__ = cosmo_print
+    __repr__ = parameters_print
 
     def f_evolving(self, z):
         '''
