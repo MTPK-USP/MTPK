@@ -171,6 +171,33 @@ class code_parameters:
     halos_sigz_est : list of floats
       edshift errors and dipoles of halos
 
+    use_redshifts: bool
+      Necessary to create the catalogs
+       True -> Use redshifts collumn                                                                    
+       False -> Otherwise
+
+    col_x, col_y, col_z : integers                                                                      
+      Necessary to create the catalogs
+      Specify columns for x, y, z in the catalogs 
+
+    x_cat_min , y_cat_min , z_cat_min, x_cat_max , y_cat_max , z_cat_max : float                        
+      Min and max of coordinates for the catalogs 
+
+    mask_redshift : bool
+      While creating the catalogs
+       True -> Mask out some redshift range                                                             
+       False -> Otherwise                                                                              
+
+    save_mask : bool
+      Save the redshift mask
+       True -> Save mask with zero'ed cells                                                           
+       False -> Otherwise                                                                             
+
+    save_mean_sel_fun : bool
+      While creating the catalogs
+       True -> Save rough/estimated selection function from mean of catalogs                           
+       False -> Otherwise 
+
     Yields
     ------
             
@@ -223,6 +250,19 @@ class code_parameters:
             'shift_sel_fun'        : 0.0,
             'k_min_CAMB'           : 1.e-4,
             'k_max_CAMB'           : 1.e+0,
+            'use_redshifts'        : False,
+            'col_x'                : 0,
+            'col_y'                : 1,
+            'col_z'                : 2,
+            'x_cat_min'            : 0.,
+            'y_cat_min'            : 0.,
+            'z_cat_min'            : 0.,
+            'x_cat_max'            : 128.,
+            'y_cat_max'            : 128.,
+            'z_cat_max'            : 128.,
+            'mask_redshift'        : False,
+            'save_mask'            : False,
+            'save_mean_sel_fun'    : False
         }
 
         #Error for type and wrong/new parameters
@@ -275,6 +315,19 @@ class code_parameters:
         self.use_kmax_phys = default_params['use_kmax_phys']
         self.kmax_phys = default_params['kmax_phys']
         self.whichspec = default_params['whichspec']
+        self.use_redshifts = default_params['use_redshifts']
+        self.col_x = default_params['col_x']
+        self.col_y = default_params['col_y']
+        self.col_z = default_params['col_z']
+        self.x_cat_min = default_params['x_cat_min']
+        self.y_cat_min = default_params['y_cat_min']
+        self.z_cat_min = default_params['z_cat_min']
+        self.x_cat_max = default_params['x_cat_max']
+        self.y_cat_max = default_params['y_cat_max']
+        self.z_cat_max = default_params['z_cat_max']
+        self.mask_redshift = default_params['mask_redshift']
+        self.save_mask = default_params['save_mask']
+        self.save_mean_sel_fun = default_params['save_mean_sel_fun']
 
         #Computed Parameters
         self.ntracers = self.nhalos

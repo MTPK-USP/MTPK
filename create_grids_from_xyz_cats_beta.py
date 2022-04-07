@@ -1,24 +1,21 @@
 '''
 This will be a function (or a class) to substitute the create_grids_from_xyz_cats.py program
+
+This code creates a grid (nx , ny, nz) of cells of size cell_size, 
+containint the selection functions of any number of tracers (Nt).
+
+The output has the format (Nt,nx,ny,nz)
+
+INPUTS:
+
+ - files "catalog_XXX_YY.dat", ..., for XXX representing the seed and YY the bin, which are 
+   table with any number of "points" with columns given by the cartesian coordinates:
+   (x) (y) (z)
 '''
 
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-########################################
-# This code creates a grid (nx , ny, nz) of cells of size cell_size, 
-# containint the selection functions of any number of tracers (Nt).
-#
-# The output has the format (Nt,nx,ny,nz)
-#
-# INPUTS:
-#
-#  - files "catalog_XXX_YY.dat", ..., for XXX representing the seed and YY the bin, which are 
-#    table with any number of "points" with columns given by the cartesian coordinates:
-#    (x) (y) (z)
-#
-#
 
-########################################
 import numpy as np
 import h5py
 import sys
@@ -26,84 +23,29 @@ import os
 from cosmo_funcs import *
 import glob
 from scipy.ndimage import gaussian_filter
-from cosmo import cosmo #class to cosmological parameter
-from code_options import code_parameters #class to code options
+from cosmo import cosmo #definining the cosmological parameters
+from code_options import code_parameters #defining the code options
 
-####################################################################################################
-#
-# Parameters
-#
-# input_filename: name of the catalogs
-# filenames_catalogs: path to the catalogs using *
-# Ncats: Number of maps or subboxes
-# Ntracers: Number of tracers
-# use_redshifts, col_x, col_y, col_z: Specify columns for: redshift, x, y, z
-# # min and max of coordinates for the catalogs
-# x_cat_min , y_cat_min , z_cat_min = 0.0 , 0.0 , 0.0
-# x_cat_max , y_cat_max , z_cat_max = 128.0 , 128.0 , 128.0
-# # Mask out some redshift range?
-# mask_redshift = False
-# # Mask out some redshift range?
-# mask_redshift = False
-# # Method. (1) Nearest Grid Point, (2) Clouds in Cell
-# grid_method = 2 #CIC
-# # grid_method = 1 #NGP
-# ####
-# #  Save mask with zero'ed cells?
-# save_mask = False
+'''
+-----------
+Parameters
+-----------
 
-# #  Save rough/estimated selection function from mean of catalogs?
-# save_mean_sel_fun = False
-#
-##########################
+input_filename : string
+ Name of the catalogs
 
-# Specify how many tracers, how many catalogs, and which files refer to which catalog/tracer
-# Final format should be filenames(cat,tracer)
+filenames_catalogs : string
+ Path to the catalogs using *
 
-# filenames_catalogs = np.sort(glob.glob('../data/ExSHalos/seed*.dat'))
-
-# # Number of maps or subboxes
-# Ncats = 4#1
-# # Number of tracers
-# Ntracers = 3#1
-
-# # Specify columns for x, y, z, redshift
-# use_redshifts = False
-# col_x = 0
-# col_y = 1
-# col_z = 2
-
-# # min and max of coordinates for the catalogs
-# x_cat_min , y_cat_min , z_cat_min = 0.0 , 0.0 , 0.0
-# x_cat_max , y_cat_max , z_cat_max = 128.0 , 128.0 , 128.0
-
-# # Mask out some redshift range?
-# mask_redshift = False
-
-# # Method. (1) Nearest Grid Point, (2) Clouds in Cell
-# grid_method = 2 #CIC
-# # grid_method = 1 #NGP
-
-# ####
-# #  Save mask with zero'ed cells?
-# save_mask = False
-
-# #  Save rough/estimated selection function from mean of catalogs?
-# save_mean_sel_fun = False
-
-#
-# (End of user definitions)
-#
-####################################################################################################
-
-####################################################################################################
-# Define function that does the Clouds-in-Cells
-#
-#
+'''
 
 def cic(value, x, nx, y=None, ny=1, z=None, nz=1,
 		wraparound=False, average=True):
-	""" Interpolate an irregularly sampled field using Cloud in Cell
+	""" 
+
+        Clouds-in-Cells
+
+        Interpolate an irregularly sampled field using Cloud in Cell
 	method.
 	This function interpolates an irregularly sampled field to a
 	regular grid using Cloud In Cell (nearest grid point gets weight
@@ -251,14 +193,6 @@ def cic(value, x, nx, y=None, ny=1, z=None, nz=1,
 	nxny = nx * ny
 	value = np.asarray(value)
 
-	#print('Resampling %i values to a %i by %i by %i grid' % (
-	#    len(value), nx, ny, nz))
-
-	# normalise data such that grid points are at integer positions.
-	#x = (x - x.min()) / x.ptp() * nx
-	#y = (y - y.min()) / y.ptp() * ny
-	#z = (z - z.min()) / z.ptp() * nz
-
 	x1, x2 = findweights(np.asarray(x), nx)
 	y1 = z1 = dict(weight=1., ind=0)
 	if y is not None:
@@ -289,17 +223,13 @@ def cic(value, x, nx, y=None, ny=1, z=None, nz=1,
 		good = totalweight > 0
 		field[good] /= totalweight[good]
 	return field.reshape((nz, ny, nx)).transpose()
-	#return field.reshape((nx, ny, nz)).squeeze().transpose()
 
-##################################
-# Define the function to be expoerted
-##################################
+def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename, filenames_catalogs):
 
-def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename,
-                               filenames_catalogs, Ncats, Ntracers, use_redshifts, col_x, col_y, col_z,
-                               x_cat_min, y_cat_min, z_cat_min, x_cat_max, y_cat_max, z_cat_max,
-                               mask_redshift, grid_method, save_mask, save_mean_sel_fun):
-
+        '''
+        Create grids from xyz cats
+        '''
+        
         filenames_catalogs = np.sort(glob.glob(filenames_catalogs))
         
         ####################
@@ -313,6 +243,21 @@ def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename,
 	        print ('Files not found! Aborting now...')
 	        sys.exit(-1)
 
+        Ncats = my_code_options.n_maps
+        Ntracers = my_code_options.nhalos
+        use_redshifts = my_code_options.use_redshifts
+        col_x = my_code_options.col_x
+        col_y = my_code_options.col_y
+        col_z = my_code_options.col_z
+        x_cat_min = my_code_options.x_cat_min
+        y_cat_min = my_code_options.y_cat_min
+        z_cat_min = my_code_options.z_cat_min
+        x_cat_max = my_code_options.x_cat_max
+        y_cat_max = my_code_options.y_cat_max
+        z_cat_max = my_code_options.z_cat_max
+        mask_redshift = my_code_options.mask_redshift
+        save_mask = my_code_options.save_mask
+        save_mean_sel_fun = my_code_options.save_mean_sel_fun
 
         # This line should be rewritten if the order of the files doesn't match the required
         # ordering: first index is catalog/sub-box, second index is tracer
@@ -353,6 +298,12 @@ def create_grids_from_xyz_cats(my_cosmology, my_code_options, input_filename,
         n_y_orig = my_code_options.n_y_orig
         n_z_orig = my_code_options.n_z_orig
 
+        grid_method = my_code_options.mas_method
+        if grid_method == 'NGP':
+                grid_method = 1
+        elif grid_method == 'CIC':
+                grid_method = 2
+        
         use_padding = my_code_options.use_padding
         if use_padding == True:
                 padding_length = my_code_options.padding_length
