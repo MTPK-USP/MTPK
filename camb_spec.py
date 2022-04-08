@@ -1,5 +1,3 @@
-import camb
-from camb import model
 import numpy as np
 import time
 import os, sys
@@ -38,7 +36,54 @@ def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min, 
                         sigma_8 
 	'''
 
-	if(k_min >= 1e-4):
+	try:
+		import camb
+		from camb import model
+
+		h = H0/100.
+
+		pars = camb.CAMBparams()
+		
+		pars.omk = 0.0
+		pars.DarkEnergy.w = w0
+		pars.DarkEnergy.wa = w1
+		pars.ombh2 = Omegab*h**2
+		pars.omch2 = Omegac*h**2
+		pars.H0 = H0
+		pars.InitPower.As = A_s
+		pars.InitPower.ns = n_SA
+		pars.Reion.redshift = z_re
+		pars.set_matter_power(redshifts = [zcentral], kmax = k_max)
+
+		if(whicspec == 0):
+			results = camb.get_results(pars)
+			kh, z, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
+			pk = pk[0,:]
+			
+			return kh, pk
+
+
+		elif(whicspec == 1):
+			pars.NonLinear = model.NonLinear_both
+			results = camb.get_results(pars)
+			results.calc_power_spectra(pars)
+			kh, z_nl, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
+			pk = pk[0,:]
+
+			return kh, pk
+
+		else:
+			pars.NonLinear = model.NonLinear_both
+			pars.NonLinearModel.halofit_version = 'casarini'
+			results = camb.get_results(pars)
+			results.calc_power_spectra(pars)
+			kh, z, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
+			pk = pk[0,:]	
+
+			return kh, pk
+
+	except:
+
 		t0 = time.time()
 		h = H0/100.
 
@@ -151,44 +196,4 @@ def camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min, 
 					r_s_drag = float(lines[i].split()[-1])
 			sigma8 = float(lines[23].split()[-1])
 
-		return np.asarray([kh, pk, r_s_drag, sigma8])
-	
-	else:
-		h = H0/100.
-
-		pars = camb.CAMBparams()
-		
-		pars.omk = 0.0
-		pars.DarkEnergy.w = w0
-		pars.DarkEnergy.wa = w1
-		pars.ombh2 = Omegab*h**2
-		pars.omch2 = Omegac*h**2
-		pars.H0 = H0
-		pars.InitPower.As = A_s
-		pars.InitPower.ns = n_SA
-		pars.Reion.redshift = z_re
-		pars.set_matter_power(redshifts = [zcentral], kmax = k_max)
-
-		if(whicspec == 0):
-			results = camb.get_results(pars)
-			kh, z, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
-			pk = pk[0,:]
-
-
-		elif(whicspec == 1):
-			pars.NonLinear = model.NonLinear_both
-			results = camb.get_results(pars)
-			results.calc_power_spectra(pars)
-			kh, z_nl, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
-			pk = pk[0,:]
-
-		else:
-			pars.NonLinear = model.NonLinear_both
-			pars.NonLinearModel.halofit_version = 'casarini'
-			results = camb.get_results(pars)
-			results.calc_power_spectra(pars)
-			kh, z, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
-			pk = pk[0,:]
-
-
-
+		return kh, pk

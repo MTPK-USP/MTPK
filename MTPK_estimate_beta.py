@@ -184,7 +184,7 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
         nklist = 1000
         k_camb = np.logspace(np.log10(k_min_camb),np.log10(k_max_camb),nklist)
         
-        kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min_camb, k_max_camb, whichspec)[:2]
+        kc, pkc = camb_spectrum(H0, Omegab, Omegac, w0, w1, z_re, zcentral, A_s, n_SA, k_min_camb, k_max_camb, whichspec)
         Pk_camb = np.asarray( np.interp(k_camb, kc, pkc) )
 
     # Ended CAMB calculation #####################################
