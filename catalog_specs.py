@@ -28,10 +28,11 @@ class cat_specs:
       Min and max of coordinates for the catalogs 
 
     m_min, m_max: floats                                                                               
-      Correspond to the mininum and maximum mass to be considered   
+      Correspond to the log10 of the mininum and maximum masses to be considered   
 
-    V: float                                                                                           
-      Volume of the box considered 
+    V: float                                                                               
+      Correspond to box volume, without padding, without mask and everything
+      It is computed as: V = (x_cat_max - x_cat_min)*(y_cat_max - y_cat_min)*(z_cat_max - z_cat_min)
 
     Yields
     ------
@@ -57,9 +58,8 @@ class cat_specs:
             'x_cat_max'            : 128.,
             'y_cat_max'            : 128.,
             'z_cat_max'            : 128.,
-            'm_min'                : 10**(11.5),
-            'm_max'                : 10**(13.),
-            'V'                    : 128.**3,
+            'm_min'                : 11.5,
+            'm_max'                : 13.
         }
 
         #Error for type and wrong/new parameters
@@ -85,7 +85,9 @@ class cat_specs:
         self.z_cat_max = default_params['z_cat_max']
         self.m_min = default_params['m_min']
         self.m_max = default_params['m_max']
-        self.V = default_params['V']
+
+        #Computed Parameters
+        self.V = (self.x_cat_max - self.x_cat_min)*(self.y_cat_max - self.y_cat_min)*(self.z_cat_max - self.z_cat_min)
 
         self.default_params = default_params
 

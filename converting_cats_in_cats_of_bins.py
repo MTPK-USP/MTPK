@@ -101,7 +101,7 @@ class converting_cats_in_cats_of_bins:
         if not os.path.exists(path_to_save):
             os.makedirs(path_to_save)
         
-        m_lims = np.logspace(np.log10(m_min), np.log10(m_max), nhalos + 1)
+        m_lims = np.logspace(m_min, m_max, nhalos + 1)
         dataj = {}
         MF = []
         for i in range( len(cats) ):
@@ -117,15 +117,15 @@ class converting_cats_in_cats_of_bins:
 
     def central_masses(self, cat_specs):
         '''
-        Method to given the central masses of halos
+        Method to give log10 of the central masses of halos
         '''
         m_min = cat_specs.m_min
         m_max = cat_specs.m_max
         nhalos = cat_specs.nhalos
 
-        m_lims = np.logspace(np.log10(m_min), np.log10(m_max), nhalos + 1)
+        m_lims = np.logspace(m_min, m_max, nhalos + 1)
         m_ctrs = []
         for i in range(nhalos):
-            m_ctrs.append( (m_lims[i+1]+m_lims[i])/2 )
+            m_ctrs.append( (m_lims[i+1] + m_lims[i])/2 )
 
-        return m_ctrs
+        return np.log10(m_ctrs)
