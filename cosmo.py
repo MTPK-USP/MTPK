@@ -245,7 +245,7 @@ class cosmo:
         '''
         Matgrowth function - evolving with z
         '''
-        Omega0_m = self.Omega0_m
+        Omega0_m = self.default_params['Omega0_b'] + self.default_params['Omega0_cdm']
         Omega0_DE = self.default_params['Omega0_DE']
         w0 = self.default_params['w0']
         w1 = self.default_params['w1']
@@ -260,8 +260,8 @@ class cosmo:
         '''
         Matgrowth function - phenomenological
         '''
-        Omega0_m = self.Omega0_m
-        gamma = self.default_params['gamma']
+        Omega0_m = self.default_params['Omega0_b'] + self.default_params['Omega0_cdm']
+        gamma = self.default_params['gamma'] 
 
         return Omega0_m**gamma
 
@@ -289,7 +289,7 @@ class cosmo:
         else:
             h = self.default_params['h']
 
-        Omega0_m   = self.default_params['Omega0_m']
+        Omega0_m   = self.default_params['Omega0_b'] + self.default_params['Omega0_cdm']
         Omega0_DE  = self.default_params['Omega0_DE']
         w0         = self.default_params['w0']
         w1         = self.default_params['w1']
@@ -337,7 +337,7 @@ class cosmo:
         Comoving radial distance in units of h^-1 Mpc. Standalone.
         '''
 
-        Omegam = self.default_params['Omega0_m']
+        Omegam = self.default_params['Omega0_b'] + self.default_params['Omega0_cdm']
         OmegaDE = self.default_params['Omega0_DE']
         w0 = self.default_params['w0']
         w1 = self.default_params['w1']

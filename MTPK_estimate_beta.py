@@ -70,13 +70,12 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     H0 = h*100.
     clight = my_cosmology.c_light
     cH = clight*h/my_cosmology.H(my_cosmology.zcentral, False) # c/H(z) , in units of h^-1 Mpc
-    Omegam = my_cosmology.Omega0_m
     OmegaDE = my_cosmology.Omega0_DE
     Omegab = my_cosmology.Omega0_b
     Omegac = my_cosmology.Omega0_cdm
     A_s = my_cosmology.A_s
     gamma = my_cosmology.gamma
-    matgrowcentral = my_cosmology.matgrowcentral
+    matgrow = my_cosmology.matgrow
     w0 = my_cosmology.w0
     w1 = my_cosmology.w1
     z_re = my_cosmology.z_re
@@ -419,18 +418,18 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     except:
         dip = 0.0
 
-    pk_mg = pkmg.pkmg(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+    pk_mg = pkmg.pkmg(gal_bias,dip,matgrow,k_camb,a_gal_sig_tot,cH,zcentral)
 
     monopoles = pk_mg.mono
     quadrupoles = pk_mg.quad
 
     # Hexadecapoles only in the Kaiser approximation
-    hexa = 8./35*matgrowcentral**2
+    hexa = 8./35*matgrow**2
 
     hexapoles = hexa*np.power(monopoles,0)
 
     try:
-        pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+        pk_mg_cross = pkmg_cross.pkmg_cross(gal_bias,dip,matgrow,k_camb,a_gal_sig_tot,cH,zcentral)
         cross_monopoles = pk_mg_cross.monos
         cross_quadrupoles = pk_mg_cross.quads
     except:
@@ -443,11 +442,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     kph_central = my_code_options.kph_central
     where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 
-    effadip = dip*matgrowcentral/(0.00000000001 + kph_central)
+    effadip = dip*matgrow/(0.00000000001 + kph_central)
     effbias = np.sqrt(monopoles[:,where_kph_central])
 
     # Get effective bias (sqrt of monopoles) for final tracers
-    pk_mg = pkmg.pkmg(gal_bias,gal_adip,matgrowcentral,k_camb,a_gal_sig_tot,cH,zcentral)
+    pk_mg = pkmg.pkmg(gal_bias,gal_adip,matgrow,k_camb,a_gal_sig_tot,cH,zcentral)
 
     monopoles = pk_mg.mono
     quadrupoles = pk_mg.quad
@@ -455,7 +454,7 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     # Compute effective dipole and bias of tracers
     where_kph_central = np.argmin(np.abs(k_camb - kph_central))
 
-    effadip = gal_adip*matgrowcentral/(0.00000000001 + kph_central)
+    effadip = gal_adip*matgrow/(0.00000000001 + kph_central)
     effbias = np.sqrt(monopoles[:,where_kph_central])
 
     print()
