@@ -19,7 +19,7 @@ import sys
 import os
 import glob
 from scipy.ndimage import gaussian_filter
-from mass_assign import build_grid, grid_pos_s, weights
+from mass_assign_beta import build_grid, grid_pos_s, weights
 
 '''
 -----------
