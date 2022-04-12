@@ -188,6 +188,27 @@ class code_parameters:
        True -> Save rough/estimated selection function from mean of catalogs                           
        False -> Otherwise 
 
+    split_tracers : bool									       
+      Create grids for those tracers from a single catalog					       
+       True -> Create										       
+       False -> Otherwise									
+
+    tracer_bins : array of floats
+      Boundary masses of the tracers							
+
+    mask_spillover_cells : bool
+      Mask out cells outside bounds of the box:
+       True -> Mask										
+       False -> Otherwise								
+
+    batch_size : integer
+      Batch size for mass assignement								
+
+    wrap : bool											       
+      Boundary method to wrap galaxies around (i.e., use periodic B.C.)				
+       True -> Use										
+       False -> Otherwise    
+
     Yields
     ------
             
@@ -242,7 +263,12 @@ class code_parameters:
             'use_redshifts'        : False,
             'mask_redshift'        : False,
             'save_mask'            : False,
-            'save_mean_sel_fun'    : False
+            'save_mean_sel_fun'    : False,
+            'split_tracers'        : False,
+            'tracer_bins'          : np.array([3.16e+11, 1.00e+12, 3.16e+12, 1.00e+13]),
+            'mask_spillover_cells' : False,
+            'batch_size'           : 1000000,
+            'wrap'                 : False
         }
 
         #Error for type and wrong/new parameters
@@ -298,6 +324,12 @@ class code_parameters:
         self.mask_redshift = default_params['mask_redshift']
         self.save_mask = default_params['save_mask']
         self.save_mean_sel_fun = default_params['save_mean_sel_fun']
+        self.split_tracers = default_params['save_mean_sel_fun']
+        self.tracer_bins = default_params['tracer_bins']
+        self.mask_spillover_cells = default_params['mask_spillover_cells']
+        self.batch_size = default_params['batch_size']
+        self.wrap = default_params['wrap']
+        
 
         #Computed Parameters
         self.ntracers = self.nhalos

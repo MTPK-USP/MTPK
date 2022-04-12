@@ -10,7 +10,7 @@
 #
 #  - files "catalog_XXX_1.hdf5", "catalog_XXX_2.hdf5", ..., which are 
 #    table with any number of "points" with columns given by:
-#    (x) (y) (z)
+#    (...) (theta) ... (phi) ... (redshift) ... (weight) ...
 #
 #  - standard input file containing grid properties, cosmological model, etc.
 #
@@ -22,21 +22,21 @@ import os
 from cosmo_funcs import *
 import glob
 from scipy.ndimage import gaussian_filter
-#The following two classes have the inttention to substitute the old program of inputs
-from cosmo import cosmo #class to cosmological parameter
-from code_options import code_parameters #class to code options
 
-if sys.platform == "darwin":
-	import pylab as pl
-	from matplotlib import cm
-else:
-	import matplotlib
-	matplotlib.use('Agg')
-	from matplotlib import pylab, mlab, pyplot
-	from matplotlib import cm
-	from IPython.display import display
-	from IPython.core.pylabtools import figsize, getfigs
-	pl=pyplot
+from mass_assign import build_grid , grid_pos_s , weights
+
+
+#if sys.platform == "darwin":
+#	import pylab as pl
+#	from matplotlib import cm
+#else:
+#	import matplotlib
+#	matplotlib.use('Agg')
+#	from matplotlib import pylab, mlab, pyplot
+#	from matplotlib import cm
+#	from IPython.display import display
+#	from IPython.core.pylabtools import figsize, getfigs
+#	pl=pyplot
 
 
 ####################################################################################################
@@ -48,13 +48,15 @@ else:
 # Files containing the catalogs
 
 # Or, use glob and read all catalogs in some directory 
-
-# #Natali
-# roound = int(sys.argv[1])
+#handle = "subbox"
+#handle = "sub"
 
 this_dir = os.getcwd()
 
-filenames_catalogs = np.sort(glob.glob('../data/positions-a1.0-L128-Np128-Ng256-seed12345.dat'))
+#filenames_catalogs = np.sort(glob.glob(this_dir + '/catalogs/Uchuu_age/*' + handle + '*'))
+#filenames_catalogs = np.sort(glob.glob('/Users/lrwa/trabalho/JPAS-LSS/Pinocchio/catalogs/Mass-12p5-15_redshift-0p1-1p0/Pin*/mass*.dat'))
+#filenames_catalogs = np.sort(glob.glob('/Users/lrwa/trabalho/JPAS-LSS/stage2/halos_unitsim.txt'))
+filenames_catalogs = np.sort(glob.glob('/Users/lrwa/trabalho/MTPK/catalogs/Unit_sims/Unit_RSD_m*'))
 
 if len(filenames_catalogs)==0 :
 	print ('Files not found! Aborting now...')
@@ -65,43 +67,76 @@ if len(filenames_catalogs)==0 :
 
 # Number of maps or subboxes
 Ncats = 1
-# Number of tracers
-Ntracers = 1
+
+# Number of tracers FOR EACH CATALOG (choose 1 if there is a single catalog with many tracers)
+ntracers_catalog = 2
+# Create grids for those tracers from a single catalog
+split_tracers = False
+# Number of tracers that will be created from the catalog
+ntracers_grid = 2
+# Specify columns for Mass, if splitting catalog
+col_tracer = 3
+# Specify criterium to split tracers: e.g., mass bins
+tracer_bins = [1.e11,1.e13,1.e15]
 
 # This line should be rewritten if the order of the files doesn't match the required
 # ordering: first index is catalog/sub-box, second index is tracer
-filenames_catalogs = np.reshape(filenames_catalogs, (Ncats, Ntracers))
+filenames_catalogs = np.reshape(filenames_catalogs,(Ncats,ntracers_catalog))
 
 # Specify columns for x, y, z, redshift
 use_redshifts = False
+#col_redshift = 0
 col_x = 0
 col_y = 1
 col_z = 2
 
 # min and max of coordinates for the catalogs
+# Uchuu 8 subboxes:
 x_cat_min , y_cat_min , z_cat_min = 0.0 , 0.0 , 0.0
 x_cat_max , y_cat_max , z_cat_max = 1000.0 , 1000.0 , 1000.0
+
+# Pinocchio:
+#x_cat_min , y_cat_min , z_cat_min = -1560.0 , -1560.0 , 1440.0
+#x_cat_max , y_cat_max , z_cat_max = 1560.0 , 1560.0 , 2208.0
 
 # Mask out some redshift range?
 mask_redshift = False
 
+# Mask out cells outside bounds of the box?
+mask_spillover_cells = False
 
-# Method. (1) Nearest Grid Point, (2) Clouds in Cell
-grid_method = 2 #CIC
-# grid_method = 1 #NGP
+
+# Mass assignement method:
+# Nearest Grid Point ("NGP")
+# Clouds in Cell ("CIC")
+# Triangular Shaped Cloud ("TSC")
+# Piecewise Cubic Spline ("PCS")
+#mas_method = "TSC"
+
+# Batch size for mass assignement
+batch_size = 1000000
 
 # Which directory to write grids to:
-dir_out = this_dir + "/maps/sims/PM/"
+#dir_out = this_dir + "/maps/sims/Uchuu_age/"
+#dir_out = this_dir + "/maps/sims/Pinocchio_z09_NGP/"
+dir_out = this_dir + "/maps/sims/Unit_RSD_TSC/"
 filenames_out = "Data"
 
 
 # File to save mean total number of tracers in maps
-file_ntot = this_dir + "/inputs/Ntot_halos.txt"
+file_ntot = this_dir + "/catalogs/Unit_sims/Ntot_Unit_RSD_NOT_WRAP.txt"
 
 
 ####################
 # Input file with grid properties (cell size, box dimensions, cosmological model etc.) 
-input_filename = "PM"
+#input_filename = "Uchuu_age_416_CiC"
+#input_filename = "Unit_sims_NGP"
+input_filename = "Unit_RSD_TSC"
+
+####
+#
+# Boundary method: wrap galaxies around (i.e., use periodic B.C.)?
+wrap=False
 
 ####
 #  Save mask with zero'ed cells?
@@ -120,205 +155,6 @@ save_mean_sel_fun = False
 
 
 
-####################################################################################################
-# Define function that does the Clouds-in-Cells
-#
-#
-
-def cic(value, x, nx, y=None, ny=1, z=None, nz=1,
-		wraparound=False, average=True):
-	""" Interpolate an irregularly sampled field using Cloud in Cell
-	method.
-	This function interpolates an irregularly sampled field to a
-	regular grid using Cloud In Cell (nearest grid point gets weight
-	1-dngp, point on other side gets weight dngp, where dngp is the
-	distance to the nearest grid point in units of the cell size).
-	
-	Inputs
-	------
-	value: array, shape (N,)
-		Sample weights (field values). For a temperature field this
-		would be the temperature and the keyword average should be
-		True. For a density field this could be either the particle
-		mass (average should be False) or the density (average should
-		be True).
-	x: array, shape (N,)
-		X coordinates of field samples, unit indices: [0,NX>.
-	nx: int
-		Number of grid points in X-direction.
-	y: array, shape (N,), optional
-		Y coordinates of field samples, unit indices: [0,NY>.
-	ny: int, optional
-		Number of grid points in Y-direction.
-	z: array, shape (N,), optional
-		Z coordinates of field samples, unit indices: [0,NZ>.
-	nz: int, optional
-		Number of grid points in Z-direction.
-	wraparound: bool (False)
-		If True, then values past the first or last grid point can
-		wrap around and contribute to the grid point on the opposite
-		side (see the Notes section below).
-	average: bool (False)
-		If True, average the contributions of each value to a grid
-		point instead of summing them.
-	Returns
-	-------
-	dens: ndarray, shape (nx, ny, nz)
-		The grid point values.
-	Notes
-	-----
-	Example of default allocation of nearest grid points: nx = 4, * = gridpoint.
-	  0   1   2   3     Index of gridpoints
-	  *   *   *   *     Grid points
-	|---|---|---|---|   Range allocated to gridpoints ([0.0,1.0> -> 0, etc.)
-	0   1   2   3   4   posx
-	Example of ngp allocation for wraparound=True: nx = 4, * = gridpoint.
-	  0   1   2   3        Index of gridpoints
-	  *   *   *   *        Grid points
-	|---|---|---|---|--    Range allocated to gridpoints ([0.5,1.5> -> 1, etc.)
-	  0   1   2   3   4=0  posx
-	References
-	----------
-	R.W. Hockney and J.W. Eastwood, Computer Simulations Using Particles
-		(New York: McGraw-Hill, 1981).
-	Modification History
-	--------------------
-	IDL code written by Joop Schaye, Feb 1999.
-	Avoid integer overflow for large dimensions P.Riley/W.Landsman Dec. 1999
-	Translated to Python by Neil Crighton, July 2009.
-	
-	Examples
-	--------
-	>>> nx = 20
-	>>> ny = 10
-	>>> posx = np.random.rand(size=1000)
-	>>> posy = np.random.rand(size=1000)
-	>>> value = posx**2 + posy**2
-	>>> field = cic(value, posx*nx, nx, posy*ny, ny)
-	# plot surface
-	"""
-
-	def findweights(pos, ngrid):
-		""" Calculate CIC weights.
-		
-		Coordinates of nearest grid point (ngp) to each value. """
-
-		if wraparound:
-			# grid points at integer values
-			ngp = np.fix(pos + 0.5)
-		else:
-			# grid points are at half-integer values, starting at 0.5,
-			# ending at len(grid) - 0.5
-			ngp = np.fix(pos) + 0.5
-
-		# Distance from sample to ngp.
-		distngp = ngp - pos
-
-		# weight for higher (right, w2) and lower (left, w1) ngp
-		weight2 = np.abs(distngp)
-		weight1 = 1.0 - weight2
-
-		# indices of the nearest grid points
-		if wraparound:
-			ind1 = ngp
-		else:
-			ind1 = ngp - 0.5
-		ind1 = ind1.astype(int)
-
-		ind2 = ind1 - 1
-		# Correct points where ngp < pos (ngp to the left).
-		ind2[distngp < 0] += 2
-
-		# Note that ind2 can be both -1 and ngrid at this point,
-		# regardless of wraparound. This is because distngp can be
-		# exactly zero.
-		bad = (ind2 == -1)
-		ind2[bad] = ngrid - 1
-		if not wraparound:
-			weight2[bad] = 0.
-		bad = (ind2 == ngrid)
-		ind2[bad] = 0
-		if not wraparound:
-			weight2[bad] = 0.
-
-		if wraparound:
-			ind1[ind1 == ngrid] = 0
-
-		return dict(weight=weight1, ind=ind1), dict(weight=weight2, ind=ind2)
-
-
-	def update_field_vals(field, totalweight, a, b, c, value, debug=True):
-		""" This updates the field array (and the totweight array if
-		average is True).
-		The elements to update and their values are inferred from
-		a,b,c and value.
-		"""
-		#print('Updating field vals')
-		#print(a)
-		# indices for field - doesn't include all combinations
-		indices = a['ind'] + b['ind'] * nx + c['ind'] * nxny
-		# weight per coordinate
-		weights = a['weight'] * b['weight'] * c['weight']
-		# Don't modify the input value array, just rebind the name.
-		value = weights * value 
-		if average:
-			for i,ind in enumerate(indices):
-				field[ind] += value[i]
-				totalweight[ind] += weights[i]
-		else:
-			for i,ind in enumerate(indices):
-				field[ind] += value[i]
-			#if debug: print ind, weights[i], value[i], field[ind]
-
-
-	nx, ny, nz = (int(i) for i in (nx, ny, nz))
-	nxny = nx * ny
-	value = np.asarray(value)
-
-	#print('Resampling %i values to a %i by %i by %i grid' % (
-	#    len(value), nx, ny, nz))
-
-	# normalise data such that grid points are at integer positions.
-	#x = (x - x.min()) / x.ptp() * nx
-	#y = (y - y.min()) / y.ptp() * ny
-	#z = (z - z.min()) / z.ptp() * nz
-
-	x1, x2 = findweights(np.asarray(x), nx)
-	y1 = z1 = dict(weight=1., ind=0)
-	if y is not None:
-		y1, y2 = findweights(np.asarray(y), ny)
-		if z is not None:
-			z1, z2 = findweights(np.asarray(z), nz)
-
-	# float32 to save memory for big arrays (e.g. 256**3)
-	field = np.zeros(nx * ny * nz, np.float32)
-
-	if average:
-		totalweight = np.zeros(nx * ny * nz, np.float32)
-	else:
-		totalweight = None
-
-	update_field_vals(field, totalweight, x1, y1, z1, value)
-	update_field_vals(field, totalweight, x2, y1, z1, value)
-	if y is not None:
-		update_field_vals(field, totalweight, x1, y2, z1, value)
-		update_field_vals(field, totalweight, x2, y2, z1, value)
-		if z is not None:
-			update_field_vals(field, totalweight, x1, y1, z2, value)
-			update_field_vals(field, totalweight, x2, y1, z2, value)
-			update_field_vals(field, totalweight, x1, y2, z2, value)
-			update_field_vals(field, totalweight, x2, y2, z2, value)
-
-	if average:
-		good = totalweight > 0
-		field[good] /= totalweight[good]
-	return field.reshape((nz, ny, nx)).transpose()
-	#return field.reshape((nx, ny, nz)).squeeze().transpose()
-
-
-
-
-
 
 
 ####################################################################################################
@@ -331,11 +167,11 @@ def cic(value, x, nx, y=None, ny=1, z=None, nz=1,
 print()
 print("Will load maps stored in files:")
 print(filenames_catalogs)
-# yesno = input(" Continue? Y or N :")
-# if yesno != "Y":
-# 	print('Aborting now.')
-# 	sys.exit(-1)
-# print()
+yesno = input(" Continue? Y or N :")
+if yesno != "Y":
+	print('Aborting now.')
+	sys.exit(-1)
+print()
 
 
 if not os.path.exists(dir_out):
@@ -347,30 +183,16 @@ this_dir = os.getcwd()
 input_dir = this_dir + '/inputs'
 sys.path.append(input_dir)
 
-# print("from " + input_filename + " import *")
-# exec ("from " + input_filename + " import *")
-# exit()
-# try:
-#         exec ("from " + input_filename + " import *")
-# except:
-#         print("Failed importing inputs. Check file:", input_filename)
+print("Using input file: ", input_filename)
 
-#Parameters
-my_cosmology = cosmo()
-physical_options = my_cosmology.default_params
+try:
+	exec ("from " + input_filename + " import *")
+except:
+	print()
+	print("Failed importing inputs! Check file:", input_filename)
+	print("Aborting now...")
+	sys.exit(-1)
 
-my_code_options = code_parameters()
-parameters_code = my_code_options.default_params
-
-cell_size = parameters_code['cell_size']
-n_x = parameters_code['n_x']
-n_y = parameters_code['n_x']
-n_z = parameters_code['n_x']
-n_x_orig= parameters_code['n_x_orig']
-n_y_orig= parameters_code['n_y_orig']
-n_z_orig= parameters_code['n_z_orig']
-zcentral = physical_options['zcentral']
-zbinwidth = 0.1
 
 try:
 	padding_length
@@ -409,11 +231,6 @@ print("n_x_orig=" , n_x_orig)
 print("n_y_orig=" , n_y_orig)
 print("n_z_orig=" , n_z_orig)
 print()
-# yesno = input(" Continue? Y or N :")
-# if yesno != "Y":
-# 	print('Aborting now.')
-# 	sys.exit(-1)
-# print()
 
 mystr=filenames_catalogs[0,0]
 
@@ -430,32 +247,47 @@ else:
 	print("Aborting now")
 	sys.exit(-1)
 
-if grid_method == 1:
+if mas_method == "NGP":
 	print()
 	print("Mass assignement: Nearest Grid Point (NGP)...")
 	print()
-elif grid_method ==2:
+elif mas_method == "CIC":
 	print()
-	print("Mass assignement: Clouds in Cell (CiC)...")
+	print("Mass assignement: Clouds in Cell (CIC)...")
+	print()
+elif mas_method == "TSC":
+	print()
+	print("Mass assignement: Triangular Shaped Cloud (TSC)...")
+	print()
+elif mas_method == "PCS":
+	print()
+	print("Mass assignement: Piecewise Cubic Spline (PCS)...")
 	print()
 else:
-	print("Sorry, I don't recognize the gridding method (grid_method). Please check code preamble above.")
+	print("Sorry, I don't recognize the mass assignement choise. Please check code preamble above.")
 	print("Aborting now...")
 	print()
 	sys.exit(-1)
 
+yesno = input(" Continue? Y or N :")
+if yesno != "Y":
+	print('Aborting now.')
+	sys.exit(-1)
+print()
+
+
 zmin = np.around(zcentral - zbinwidth,5)
 zmax = np.around(zcentral + zbinwidth,5)
 
-
-mean_counts  = np.zeros((Ntracers,n_x,n_y,n_z))
+mean_counts  = np.zeros((ntracers_grid,n_x,n_y,n_z))
+box=(n_x,n_y,n_z)
 
 # Now, loop over sets of catalogs and tracers
 for nc in range(Ncats):
 	print("Processing catalog #", nc)
-	counts  = np.zeros((Ntracers,n_x,n_y,n_z))
-	for nt in range(Ntracers):
-		print("Reading catalog for tracer",nt)
+	counts  = np.zeros((ntracers_grid,n_x,n_y,n_z))
+	for nt in range(ntracers_catalog):
+		print("Reading tracer #",nt)
 		try:
 			#h5map = h5py.File(filenames_catalogs[nc,nt], 'r')
 			#h5data = h5map.get(list(h5map.keys())[0])
@@ -467,30 +299,41 @@ for nc in range(Ncats):
 					tracer_redshift , tracer_x, tracer_y, tracer_z = np.array(f['redshift']), np.array(f['x']), np.array(f['y']), np.array(f['z'])
 				else:
 					tracer_x, tracer_y, tracer_z = np.array(f['x']), np.array(f['y']), np.array(f['z'])
+				if split_tracers:
+					tracer_type = np.array(f['m'])
 				f.close()
 				if mask_redshift:
 					mask = np.where( (tracer_redshift >= zmin) & (tracer_redshift <= zmax))[0]
 					tracer_x = tracer_x[mask]
 					tracer_y = tracer_y[mask]
 					tracer_z = tracer_z[mask]
+					if split_tracers:
+						tracer_type = tracer_type[mask]
+
 			else:
 				f = filenames_catalogs[nc,nt]
 				this_cat = np.loadtxt(f)
+				# Fix dimensions if catalog has switched lines/columns
+				if this_cat.shape[0] < this_cat.shape[1]:
+					this_cat = this_cat.T
 				if use_redshifts:
 					tracer_redshift, tracer_x, tracer_y, tracer_z = this_cat[:,col_redshift] , this_cat[:,col_x] , this_cat[:,col_y] , this_cat[:,col_z]
 				else:
 					tracer_x, tracer_y, tracer_z = this_cat[:,col_x] , this_cat[:,col_y] , this_cat[:,col_z]
 				# Redshift mask
+				if split_tracers:
+					tracer_type = this_cat[:,col_tracer]
 				if mask_redshift:
 					mask = np.where( (tracer_redshift >= zmin) & (tracer_redshift <= zmax))[0]
 					tracer_x = tracer_x[mask]
 					tracer_y = tracer_y[mask]
 					tracer_z = tracer_z[mask]
+					if split_tracers:
+						tracer_type = tracer_type[mask]
 		except:
 			print("Could not read file:" , filenames_catalogs[nc,nt])
 			sys.exit(-1)
 
-		#ntot = len(cat)
 		ntot = len(tracer_x)
 		print("Original catalog has", ntot,"objects")
 
@@ -499,39 +342,40 @@ for nc in range(Ncats):
 		tracer_z = tracer_z - z_cat_min + cell_size*padding_length
 
 		# Mask out cells outside bounds of the box
-		posx = np.where( (tracer_x <= 0) | (tracer_x >= xbins[-1]) )[0]
-		posy = np.where( (tracer_y <= 0) | (tracer_y >= ybins[-1]) )[0]
-		posz = np.where( (tracer_z <= 0) | (tracer_z >= zbins[-1]) )[0]
+		if mask_spillover_cells:
+			posx = np.where( (tracer_x <= 0) | (tracer_x >= xbins[-1]) )[0]
+			posy = np.where( (tracer_y <= 0) | (tracer_y >= ybins[-1]) )[0]
+			posz = np.where( (tracer_z <= 0) | (tracer_z >= zbins[-1]) )[0]
 
-		boxmask = np.union1d(posx,np.union1d(posy,posz))
+			boxmask = np.union1d(posx,np.union1d(posy,posz))
 
-		tracer_x=np.delete(tracer_x,boxmask)
-		tracer_y=np.delete(tracer_y,boxmask)
-		tracer_z=np.delete(tracer_z,boxmask)
+			tracer_x=np.delete(tracer_x,boxmask)
+			tracer_y=np.delete(tracer_y,boxmask)
+			tracer_z=np.delete(tracer_z,boxmask)
+			ntot = len(tracer_x)
+			print("After trimming inside box, the catalog has", ntot,"objects")
+			print(" Now building grid box...")
 
-		ntot = len(tracer_x)
-		print("After trimming inside box, the catalog has", ntot,"objects")
-		print()
-		print(" Now building grid box...")
-
-		if grid_method == 1:
-			counts[nt] = np.histogramdd(np.array([tracer_x,tracer_y,tracer_z]).T,bins=(xbins,ybins,zbins))[0]
-			mean_counts[nt] += counts[nt]
-		elif grid_method ==2:
-			val = np.ones(ntot)
-			cic_grid = cic(val,tracer_x/cell_size,n_x,tracer_y/cell_size,n_y,tracer_z/cell_size,n_z,average=False)
-			counts[nt] = cic_grid
-			mean_counts[nt] += cic_grid
+		if split_tracers:
+			print("Splitting tracers in catalog and generating grids...")
+			for ntg in range(ntracers_grid):
+				print(" ... tracer",ntg)
+				pos_tracers = np.where( (tracer_type > tracer_bins[ntg]) & (tracer_type <= tracer_bins[ntg+1]) )[0]
+				tx, ty , tz = tracer_x[pos_tracers] , tracer_y[pos_tracers] , tracer_z[pos_tracers]
+				ntot_tracer = len(pos_tracers)
+				counts[ntg] = build_grid(np.array([tx,ty,tz]).T,cell_size,box,mas_method,batch_size,wrap)
+				mean_counts[ntg] += counts[ntg]
+				print("... after placing objects in grid there are", np.int0(np.sum(counts[ntg])), "objects.")
+				print("Final/original number:", np.around(100.*np.sum(counts[ntg])/ntot_tracer,2), "%")
+			del tracer_x, tracer_y, tracer_z
 		else:
-			print("Sorry, I don't recognize the gridding method (grid_method). Please check preamble above.")
-			print("Aborting now...")
+			counts[nt] = build_grid(np.array([tracer_x,tracer_y,tracer_z]).T,cell_size,box,mas_method,batch_size,wrap)
+			mean_counts[nt] += counts[nt]
+			del tracer_x, tracer_y, tracer_z
+			print("... after placing objects in grid there are", np.int0(np.sum(counts[nt])), "objects.")
+			print("Final/original number:", np.around(100.*np.sum(counts[nt])/ntot,2), "%")
 			print()
-			sys.exit(-1)
 
-		del tracer_x, tracer_y, tracer_z
-
-		print("... after placing objects in grid there are", np.int0(np.sum(counts[nt])), "objects.")
-		print("Final/original number:", np.around(100.*np.sum(counts[nt])/ntot,2), "%")
 	# Now write these catalogs into a single grid
 	if len(str(nc))==1:
 		map_num = '00' + str(nc)
@@ -543,10 +387,7 @@ for nc in range(Ncats):
 
 	print("Saving grid of counts to file:",dir_out + filenames_out + "_grid_" + map_num + ".hdf5")
 	h5f = h5py.File(dir_out + filenames_out + "_grid_" + map_num + ".hdf5",'w')
-	if grid_method == 1:
-		h5f.create_dataset('grid', data=counts, dtype='int32',compression='gzip')
-	else:
-		h5f.create_dataset('grid', data=counts, dtype='float32', compression='gzip')
+	h5f.create_dataset('grid', data=counts, dtype='float32', compression='gzip')
 	h5f.close()
 
 	print()
@@ -558,6 +399,8 @@ tot_counts = np.sum(mean_counts,axis=0)
 # Mean total number of halos of each type in box
 np.savetxt(file_ntot,np.sum(mean_counts,axis=(1,2,3)))
 
+print("Number of tracers per cell:", np.sum(mean_counts,axis=(1,2,3))/n_x/n_y/n_z)
+
 if save_mean_sel_fun:
 	nf1=len(tot_counts[tot_counts!=0])
 
@@ -568,10 +411,10 @@ if save_mean_sel_fun:
 	# Number of cells inside mask
 	nfull=len(tg[tg!=0])
 
-	sel_fun = np.zeros((Ntracers,n_x,n_y,n_z))
-	num_densities = np.zeros(Ntracers)
+	sel_fun = np.zeros((ntracers_grid,n_x,n_y,n_z))
+	num_densities = np.zeros(ntracers_grid)
 	print("Estimating APPROXIMATE number densities:")
-	for i in range(Ntracers):
+	for i in range(ntracers_grid):
 		num_densities[i] = np.sum(mean_counts[i])/nfull/cell_size**3
 		print(np.around(num_densities[i],5))
 		sel_fun[i] = num_densities[i]*np.sign(tg)
