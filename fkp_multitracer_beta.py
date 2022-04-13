@@ -20,8 +20,9 @@ class fkp_init(object):
     Enters num_bins, n_bar (matrix), bias 
     n_x,n_y, n_z and the bin_matrix
     '''
-    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power, multipoles):
+    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power, multipoles, verbose):
 
+        self.verbose = verbose
         self.bin_matrix = bin_matrix
         self.num_bins = num_bins
         self.n_bar_matrix = n_bar_matrix
@@ -144,17 +145,13 @@ class fkp_init(object):
         # P_mu that we actually estimate -- at the end of the estimation procedure.
         self.F_inv_munu = np.linalg.inv(self.F_munu)
 
-        # Print out the shapes of everything we will use later...
-        #print('F_munu :',np.shape(self.F_munu))
-        #print('F_inv :',np.shape(self.F_inv_munu))
-        #print('wt :',np.shape(self.wt))
-        #print('wt_flat :',np.shape(self.wt_flat))
-        #print('DeltaQ_mu :',np.shape(self.DeltaQ_mu))
-
-    def fkp(self,ng):
+    def fkp(self, ng):
         '''
         This is the FKP function itself, only entry is the galaxy map
         '''
+
+        verbose = self.verbose
+        
         # This was defined in .init, above
         # largenumber = 10000.0
         small = 1.0/self.largenumber
@@ -311,7 +308,10 @@ class fkp_init(object):
             Pshot_mu_ret = np.sum(Cov_ret*Pshot_mu_flat,axis=1)*Vfft_to_Vk
 
             # Testing: print shot noise
-            print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
+            if verbose:
+                print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
+            else:
+                pass
 
             ###############################################################
             # Now calculate the theoretical covariances
@@ -400,7 +400,10 @@ class fkp_init(object):
             Pshot_mu_ret = np.sum(Cov_ret*Pshot_mu_flat,axis=1)*Vfft_to_Vk
 
             # Testing: print shot noise
-            print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
+            if verbose:
+                print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
+            else:
+                pass
 
             ###############################################################
             # Now calculate the theoretical covariances
@@ -503,7 +506,10 @@ class fkp_init(object):
             Pshot_mu_ret = np.sum(Cov_ret*Pshot_mu_flat,axis=1)*Vfft_to_Vk
 
             # Testing: print shot noise
-            print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
+            if verbose:
+                print("   Multi-tracer shot noise:" , np.mean(Pshot_mu_ret*(self.phsize_x/self.n_x)*(self.phsize_y/self.n_y)*(self.phsize_z/self.n_z),axis=1))
+            else:
+                pass
 
             ###############################################################
             # Now calculate the theoretical covariances

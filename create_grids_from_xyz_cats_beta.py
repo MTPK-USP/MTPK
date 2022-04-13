@@ -19,7 +19,7 @@ import sys
 import os
 import glob
 from scipy.ndimage import gaussian_filter
-from mass_assign_beta import build_grid, grid_pos_s, weights
+from mass_assign_beta import build_grid
 
 '''
 -----------
@@ -63,6 +63,7 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 	if len(filenames_catalogs) == 0:
 		raise NameError('Files not found!')
 
+	verbose = my_code_options.verbose
 	ntracers_catalog = cat_specs.nhalos
 	ntracers_grid = cat_specs.nhalos	
 	Ncats = cat_specs.n_maps
@@ -93,9 +94,12 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 	# Which directory to write grids to:
 	filenames_out = "Data"
 
-	print()
-	print("Will load maps stored in files:")
-	print(filenames_catalogs)
+	if verbose:
+		print()
+		print("Will load maps stored in files:")
+		print(filenames_catalogs)
+	else:
+		pass
 
 	if not os.path.exists(dir_out):
 		os.makedirs(dir_out)
@@ -132,30 +136,33 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 	ybins = cell_size * np.arange(n_y + 1)
 	zbins = cell_size * np.arange(n_z + 1)
 
-	print("Dimensions of the grids: n_x, n_y, n_z =",n_x,n_y,n_z)
-	print()
-	print("The actual catalog spans the ranges in x,y,z:")
-	print("x:", x_cat_min , "-->",x_cat_max)
-	print("y:", y_cat_min , "-->",y_cat_max)
-	print("z:", z_cat_min , "-->",z_cat_max)
-	print()
-	print()
-	print("With the padding length, of ", padding_length, "cells, the box will be filled with:")
-	print("x: (",padding_length, "* 0 ,", n_x-2*padding_length, ",", padding_length,"*0)")
-	print("y: (",padding_length, "* 0 ,", n_y-2*padding_length, ",", padding_length,"*0)")
-	print("z: (",padding_length, "* 0 ,", n_z-2*padding_length, ",", padding_length,"*0)")
-	print()
-	print("Check: given the padding, your catalog should end at cartesian positions:")
-	print("max(x) =", xbins[-1] - 2*padding_length*cell_size )
-	print("max(y) =", ybins[-1] - 2*padding_length*cell_size )
-	print("max(z) =", zbins[-1] - 2*padding_length*cell_size )
-	print()
-	print("Origin (0,0,0) of box will be considered to be displaced from the observer @Earth")
-	print("by these numbers of cells in each direction:    (This affects RSDs!)")
-	print("n_x_orig=" , n_x_orig)
-	print("n_y_orig=" , n_y_orig)
-	print("n_z_orig=" , n_z_orig)
-	print()
+	if verbose:
+		print("Dimensions of the grids: n_x, n_y, n_z =",n_x,n_y,n_z)
+		print()
+		print("The actual catalog spans the ranges in x,y,z:")
+		print("x:", x_cat_min , "-->",x_cat_max)
+		print("y:", y_cat_min , "-->",y_cat_max)
+		print("z:", z_cat_min , "-->",z_cat_max)
+		print()
+		print()
+		print("With the padding length, of ", padding_length, "cells, the box will be filled with:")
+		print("x: (",padding_length, "* 0 ,", n_x-2*padding_length, ",", padding_length,"*0)")
+		print("y: (",padding_length, "* 0 ,", n_y-2*padding_length, ",", padding_length,"*0)")
+		print("z: (",padding_length, "* 0 ,", n_z-2*padding_length, ",", padding_length,"*0)")
+		print()
+		print("Check: given the padding, your catalog should end at cartesian positions:")
+		print("max(x) =", xbins[-1] - 2*padding_length*cell_size )
+		print("max(y) =", ybins[-1] - 2*padding_length*cell_size )
+		print("max(z) =", zbins[-1] - 2*padding_length*cell_size )
+		print()
+		print("Origin (0,0,0) of box will be considered to be displaced from the observer @Earth")
+		print("by these numbers of cells in each direction:    (This affects RSDs!)")
+		print("n_x_orig=" , n_x_orig)
+		print("n_y_orig=" , n_y_orig)
+		print("n_z_orig=" , n_z_orig)
+		print()
+	else:
+		pass
 	
 	mystr=filenames_catalogs[0,0]
 
@@ -170,24 +177,27 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 	else:
 		raise TypeError('Wrong format of the catalogs. They should be .hdf5, .dat, .cat, or .txt.')
 
-	if mas_method == "NGP":
-		print()
-		print("Mass assignement: Nearest Grid Point (NGP)")
-		print()
-	elif mas_method == "CIC":
-		print()
-		print("Mass assignement: Clouds in Cell (CiC)")
-		print()
-	elif mas_method == "TSC":
-		print()
-		print("Mass assignement: Triangular Shaped Cloud (TSC)")
-		print()
-	elif mas_method == "PCS":
-		print()
-		print("Mass assignement: Piecewise Cubic Spline (PCS)")
-		print()
+	if verbose:
+		if mas_method == "NGP":
+			print()
+			print("Mass assignement: Nearest Grid Point (NGP)")
+			print()
+		elif mas_method == "CIC":
+			print()
+			print("Mass assignement: Clouds in Cell (CiC)")
+			print()
+		elif mas_method == "TSC":
+			print()
+			print("Mass assignement: Triangular Shaped Cloud (TSC)")
+			print()
+		elif mas_method == "PCS":
+			print()
+			print("Mass assignement: Piecewise Cubic Spline (PCS)")
+			print()
+		else:
+			raise ValueError("Wrong gridding method (mas_method)")
 	else:
-		raise ValueError("Wrong gridding method (mas_method)")
+		pass
 
 	zmin = np.around(zcentral - zbinwidth,5)
 	zmax = np.around(zcentral + zbinwidth,5)
@@ -197,10 +207,16 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 
 	# Now, loop over sets of catalogs and tracers
 	for nc in range(Ncats):
-		print("Processing catalog #", nc)
+		if verbose:
+			print("Processing catalog #", nc)
+		else:
+			pass
 		counts	= np.zeros((ntracers_grid,n_x,n_y,n_z))
 		for nt in range(ntracers_catalog):
-			print("Reading catalog for tracer",nt)
+			if verbose:
+				print("Reading catalog for tracer",nt)
+			else:
+				pass
 			try:
 				if use_h5py:
 					f = h5py.File(filenames_catalogs[nc,nt], 'r')
@@ -242,7 +258,10 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 				raise AttributeError("Could not read file:" , filenames_catalogs[nc,nt])
 
 			ntot = len(tracer_x)
-			print("Original catalog has", ntot,"objects")
+			if verbose:
+				print("Original catalog has", ntot,"objects")
+			else:
+				pass
 
 			tracer_x = tracer_x - x_cat_min + cell_size*padding_length
 			tracer_y = tracer_y - y_cat_min + cell_size*padding_length
@@ -262,29 +281,44 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 
 				ntot = len(tracer_x)
 
-				print("After trimming inside box, the catalog has", ntot,"objects")
-				print(" Now building grid box...")
+				if verbose:
+					print("After trimming inside box, the catalog has", ntot,"objects")
+					print(" Now building grid box...")
+				else:
+					pass
 
 			if split_tracers:
-				print("Splitting tracers in catalog and generating grids...")
+				if verbose:
+					print("Splitting tracers in catalog and generating grids...")
+				else:
+					pass
 				for ntg in range(ntracers_grid):
-					print(" ... tracer",ntg)
+					if verbose:
+						print(" ... tracer", ntg)
+					else:
+						pass
 					pos_tracers = np.where( (tracer_type > tracer_bins[ntg]) & (tracer_type <= tracer_bins[ntg+1]) )[0]
 					tx, ty , tz = tracer_x[pos_tracers] , tracer_y[pos_tracers] , tracer_z[pos_tracers]
 					ntot_tracer = len(pos_tracers)
-					counts[ntg] = build_grid(np.array([tx,ty,tz]).T,cell_size,box,mas_method,batch_size,wrap)
+					counts[ntg] = build_grid(np.array([tx,ty,tz]).T,cell_size,box,mas_method,batch_size,wrap, verbose)
 					mean_counts[ntg] += counts[ntg]
-					print("... after placing objects in grid there are", np.int0(np.sum(counts[ntg])), "objects.")
-					print("Final/original number:", np.around(100.*np.sum(counts[ntg])/ntot_tracer,2), "%")
+					if verbose:
+						print("... after placing objects in grid there are", np.int0(np.sum(counts[ntg])), "objects.")
+						print("Final/original number:", np.around(100.*np.sum(counts[ntg])/ntot_tracer,2), "%")
+					else:
+						pass
 				del tracer_x, tracer_y, tracer_z
 
 			else:
-				counts[nt] = build_grid(np.array([tracer_x,tracer_y,tracer_z]).T,cell_size,box,mas_method,batch_size,wrap)
+				counts[nt] = build_grid(np.array([tracer_x,tracer_y,tracer_z]).T,cell_size,box,mas_method,batch_size,wrap, verbose)
 				mean_counts[nt] += counts[nt]
 				del tracer_x, tracer_y, tracer_z
-				print("... after placing objects in grid there are", np.int0(np.sum(counts[nt])), "objects.")
-				print("Final/original number:", np.around(100.*np.sum(counts[nt])/ntot,2), "%")
-				print()
+				if verbose:
+					print("... after placing objects in grid there are", np.int0(np.sum(counts[nt])), "objects.")
+					print("Final/original number:", np.around(100.*np.sum(counts[nt])/ntot,2), "%")
+					print()
+				else:
+					pass
 
 		# Now write these catalogs into a single grid
 		if len(str(nc))==1:
@@ -294,17 +328,22 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 		else:
 			map_num = str(nc)
 
-		print("Saving grid of counts to file:",dir_out + filenames_out + "_grid_" + map_num + ".hdf5")
+		if verbose:
+			print("Saving grid of counts to file:",dir_out + filenames_out + "_grid_" + map_num + ".hdf5")
+		else:
+			pass
 		h5f = h5py.File(dir_out + filenames_out + "_grid_" + map_num + ".hdf5",'w')
 		h5f.create_dataset('grid', data=counts, dtype='float32', compression='gzip')
 		h5f.close()
 
-		print()
 
 	mean_counts = mean_counts/Ncats
 	tot_counts = np.sum(mean_counts,axis=0)
 
-	print("Number of tracers per cell:", np.sum(mean_counts,axis=(1,2,3))/n_x/n_y/n_z)
+	if verbose:
+		print("Number of tracers per cell:", np.sum(mean_counts,axis=(1,2,3))/n_x/n_y/n_z)
+	else:
+		pass
 
 	if save_mean_sel_fun:
 		nf1=len(tot_counts[tot_counts!=0])
@@ -318,14 +357,23 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 
 		sel_fun = np.zeros((ntracers_grid,n_x,n_y,n_z))
 		num_densities = np.zeros(ntracers_grid)
-		print("Estimating APPROXIMATE number densities:")
+		if verbose:
+			print("Estimating APPROXIMATE number densities:")
+		else:
+			pass
 		for i in range(ntracers_grid):
 			num_densities[i] = np.sum(mean_counts[i])/nfull/cell_size**3
-			print(np.around(num_densities[i],5))
+			if verbose:
+				print(np.around(num_densities[i],5))
+			else:
+                                pass
 			sel_fun[i] = num_densities[i]*np.sign(tg)
 
-		print("Saving estimated selection function")
-		print("(ATTENTION! USE WITH CARE. YOU SHOULD NOT RELY ON THIS ESTIMATE!)")
+		if verbose:
+			print("Saving estimated selection function")
+			print("(ATTENTION! USE WITH CARE. YOU SHOULD NOT RELY ON THIS ESTIMATE!)")
+		else:
+			pass
 
 
 		h5f = h5py.File(dir_out + "Rough_sel_fun.hdf5",'w')

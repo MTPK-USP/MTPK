@@ -15,6 +15,10 @@ class code_parameters:
     the code will simply use the default parameter defined below.
     However, you have to specify your code options, unless you are running the example.
 
+    verbose : bool
+      True -> Print all the stuff from the code
+      False -> Otherwise
+
     method : string
       Choose the method to compute de power spectrum:
        method = 'FKP'
@@ -221,6 +225,7 @@ class code_parameters:
     
     def __init__(self, **kwargs):
         default_params = {
+            'verbose'              : False,
             'method'               : 'both',
             'mas_method'           : 'CIC',
             'nhalos'               : 3,
@@ -280,6 +285,7 @@ class code_parameters:
             default_params[key] = value
 
         #Main Parameters
+        self.verbose = default_params['verbose']
         self.method = default_params['method']
         self.mas_method = default_params['mas_method']
         self.nhalos = default_params['nhalos']

@@ -87,6 +87,7 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     sigz_est = np.asarray(my_code_options.sigz_est) #adimensional
     sigma_z = sigz_est*my_cosmology.c_light/my_cosmology.H(my_cosmology.zcentral, False) # Mpc/h
     #Code options
+    verbose = my_code_options.verbose
     whichspec = my_code_options.whichspec
     sig_tot = np.sqrt(sigma_z**2 + sigma_v**2) #Mpc/h
     a_sig_tot = np.sqrt(sigz_est**2 + a_vdisp**2) #Adimensional sig_tot
@@ -151,23 +152,32 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     handle_estimates = handle_data
 
     ###################
-    print()
-    print()
-    print( 'This is the Multi-tracer power spectrum estimator')
+    if verbose:
+        print()
+        print()
+        print( 'This is the Multi-tracer power spectrum estimator')
 
-    print()
-    print('Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates)
-    print()
+        print()
+        print('Handle of this run (fiducial spectra, biases, etc.): ', handle_estimates)
+        print()
+    else:
+        pass
 
     # If directories do not exist, create them now
     if not os.path.exists(dir_specs):
         os.makedirs(dir_specs)
 
     #############Calling CAMB for calculations of the spectra#################
-    print('Beggining CAMB calculations\n')
+    if verbose:
+        print('Beggining CAMB calculations\n')
+    else:
+        pass
 
     if use_theory_spectrum:
-        print('Using pre-existing power spectrum in file:',theory_spectrum_file)
+        if verbose:
+            print('Using pre-existing power spectrum in file:',theory_spectrum_file)
+        else:
+            pass
         kcpkc = np.loadtxt(theory_spectrum_file)
         if kcpkc.shape[1] > kcpkc.shape[0]: 
             k_camb=kcpkc[0]
@@ -176,7 +186,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             k_camb=kcpkc[:,0]
             Pk_camb=kcpkc[:,1]
     else:
-        print('Computing matter power spectrum for given cosmology...\n')
+        if verbose:
+            print('Computing matter power spectrum for given cosmology...\n')
+        else:
+            pass
 
         # It is strongly encouraged to use k_min >= 1e-4, since it is a lot faster
 
@@ -198,9 +211,12 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     # Generate real- and Fourier-space grids for FFTs
     #####################################################
 
-    print('.')
-    print('Generating the k-space Grid...')
-    print('.')
+    if verbose:
+        print('.')
+        print('Generating the k-space Grid...')
+        print('.')
+    else:
+        pass
 
     if use_padding:
         n_x_box = n_x + 2*padding_length[0]
@@ -248,8 +264,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ncentral = 10.0*nbar**0
             nsigma = 10000.0*nbar**0 
         except:
-            print("Att.: using analytical selection function for galaxies (check parameters in input file).")
-            print("Using n_bar, n_central, n_sigma  from input file")
+            if verbose:
+                print("Att.: using analytical selection function for galaxies (check parameters in input file).")
+                print("Using n_bar, n_central, n_sigma  from input file")
+            else:
+                pass
 
         n_bar_matrix_fid = np.zeros((ntracers,n_x,n_y,n_z),dtype='float32')
         for nt in range(ntracers):
@@ -293,7 +312,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
         if answer!='y':
             print ('Aborting now...')
             sys.exit(-1)
-    print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
+    if verbose:
+        print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
+    else:
+        pass
 
     ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
     ## We will treat this as an additional MASK (thresh_mask) for data and mocks
@@ -304,26 +326,37 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     else:
         pass
 
-    print(".")
+    if verbose:
+        print(".")
 
-    print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
+        print ('Geometry: (nx,ny,nz) = (' +str(n_x)+','+str(n_y)+','+str(n_z)+'),  cell_size=' + str(cell_size) + ' h^-1 Mpc')
+    else:
+        pass
+    
     # Apply padding, if it exists
     try:
-        print ('Geometry including bounding box: (nx,ny,nz) = (' +str(n_x_box)+','+str(n_y_box)+','+str(n_z_box) + ')')
+        if verbose:
+            print ('Geometry including bounding box: (nx,ny,nz) = (' +str(n_x_box)+','+str(n_y_box)+','+str(n_z_box) + ')')
+        else:
+            pass
     except:
         pass
 
-    print(".")
-    if whichspec == 0:
-        print ('Using LINEAR power spectrum from CAMB')
-    elif whichspec == 1:
-        print ('Using power spectrum from CAMB + HaloFit')
+    if verbose:
+        print(".")
+        if whichspec == 0:
+            print ('Using LINEAR power spectrum from CAMB')
+        elif whichspec == 1:
+            print ('Using power spectrum from CAMB + HaloFit')
+        else:
+            print ('Using power spectrum from CAMB + HaloFit with PkEqual')
     else:
-        print ('Using power spectrum from CAMB + HaloFit with PkEqual')
+        pass
 
-    print(".")
-    print ('----------------------------------')
-    print(".")
+    if verbose:
+        print(".")
+        print ('----------------------------------')
+        print(".")
 
     #####################################################
     # Start computing physical sizes of boxes
@@ -375,11 +408,14 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     #  Physically, the maximal useful k is perhaps k =~ 0.3 h/Mpc (non-linear scale)
     np.set_printoptions(precision=3)
 
-    print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
+    if verbose:
+        print ('Will estimate modes up to k[h/Mpc] = ', '%.4f'% kmax_phys,' in bins with Delta_k =', '%.4f' %dk_phys)
 
-    print(".")
-    print ('----------------------------------')
-    print(".")
+        print(".")
+        print ('----------------------------------')
+        print(".")
+    else:
+        pass
 
     #R This line makes some np variables be printed with less digits
     np.set_printoptions(precision=6)
@@ -457,9 +493,12 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     effadip = gal_adip*matgrow/(0.00000000001 + kph_central)
     effbias = np.sqrt(monopoles[:,where_kph_central])
 
-    print()
-    print ('----------------------------------')
-    print()
+    if verbose:
+        print()
+        print ('----------------------------------')
+        print()
+    else:
+        pass
 
     ###############################
     #R
@@ -482,7 +521,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     lenkf=len(kflat)
 
 
-    print ('Central physical k values where spectra will be estimated:', kph_central)
+    if verbose:
+        print ('Central physical k values where spectra will be estimated:', kph_central)
+    else:
+        pass
 
     # Get G(z)^2*P(k_central) for the central value of k and central value of z
     kcmin = kph_central - 2.0*np.pi*( 4.0*dk0 )/cell_size
@@ -508,7 +550,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     #R   1 when the value of (k,mu)/(k) belongs to the bin
     #R   0 if it does not
 
-    print ('Initializing the k-binning matrix...')
+    if verbose:
+        print ('Initializing the k-binning matrix...')
+    else:
+        pass
     tempor = time()
 
     #R Initialize first row of the M-matrices (vector of zeros)
@@ -557,17 +602,23 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     # Counts in each bin
     kkbar_counts = MRk.dot(np.ones(lenkf))
 
-    print ('Done with k-binning matrices. Time cost: ', np.int32((time()-tempor)*1000)/1000., 's')
-    print ('Memory occupied by the binning matrix: ', MRk.nnz)
+    if verbose:
+        print ('Done with k-binning matrices. Time cost: ', np.int32((time()-tempor)*1000)/1000., 's')
+        print ('Memory occupied by the binning matrix: ', MRk.nnz)
+    else:
+        pass
 
     #R We defined "target" k's , but <k> on bins may be slightly different
     kkav=(((MRk*kflat))/(kkbar_counts+0.00001))
-    print ('Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ])
-    print ('The true mean of k for each bin is:', [ "{:1.4f}".format(x) for x in kkav[10:16:2] ])
-    print()
-    print ('----------------------------------')
-    print()
-    print ('Now estimating the power spectra...')
+    if verbose:
+        print ('Originally k_bar was defined as:', [ "{:1.4f}".format(x) for x in k_bar[10:16:2] ])
+        print ('The true mean of k for each bin is:', [ "{:1.4f}".format(x) for x in kkav[10:16:2] ])
+        print()
+        print ('----------------------------------')
+        print()
+        print ('Now estimating the power spectra...')
+    else:
+        pass
 
     ###
     #Corrections due to bin averaging
@@ -602,7 +653,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
     #############################################################################
     # BEGIN ESTIMATION
-    print ('Starting power spectra estimation')
+    if verbose:
+        print ('Starting power spectra estimation')
+    else:
+        pass
 
     # Initialize outputs
 
@@ -651,14 +705,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
 
-            print( "Initializing multi-tracer estimation toolbox...")
+            if verbose:
+                print( "Initializing multi-tracer estimation toolbox...")
+            else:
+                pass
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order, verbose)
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-            print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
+            if verbose:
+                print( "Initializing traditional (FKP) estimation toolbox...")
+            else:
+                pass
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos, verbose)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -667,8 +727,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ''' 
             normsel = np.zeros((n_maps,ntracers))
 
-            print ("... done. Starting computations for each map (box) now.")
-            print()
+            if verbose:
+                print ("... done. Starting computations for each map (box) now.")
+                print()
+            else:
+                pass
 
             #################################
             est_bias_fkp = np.zeros(ntracers)
@@ -676,14 +739,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             for nm in range(n_maps):
                 time_start=time()
-                print ('Loading simulated box #', nm)
+                if verbose:
+                    print ('Loading simulated box #', nm)
+                else:
+                    pass
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
                     raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
-                print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                if verbose:
+                    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                else:
+                    pass
 
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
@@ -713,7 +782,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 ##################################################
 
                 # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-                print ('  Estimating FKP power spectra...')
+                if verbose:
+                    print ('  Estimating FKP power spectra...')
+                else:
+                    pass
                 # Use sum instead of mean to take care of empty cells
                 normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
                 # Updated definition of normsel to avoid raising a NaN when there are zero tracers
@@ -723,9 +795,15 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 if ( (normsel[nm].any() > 2.0) | (normsel[nm].any() < 0.5) ):
                     print("Attention! Your selection function and simulation have very different numbers of objects:")
                     print("Selecion function/map for all tracers:",np.around(normsel[nm],3))
+                    
                     normsel[normsel > 2.0] = 2.0
                     normsel[normsel < 0.5] = 0.5
-                    print(" Normalized selection function/map at:",np.around(normsel[nm],3))
+
+                    if verbose:
+                        print(" Normalized selection function/map at:",np.around(normsel[nm],3))
+                    else:
+                        pass
+                    
                 if nm==0:
                     FKPmany = fkp_many.fkp((normsel[nm]*maps.T).T)
                     P0_fkp[nm] = fkp_many.P_ret
@@ -745,7 +823,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
                 #################################
                 # Now, the multi-tracer method
-                print ('  Now estimating multi-tracer spectra...')
+                if verbose:
+                    print ('  Now estimating multi-tracer spectra...')
+                else:
+                    pass
+                
                 if nm==0:
                     FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
                     P0_data[nm] = fkp_mult.P0_mu_ret
@@ -765,23 +847,37 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                     # If data bias is different from mocks
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print ("  Effective biases of the simulated maps:")
-                    print ("   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print ("  Effective biases of the simulated maps:")
+                        print ("   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
+                    
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
                 else:
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print( "  Effective biases of these maps:")
-                    print( "   Fiducial=", ["%.3f"%b for b in effbias])
-                    print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print( "  Effective biases of these maps:")
+                        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+                        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
+                    
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
 
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
@@ -794,7 +890,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     
             
             time_end=time()
-            print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            if verbose:
+                print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            else:
+                pass
 
             ################################################################################
             ################################################################################
@@ -804,7 +903,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
             ################################################################################
 
-            print ('Applying mass assignement window function corrections...')
+            if verbose:
+                print ('Applying mass assignement window function corrections...')
+            else:
+                pass
 
             ################################################################################
             #############################################################################
@@ -906,14 +1008,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             effbias_mt = np.copy(effbias)
             effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
-            print( "Initializing multi-tracer estimation toolbox...")
+            if verbose:
+                print( "Initializing multi-tracer estimation toolbox...")
+            else:
+                pass
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order, verbose)
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-            print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
+            if verbose:
+                print( "Initializing traditional (FKP) estimation toolbox...")
+            else:
+                pass
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos, verbose)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -922,8 +1030,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ''' 
             normsel = np.zeros((n_maps,ntracers))
 
-            print ("... done. Starting computations for each map (box) now.")
-            print()
+            if verbose:
+                print ("... done. Starting computations for each map (box) now.")
+                print()
+            else:
+                pass
 
             #################################
 
@@ -933,14 +1044,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             for nm in range(n_maps):
                 time_start=time()
-                print ('Loading simulated box #', nm)
+                if verbose:
+                    print ('Loading simulated box #', nm)
+                else:
+                    pass
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
                     raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
-                print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                if verbose:
+                    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                else:
+                    pass
 
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
@@ -970,7 +1087,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 ##################################################
 
                 # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-                print ('  Estimating FKP power spectra...')
+                if verbose:
+                    print ('  Estimating FKP power spectra...')
+                else:
+                    pass
                 # Use sum instead of mean to take care of empty cells
                 normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
                 # Updated definition of normsel to avoid raising a NaN when there are zero tracers
@@ -1006,7 +1126,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
                 #################################
                 # Now, the multi-tracer method
-                print ('  Now estimating multi-tracer spectra...')
+                if verbose:
+                    print ('  Now estimating multi-tracer spectra...')
+                else:
+                    pass
                 if nm==0:
                     FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
                     P0_data[nm] = fkp_mult.P0_mu_ret
@@ -1029,23 +1152,35 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                     # If data bias is different from mocks
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print ("  Effective biases of the simulated maps:")
-                    print ("   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print ("  Effective biases of the simulated maps:")
+                        print ("   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
                 else:
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print( "  Effective biases of these maps:")
-                    print( "   Fiducial=", ["%.3f"%b for b in effbias])
-                    print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print( "  Effective biases of these maps:")
+                        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+                        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
 
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
@@ -1058,7 +1193,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     
 
             time_end=time()
-            print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            if verbose:
+                print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            else:
+                pass
 
             ################################################################################
             ################################################################################
@@ -1068,7 +1206,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
             ################################################################################
 
-            print ('Applying mass assignement window function corrections...')
+            if verbose:
+                print ('Applying mass assignement window function corrections...')
+            else:
+                pass
 
             ################################################################################
             #############################################################################
@@ -1185,14 +1326,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             effbias_mt = np.copy(effbias)
             effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
-            print( "Initializing multi-tracer estimation toolbox...")
+            if verbose:
+                print( "Initializing multi-tracer estimation toolbox...")
+            else:
+                pass
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order, verbose)
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-            print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
+            if verbose:
+                print( "Initializing traditional (FKP) estimation toolbox...")
+            else:
+                pass
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos, verbose)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1201,8 +1348,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ''' 
             normsel = np.zeros((n_maps,ntracers))
 
-            print ("... done. Starting computations for each map (box) now.")
-            print()
+            if verbose:
+                print ("... done. Starting computations for each map (box) now.")
+                print()
+            else:
+                pass
 
             #################################
 
@@ -1212,14 +1362,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             for nm in range(n_maps):
                 time_start=time()
-                print ('Loading simulated box #', nm)
+                if verbose:
+                    print ('Loading simulated box #', nm)
+                else:
+                    pass
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
                     raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
-                print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                if verbose:
+                    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                else:
+                    pass
 
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
@@ -1248,7 +1404,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 ##################################################
 
                 # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-                print ('  Estimating FKP power spectra...')
+                if verbose:
+                    print ('  Estimating FKP power spectra...')
+                else:
+                    pass
                 # Use sum instead of mean to take care of empty cells
                 normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
                 # Updated definition of normsel to avoid raising a NaN when there are zero tracers
@@ -1288,7 +1447,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
                 #################################
                 # Now, the multi-tracer method
-                print ('  Now estimating multi-tracer spectra...')
+                if verbose:
+                    print ('  Now estimating multi-tracer spectra...')
+                else:
+                    pass
                 if nm==0:
                     FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
                     P0_data[nm] = fkp_mult.P0_mu_ret
@@ -1318,23 +1480,35 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                     # If data bias is different from mocks
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print ("  Effective biases of the simulated maps:")
-                    print ("   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print ("  Effective biases of the simulated maps:")
+                        print ("   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
                 else:
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print( "  Effective biases of these maps:")
-                    print( "   Fiducial=", ["%.3f"%b for b in effbias])
-                    print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print( "  Effective biases of these maps:")
+                        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+                        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
     
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
@@ -1346,7 +1520,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
 
             time_end=time()
-            print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            if verbose:
+                print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            else:
+                pass
 
             ################################################################################
             ################################################################################
@@ -1356,7 +1533,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
             ################################################################################
 
-            print ('Applying mass assignement window function corrections...')
+            if verbose:
+                print ('Applying mass assignement window function corrections...')
+            else:
+                pass
 
             ################################################################################
             #############################################################################
@@ -1473,8 +1653,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-            print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
+            if verbose:
+                print( "Initializing traditional (FKP) estimation toolbox...")
+            else:
+                pass
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos, verbose)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1483,8 +1666,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ''' 
             normsel = np.zeros((n_maps,ntracers))
 
-            print ("... done. Starting computations for each map (box) now.")
-            print()
+            if verbose:
+                print ("... done. Starting computations for each map (box) now.")
+                print()
+            else:
+                pass
 
             #################################
 
@@ -1492,14 +1678,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             for nm in range(n_maps):
                 time_start=time()
-                print ('Loading simulated box #', nm)
+                if verbose:
+                    print ('Loading simulated box #', nm)
+                else:
+                    pass
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
                     raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
-                print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                if verbose:
+                    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                else:
+                    pass
 
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
@@ -1528,7 +1720,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 ##################################################
 
                 # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-                print ('  Estimating FKP power spectra...')
+                if verbose:
+                    print ('  Estimating FKP power spectra...')
+                else:
+                    pass
                 # Use sum instead of mean to take care of empty cells
                 normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
                 # Updated definition of normsel to avoid raising a NaN when there are zero tracers
@@ -1568,20 +1763,32 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 if nm==0:
                     # If data bias is different from mocks
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-                    print ("  Effective biases of the simulated maps:")
-                    print ("   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    if verbose:
+                        print ("  Effective biases of the simulated maps:")
+                        print ("   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
                 else:
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-                    print( "  Effective biases of these maps:")
-                    print( "   Fiducial=", ["%.3f"%b for b in effbias])
-                    print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    if verbose:
+                        print( "  Effective biases of these maps:")
+                        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+                        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
 
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
@@ -1593,7 +1800,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
 
             time_end=time()
-            print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            if verbose:
+                print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            else:
+                pass
 
             ################################################################################
             ################################################################################
@@ -1603,7 +1813,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
             ################################################################################
 
-            print ('Applying mass assignement window function corrections...')
+            if verbose:
+                print ('Applying mass assignement window function corrections...')
+            else:
+                pass
 
             ################################################################################
             #############################################################################
@@ -1689,8 +1902,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-            print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
+            if verbose:
+                print( "Initializing traditional (FKP) estimation toolbox...")
+            else:
+                pass
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos, verbose)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1699,8 +1915,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ''' 
             normsel = np.zeros((n_maps,ntracers))
 
-            print ("... done. Starting computations for each map (box) now.")
-            print()
+            if verbose:
+                print ("... done. Starting computations for each map (box) now.")
+                print()
+            else:
+                pass
 
             #################################
 
@@ -1708,14 +1927,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             for nm in range(n_maps):
                 time_start=time()
-                print ('Loading simulated box #', nm)
+                if verbose:
+                    print ('Loading simulated box #', nm)
+                else:
+                    pass
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
                     raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
-                print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                if verbose:
+                    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                else:
+                    pass
 
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
@@ -1744,7 +1969,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 ##################################################
 
                 # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-                print ('  Estimating FKP power spectra...')
+                if verbose:
+                    print ('  Estimating FKP power spectra...')
+                else:
+                    pass
                 # Use sum instead of mean to take care of empty cells
                 normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
                 # Updated definition of normsel to avoid raising a NaN when there are zero tracers
@@ -1788,20 +2016,32 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 if nm==0:
                     # If data bias is different from mocks
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-                    print ("  Effective biases of the simulated maps:")
-                    print ("   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    if verbose:
+                        print ("  Effective biases of the simulated maps:")
+                        print ("   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
                 else:
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-                    print( "  Effective biases of these maps:")
-                    print( "   Fiducial=", ["%.3f"%b for b in effbias])
-                    print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    if verbose:
+                        print( "  Effective biases of these maps:")
+                        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+                        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
 
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
@@ -1813,7 +2053,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
 
             time_end=time()
-            print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            if verbose:
+                print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            else:
+                pass
 
             ################################################################################
             ################################################################################
@@ -1823,7 +2066,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
             ################################################################################
 
-            print ('Applying mass assignement window function corrections...')
+            if verbose:
+                print ('Applying mass assignement window function corrections...')
+            else:
+                pass
 
             ################################################################################
             #############################################################################
@@ -1919,8 +2165,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             ##
             # UPDATED THIS TO NEW FKP CLASS WITH AUTO- AND CROSS-SPECTRA
-            print( "Initializing traditional (FKP) estimation toolbox...")
-            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos)
+            if verbose:
+                print( "Initializing traditional (FKP) estimation toolbox...")
+            else:
+                pass
+            fkp_many = fkp.fkp_init(num_binsk, n_bar_matrix_fid, effbias, cell_size, n_x_box, n_y_box, n_z_box, n_x_orig, n_y_orig, n_z_orig, MRk, powercentral,mas_power, multipoles_order, do_cross_spectra, nhalos, verbose)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -1929,8 +2178,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ''' 
             normsel = np.zeros((n_maps,ntracers))
 
-            print ("... done. Starting computations for each map (box) now.")
-            print()
+            if verbose:
+                print ("... done. Starting computations for each map (box) now.")
+                print()
+            else:
+                pass
 
             #################################
 
@@ -1938,14 +2190,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             for nm in range(n_maps):
                 time_start=time()
-                print ('Loading simulated box #', nm)
+                if verbose:
+                    print ('Loading simulated box #', nm)
+                else:
+                    pass
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
                     raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
-                print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                if verbose:
+                    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                else:
+                    pass
 
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
@@ -1974,7 +2232,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 ##################################################
 
                 # Notice that we use "effective bias" (i.e., some estimate of the monopole) here;
-                print ('  Estimating FKP power spectra...')
+                if verbose:
+                    print ('  Estimating FKP power spectra...')
+                else:
+                    pass
                 # Use sum instead of mean to take care of empty cells
                 normsel[nm] = np.sum(n_bar_matrix_fid,axis=(1,2,3))/np.sum(maps,axis=(1,2,3))
                 # Updated definition of normsel to avoid raising a NaN when there are zero tracers
@@ -2026,20 +2287,32 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 if nm==0:
                     # If data bias is different from mocks
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-                    print ("  Effective biases of the simulated maps:")
-                    print ("   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    if verbose:
+                        print ("  Effective biases of the simulated maps:")
+                        print ("   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
                 else:
                     est_bias_fkp = np.sqrt(np.mean(effbias**2*(P0_fkp[nm]/powtrue).T [myran],axis=0))
-                    print( "  Effective biases of these maps:")
-                    print( "   Fiducial=", ["%.3f"%b for b in effbias])
-                    print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    if verbose:
+                        print( "  Effective biases of these maps:")
+                        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+                        print( "        FKP=", ["%.3f"%b for b in est_bias_fkp])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
     
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
@@ -2051,7 +2324,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
 
             time_end=time()
-            print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            if verbose:
+                print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            else:
+                pass
 
             ################################################################################
             ################################################################################
@@ -2061,7 +2337,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
             ################################################################################
 
-            print ('Applying mass assignement window function corrections...')
+            if verbose:
+                print ('Applying mass assignement window function corrections...')
+            else:
+                pass
 
             ################################################################################
             #############################################################################
@@ -2173,9 +2452,12 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             effbias_mt = np.copy(effbias)
             effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
-            print( "Initializing multi-tracer estimation toolbox...")
+            if verbose:
+                print( "Initializing multi-tracer estimation toolbox...")
+            else:
+                pass
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order, verbose)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -2184,8 +2466,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ''' 
             normsel = np.zeros((n_maps,ntracers))
 
-            print ("... done. Starting computations for each map (box) now.")
-            print()
+            if verbose:
+                print ("... done. Starting computations for each map (box) now.")
+                print()
+            else:
+                pass
 
             #################################
 
@@ -2193,14 +2478,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             for nm in range(n_maps):
                 time_start=time()
-                print ('Loading simulated box #', nm)
+                if verbose:
+                    print ('Loading simulated box #', nm)
+                else:
+                    pass
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
                     raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
-                print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                if verbose:
+                    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                else:
+                    pass
 
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
@@ -2230,7 +2521,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
         
                 #################################
                 # Now, the multi-tracer method
-                print ('  Now estimating multi-tracer spectra...')
+                if verbose:
+                    print ('  Now estimating multi-tracer spectra...')
+                else:
+                    pass
                 if nm==0:
                     FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
                     P0_data[nm] = fkp_mult.P0_mu_ret
@@ -2244,20 +2538,32 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 if nm==0:
                     # If data bias is different from mocks
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print ("  Effective biases of the simulated maps:")
-                    print ("   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print ("  Effective biases of the simulated maps:")
+                        print ("   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
                 else:
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print( "  Effective biases of these maps:")
-                    print( "   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print( "  Effective biases of these maps:")
+                        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
     
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
@@ -2266,7 +2572,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
 
             time_end=time()
-            print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            if verbose:
+                print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            else:
+                pass
 
             ################################################################################
             ################################################################################
@@ -2276,7 +2585,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
             ################################################################################
 
-            print ('Applying mass assignement window function corrections...')
+            if verbose:
+                print ('Applying mass assignement window function corrections...')
+            else:
+                pass
 
             ################################################################################
             #############################################################################
@@ -2332,9 +2644,12 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             effbias_mt = np.copy(effbias)
             effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
-            print( "Initializing multi-tracer estimation toolbox...")
+            if verbose:
+                print( "Initializing multi-tracer estimation toolbox...")
+            else:
+                pass
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order, verbose)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -2343,8 +2658,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ''' 
             normsel = np.zeros((n_maps,ntracers))
 
-            print ("... done. Starting computations for each map (box) now.")
-            print()
+            if verbose:
+                print ("... done. Starting computations for each map (box) now.")
+                print()
+            else:
+                pass
 
             #################################
 
@@ -2352,14 +2670,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             for nm in range(n_maps):
                 time_start=time()
-                print ('Loading simulated box #', nm)
+                if verbose:
+                    print ('Loading simulated box #', nm)
+                else:
+                    pass
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
                     raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
-                
-                print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+
+                if verbose:
+                    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                else:
+                    pass
 
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
@@ -2388,7 +2712,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
         
                 #################################
                 # Now, the multi-tracer method
-                print ('  Now estimating multi-tracer spectra...')
+                if verbose:
+                    print ('  Now estimating multi-tracer spectra...')
+                else:
+                    pass
                 if nm==0:
                     FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
                     P0_data[nm] = fkp_mult.P0_mu_ret
@@ -2405,20 +2732,32 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 if nm==0:
                     # If data bias is different from mocks
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print ("  Effective biases of the simulated maps:")
-                    print ("   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print ("  Effective biases of the simulated maps:")
+                        print ("   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
                 else:
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print( "  Effective biases of these maps:")
-                    print( "   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print( "  Effective biases of these maps:")
+                        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
 
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
@@ -2427,7 +2766,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
 
             time_end=time()
-            print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            if verbose:
+                print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            else:
+                pass
 
             ################################################################################
             ################################################################################
@@ -2437,7 +2779,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
             ################################################################################
 
-            print ('Applying mass assignement window function corrections...')
+            if verbose:
+                print ('Applying mass assignement window function corrections...')
+            else:
+                pass
 
             ################################################################################
             #############################################################################
@@ -2497,9 +2842,12 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             effbias_mt = np.copy(effbias)
             effbias_mt[nbarbar*effbias**2 < 0.5e-6] = 0.01
 
-            print( "Initializing multi-tracer estimation toolbox...")
+            if verbose:
+                print( "Initializing multi-tracer estimation toolbox...")
+            else:
+                pass
 
-            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order)
+            fkp_mult = fkpmt.fkp_init(num_binsk,n_bar_matrix_fid,effbias_mt,cell_size,n_x_box,n_y_box,n_z_box,n_x_orig,n_y_orig,n_z_orig,MRk,powercentral,mas_power, multipoles_order, verbose)
 
             '''
             Because of the very sensitive nature of shot noise subtraction 
@@ -2508,8 +2856,11 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ''' 
             normsel = np.zeros((n_maps,ntracers))
 
-            print ("... done. Starting computations for each map (box) now.")
-            print()
+            if verbose:
+                print ("... done. Starting computations for each map (box) now.")
+                print()
+            else:
+                pass
 
             #################################
 
@@ -2517,14 +2868,20 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
             for nm in range(n_maps):
                 time_start=time()
-                print ('Loading simulated box #', nm)
+                if verbose:
+                    print ('Loading simulated box #', nm)
+                else:
+                    pass
                 h5map = h5py.File(mapnames_sims[nm],'r')
                 maps = np.asarray(h5map.get(list(h5map.keys())[0]))
                 if not maps.shape == (ntracers,n_x,n_y,n_z):
                     raise ValueError('Unexpected shape of simulated maps! Found:', maps.shape)
                 h5map.close()
 
-                print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                if verbose:
+                    print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
+                else:
+                    pass
 
                 ## !! NEW !! Additional mask from low-cell-count threshold
                 if use_cell_low_count_thresh:
@@ -2553,7 +2910,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
         
                 #################################
                 # Now, the multi-tracer method
-                print ('  Now estimating multi-tracer spectra...')
+                if verbose:
+                    print ('  Now estimating multi-tracer spectra...')
+                else:
+                    pass
                 if nm==0:
                     FKPmult = fkp_mult.fkp((normsel[nm]*maps.T).T)
                     P0_data[nm] = fkp_mult.P0_mu_ret
@@ -2573,20 +2933,32 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 if nm==0:
                     # If data bias is different from mocks
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print ("  Effective biases of the simulated maps:")
-                    print ("   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print ("  Effective biases of the simulated maps:")
+                        print ("   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
                 else:
                     est_bias_mt = np.sqrt(np.mean((P0_data[nm]/powtrue).T [myran],axis=0))
-                    print( "  Effective biases of these maps:")
-                    print( "   Fiducial=", ["%.3f"%b for b in effbias])
-                    print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    if verbose:
+                        print( "  Effective biases of these maps:")
+                        print( "   Fiducial=", ["%.3f"%b for b in effbias])
+                        print ("         MT=", ["%.3f"%b for b in est_bias_mt])
+                    else:
+                        pass
                     dt = time() - time_start
-                    print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
-                    print(".")
+                    if verbose:
+                        print ("Elapsed time for computation of spectra for this map:", np.around(dt,4))
+                        print(".")
+                    else:
+                        pass
     
             #Update nbarbar to reflect actual
             nbarbar = nbarbar/np.mean(normsel,axis=0)
@@ -2596,7 +2968,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
 
             time_end=time()
-            print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            if verbose:
+                print ('Total time cost for estimation of spectra: ', time_end - time_start)
+            else:
+                pass
 
             ################################################################################
             ################################################################################
@@ -2606,7 +2981,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             ################################################################################
             ################################################################################
 
-            print ('Applying mass assignement window function corrections...')
+            if verbose:
+                print ('Applying mass assignement window function corrections...')
+            else:
+                pass
 
             ################################################################################
             #############################################################################

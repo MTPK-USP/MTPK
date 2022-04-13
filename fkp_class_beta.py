@@ -18,7 +18,7 @@ class fkp_init(object):
     Enters num_bins, n_bar (matrix), bias 
     n_x,n_y, n_z and the bin_matrix
     '''
-    def __init__(self,num_bins,n_bar_matrix,bias,cell_size,n_x,n_y,n_z,n_x_orig,n_y_orig,n_z_orig,bin_matrix,power0,mas_power, multipoles, do_cross_spectra, nhalos):
+    def __init__(self, num_bins, n_bar_matrix, bias,cell_size, n_x, n_y, n_z, n_x_orig, n_y_orig, n_z_orig, bin_matrix, power0, mas_power, multipoles, do_cross_spectra, nhalos, verbose):
         # Here bin_matrix is the M-matrix
         self.num_bins = num_bins
         self.n_bar_matrix = n_bar_matrix
@@ -38,6 +38,8 @@ class fkp_init(object):
         self.multipoles = multipoles
         self.do_cross_spectra = do_cross_spectra
         self.nhalos = nhalos
+
+        self.verbose = verbose
 
         largenumber = 100000000.
         small = 1.0/largenumber
@@ -114,6 +116,8 @@ class fkp_init(object):
         '''
         This is the FKP function itself, only entries are the galaxy maps for all tracers
         '''
+        verbose = self.verbose
+        
         largenumber=100000000.
         small = 1.0/largenumber
         alpha = small
@@ -196,7 +200,10 @@ class fkp_init(object):
                 self.Pshot_phys[i]=self.Pshot[i]*self.cell_size**3
                 # TESTING
                 pshotret = (self.Pshot_phys[i])*(self.bias[i])**2
-                print("   FKP shot noise for tracer",i," : ", pshotret)
+                if verbose:
+                    print("   FKP shot noise for tracer",i," : ", pshotret)
+                else:
+                    pass
 
                 sigma[i] = sigma[i]*self.cell_size**3
 
@@ -296,7 +303,10 @@ class fkp_init(object):
                 self.Pshot_phys[i]=self.Pshot[i]*self.cell_size**3
                 # TESTING
                 pshotret = (self.Pshot_phys[i])*(self.bias[i])**2
-                print("   FKP shot noise for tracer",i," : ", pshotret)
+                if verbose:
+                    print("   FKP shot noise for tracer",i," : ", pshotret)
+                else:
+                    pass
 
                 sigma[i] = sigma[i]*self.cell_size**3
 
@@ -437,7 +447,10 @@ class fkp_init(object):
                 self.Pshot_phys[i]=self.Pshot[i]*self.cell_size**3
                 # TESTING
                 pshotret = (self.Pshot_phys[i])*(self.bias[i])**2
-                print("   FKP shot noise for tracer",i," : ", pshotret)
+                if verbose:
+                    print("   FKP shot noise for tracer",i," : ", pshotret)
+                else:
+                    pass
 
                 sigma[i] = sigma[i]*self.cell_size**3
 

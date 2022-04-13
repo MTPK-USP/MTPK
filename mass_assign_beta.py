@@ -19,7 +19,7 @@ ValueError
 import numpy as np
 import sys
 
-def build_grid(cat, cell, box, mas_method, batch_size, wrap):
+def build_grid(cat, cell, box, mas_method, batch_size, wrap, verbose):
     """ 
     Parameters
     -------
@@ -71,16 +71,25 @@ def build_grid(cat, cell, box, mas_method, batch_size, wrap):
     full_grid = np.zeros(box)
 
     for nb in range(nbat+1):
-        print("Processing batch #",nb, "of", nbat)
+        if verbose:
+            print("Processing batch #",nb, "of", nbat)
+        else:
+            pass
         if nb <= nbat:
             nstart = nb*nmax
             nend = np.min( ( (nb+1)*nmax , nobj ))
             this_cat = cat[nstart:nend]
-            print("Processing objects #",nstart, "to", nend)
+            if verbose:
+                print("Processing objects #",nstart, "to", nend)
+            else:
+                pass
         else:
             nstart = nbat*nmax
             this_cat = cat[nstart:]
-            print("Processing objects #",nstart, "to end")
+            if verbose:
+                print("Processing objects #",nstart, "to end")
+            else:
+                pass
         cat_len = len(this_cat)
         # each sub-catalog with nmax objects will give rise to a new catalog with (5**ndim)*nmax objects
         if ndim ==1:
