@@ -49,7 +49,7 @@ handle = "lightcone"
 
 this_dir = os.getcwd()
 
-filenames_catalogs = glob.glob(this_dir + '/data/' + handle + '/*')
+filenames_catalogs = glob.glob(this_dir + '/data/' + handle + '/new_Lightcone_RA_DEC_z.dat')
 
 if len(filenames_catalogs)==0 :
     print ('Files not found! Aborting now...')

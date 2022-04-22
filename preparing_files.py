@@ -1,7 +1,10 @@
 import numpy as np
 
-data_xyz = np.loadtxt('data/lightcone/Lightcone_xyz.dat')
-data_rdz = np.loadtxt('data/lightcone/Lightcone_RA_DEC_z.dat')
+print('Reading data')
+data_xyz = np.loadtxt('data/lightcone/new_Lightcone_xyz.dat')
+data_rdz = np.loadtxt('data/lightcone/new_Lightcone_RA_DEC_z.dat')
+
+print('Doing the computations!')
 
 redshift_range = [0, 0.3]
 z_red = data_rdz[:, 2]
@@ -29,3 +32,5 @@ histo_rad = np.histogram(rad, bins = r_bins)[0]
 num_dens = np.array([r, z_rad, histo_rad/volumes])
 
 np.savetxt('data/lightcone/r_z_hmf_massbin.dat', num_dens.T)
+
+print('Done!')
