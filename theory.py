@@ -206,8 +206,68 @@ def power_spectrum(my_cosmology, my_code_options):
         return Pk_dict
 	
     else:
-        print('Warning! Minimum k value too small, code will not work')
-        sys.exit(-1)
+    	import camb
+    	from camb import model
+    	
+    	h = my_cosmology.h
+    	
+    	pars = camb.CAMBparams()
+    	
+    	pars.omk = my_cosmology.Omega0_k
+    	pars.DarkEnergy.w = my_cosmology.w0
+    	pars.DarkEnergy.wa = my_cosmology.w1
+    	pars.ombh2 = my_cosmology.Omega0_b*h**2
+    	pars.omch2 = my_cosmology.Omega0_cdm*h**2
+    	pars.H0 = h*100.
+    	pars.InitPower.As = my_cosmology.A_s
+    	pars.InitPower.ns = my_cosmology.n_s
+    	pars.Reion.redshift = my_cosmology.z_re
+    	zcentral = my_code_options.zcentral
+    	k_min = my_code_options.k_min_CAMB
+    	k_max = my_code_options.k_max_CAMB
+    	pars.set_matter_power(redshifts = [zcentral], kmax = k_max)
+    	
+    	results = camb.get_background(pars)
+    	Pk_dict = {'r_s_drag' : results['rdrag']}
+    	
+    	if(whicspec == 0):
+    		results = camb.get_results(pars)
+    		kh, z, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
+    		pk = pk[0,:]
+    		s8 = np.array(results.get_sigma8())
+    		Pk_dict = {'k' : kh}
+    		Pk_dict = {'Pk_z1' : pk}
+    		Pk_dict = {'sigma_8' : s8}
+    		return Pk_dict
+    		
+    	elif(whicspec == 1):
+    		pars.NonLinear = model.NonLinear_both
+    		results = camb.get_results(pars)
+    		results.calc_power_spectra(pars)
+    		kh, z_nl, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
+    		pk = pk[0,:]
+    		s8 = np.array(results.get_sigma8())
+    		Pk_dict = {'k' : kh}
+    		Pk_dict = {'Pk_z1' : pk}
+    		Pk_dict = {'sigma_8' : s8}
+    		return Pk_dict
+    		
+    	else:
+    		pars.NonLinear = model.NonLinear_both
+    		pars.NonLinearModel.halofit_version = 'casarini'
+    		results = camb.get_results(pars)
+    		results.calc_power_spectra(pars)
+    		kh, z, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
+    		pk = pk[0,:]
+    		s8 = np.array(results.get_sigma8())
+    		Pk_dict = {'k' : kh}
+    		Pk_dict = {'Pk_z1' : pk}
+    		Pk_dict = {'sigma_8' : s8}
+    		return Pk_dict
+
+#    else:
+#        print('Warning! Minimum k value too small, code will not work')
+#        sys.exit(-1)
 
 def rsd_params( **kwargs):
     '''Method to organize RSD parameters inside a dictionary from which they can
