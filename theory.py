@@ -9,30 +9,28 @@ c_light = 299792.458 #km/s
 
 camb_dir = "CAMB"
 
-def power_spectrum(cosmo, whichspec, redshifts, k_min, k_max):
-    '''
-    Method to compute the matter power-spectrum using CAMB
+def power_spectrum(my_cosmology, my_code_options):
+    '''Method to compute the matter power-spectrum using CAMB
 
         Parameters
         ----------
         cosmo : object
-            Object containing a predefined cosmology
+            object containing a predefined cosmology
         
         whichspec : str
-            String indicating which spectrum we wish to obtain.
+            string indicating which spectrum we wish to obtain.
             'Linear'           -> Linear power-spectrum
             'Halofit-Mead'     -> Halofit implementation by A. Mead
             'Halofit-Casarini' -> Halofit implementation by L. Casarini
         
         redshifts : array of floats
-            Array containing different redshifts 
+            array containing different redshifts 
         
         k_min : float
             Minimum wave-vector for which we want the spectrum to be computed
 
         k_max : float 
-            Maximum wave-vector for which we want the spectrum to be computed
-
+            Maxmimum wave-vector for which we want the spectrum to be computed
         Returns
         -------
         
@@ -40,7 +38,7 @@ def power_spectrum(cosmo, whichspec, redshifts, k_min, k_max):
             Dictionay containing k(h/Mpc),  Pk(Mpc/h)^3, r_s_drag (Mpc) and sigma_8 
 
             The dictionary's
-            Structure is as follows
+            structure is as follows
             Pk_dict = { 'k'        : k_array,
                         'Pk_z1'    : Pk_at_redshift_z1,
                         ...
@@ -51,6 +49,8 @@ def power_spectrum(cosmo, whichspec, redshifts, k_min, k_max):
                                 
     '''
     this_dir = os.getcwd()
+    
+    redshifts = my_cosmology.zcentral
 
     if type(redshifts) == float:
         redshifts = np.asarray([redshifts])
@@ -75,6 +75,9 @@ def power_spectrum(cosmo, whichspec, redshifts, k_min, k_max):
     ks = []
     ps = []
 
+    k_min = my_code_options.k_min_CAMB
+    k_max = my_code_options.k_max_CAMB
+
     if(k_min >=1e-4):
         t0 = time.time()
         
@@ -86,19 +89,19 @@ def power_spectrum(cosmo, whichspec, redshifts, k_min, k_max):
 
         temp[3]  = 'output_root     = mtpk \n'
 
-        temp[34] = 'ombh2           = ' + str(cosmo.Omega0_b*cosmo.h**2) + '\n'
-        temp[35] = 'omch2           = ' + str(cosmo.Omega0_cdm*cosmo.h**2) + '\n'
-        temp[37] = 'omk             = ' + str(cosmo.Omega0_k) + '\n'
-        temp[38] = 'hubble          = ' + str(100*cosmo.h) + '\n'
+        temp[34] = 'ombh2           = ' + str(my_cosmology.Omega0_b*my_cosmology.h**2) + '\n'
+        temp[35] = 'omch2           = ' + str(my_cosmology.Omega0_cdm*my_cosmology.h**2) + '\n'
+        temp[37] = 'omk             = ' + str(my_cosmology.Omega0_k) + '\n'
+        temp[38] = 'hubble          = ' + str(100*my_cosmology.h) + '\n'
         # Dark Energy Parameters
-        temp[41] = 'w               = ' + str(cosmo.w0) + '\n'
-        temp[46] = 'wa              = ' + str(cosmo.w1) + '\n'
+        temp[41] = 'w               = ' + str(my_cosmology.w0) + '\n'
+        temp[46] = 'wa              = ' + str(my_cosmology.w1) + '\n'
         # Primordial Spectrum Parameters
-        temp[85] = 'scalar_amp(1)   = ' + str(cosmo.A_s) + '\n'
-        temp[86] = 'scalar_spectral_index(1) = ' + str(cosmo.n_s) + '\n'
+        temp[85] = 'scalar_amp(1)   = ' + str(my_cosmology.A_s) + '\n'
+        temp[86] = 'scalar_spectral_index(1) = ' + str(my_cosmology.n_s) + '\n'
         # Reionization Parameters
         temp[107] = 're_use_optical_depth = F \n'
-        temp[110] = 're_redshift         = ' + str(cosmo.z_re) + '\n'
+        temp[110] = 're_redshift         = ' + str(my_cosmology.z_re) + '\n'
         
         temp[252] = 'transfer_kmax        = ' + str(k_max) + '\n'
         temp[254] = 'transfer_num_redshifts = ' + str(n_redshifts) + '\n'
@@ -126,6 +129,8 @@ def power_spectrum(cosmo, whichspec, redshifts, k_min, k_max):
         #print("Time elapsed for I/O:",t1-t0)
 
         t0 = time.time()
+        
+        whichspec = my_code_options.whichspec
 
         if(whichspec == 0):
             ########### Linear Spectrum #################
@@ -205,8 +210,8 @@ def power_spectrum(cosmo, whichspec, redshifts, k_min, k_max):
         sys.exit(-1)
 
 def rsd_params( **kwargs):
-    '''
-    Method to organize RSD parameters inside a dictionary from which they can be easily accessed
+    '''Method to organize RSD parameters inside a dictionary from which they can
+        be easily accessed
 
         Parameters
         ----------
@@ -233,35 +238,37 @@ def rsd_params( **kwargs):
             continue
         default_params[key] = value
 
+
     return default_params
 
+
+
 def pk_multipoles_gauss(rsd_params, cosmo, redshifts, whichspec, kmin, kmax, Nk, **kwargs):
-    '''
-    Method to compute the monopole and quadrupole of the redshift-space power-spectrum
+    '''Method to compute the monopole and quadrupole of the redshift-space power-spectrum
 
         Parameters
         ----------
 
         cosmo : cosmology object
-            Object containing a predefined cosmology
+            object containing a predefined cosmology
         
         rsd_params : dictionary
-            Dictionary containing the main RSD parameters
+            dictionary containing the main RSD parameters
         
         redsfhits : float list
-            List containing the redshifts for which we want the multipoles
+            list containing the redshifts for which we want the multipoles
 
         whichspec : integer
-            Integer controlling which kind of spectrum we want:
+            integer controlling which kind of spectrum we want:
                 0 -> linear
                 1 -> Halofit Mead version
                 2 -> Halofit Casarini version
 
         kmin : float
-            Minimum wave-vector (h/Mpc)
+            minimum wave-vector (h/Mpc)
 
         kmax : float
-            Maximum wave-vector (h/Mpc)
+            maximum wave-vector (h/Mpc)
 
         Nk : int
             Number of k bins
@@ -271,7 +278,7 @@ def pk_multipoles_gauss(rsd_params, cosmo, redshifts, whichspec, kmin, kmax, Nk,
             values. If you choose to do that, kmin, kmax and Nk will be ignored
 
         matgrowrate : float, optional
-            Optional parameter to pass a value of matgrowrate.
+            optional parameter to pass a value of matgrowrate.
             If this is not given, will use cosmological parameters
             to obtain f through f(z) = Omega_m(z)^gamma
 
@@ -295,7 +302,6 @@ def pk_multipoles_gauss(rsd_params, cosmo, redshifts, whichspec, kmin, kmax, Nk,
             redshift-space multipoles.
 
     '''
-
     import os, ctypes
     from scipy import integrate, LowLevelCallable
 
@@ -322,15 +328,15 @@ def pk_multipoles_gauss(rsd_params, cosmo, redshifts, whichspec, kmin, kmax, Nk,
     try:
         matgrowrate
     except:
-        matgrowrate = cosmo.f_evolving(redshifts)
+        matgrowrate = my_cosmology.f_evolving(redshifts)
     try:
         len(matgrowrate)
     except:
         matgrowrate = np.asarray([matgrowrate])
 
     sig_tot         = rsd_params['sigma_tot']
-    sig_tot         = sig_tot / cosmo.H(redshifts, True)
-    #cH              = c_light / cosmo.H(redshifts, True)
+    sig_tot         = sig_tot / my_cosmology.H(redshifts, True)
+    #cH              = c_light / my_cosmology.H(redshifts, True)
 
     # Let's try to do it numerically 
 
@@ -372,8 +378,7 @@ def pk_multipoles_gauss(rsd_params, cosmo, redshifts, whichspec, kmin, kmax, Nk,
 
 
 def q_ell(random, cosmo, **kwargs):
-    '''
-    Computes window function multipoles in real space, using a pair-counting approach.
+    '''Computes window function multipoles in real space, using a pair-counting approach.
 
         We'll take a random catalogue and compute the random-random pairs weighted by the 
         Legendre polynomial of order \ell evaluated on the angle between the two objects, 
@@ -383,74 +388,74 @@ def q_ell(random, cosmo, **kwargs):
         ----------
 
         random : array of floats
-            Array containing the random catalogue. This should have the shape
+            array containing the random catalogue. This should have the shape
             (N, 3) in which N is the number of random points and the columns store RA, 
             DEC, z respectively.        
 
         cosmo : dictionary
-            Contains cosmological parameters which can be accessed through keywords
+            contains cosmological parameters which can be accessed through keywords
 
         ell_max : int
-            Maximum multipole we wish to compute
+            maximum multipole we wish to compute
         
         rmin : float
-            Value of the minimum r for which we'll compute Q_ell(r)
+            value of the minimum r for which we'll compute Q_ell(r)
 
         rmax : float
-            Value of the maximum r for which we'll compute Q_ell(r)
+            value of the maximum r for which we'll compute Q_ell(r)
 
         Nr : int
-            Number of points in r to be computed
+            number of points in r to be computed
         
         Nmu : int
-            Number of bins in mu
+            number of bins in mu
 
         all_multipoles : bool
-            Boolean variable to control whether the user wants all the multipoles or only
+            boolean variable to control whether the user wants all the multipoles or only
             the even ones
 
         zmin : float
-            Minimum redshift we wish to consider in the random catalogue
+            minimum redshift we wish to consider in the random catalogue
         
         zmax : float
-            Maximum redshift we wish to consider in the random catalogue
+            maximum redshift we wish to consider in the random catalogue
 
         mu_max : float
-            Maximum value of mu we wish to consider. Should be kept to 1 unless you have
+            maximum value of mu we wish to consider. Should be kept to 1 unless you have
             strong reasons to change it
 
         autocorr : int
             0 or 1. Controls whether we're computing auto or cross correlations
 
         N_cores : int 
-            Number of cores available in your computer
+            number of cores available in your computer
         
         fraction : float
-            Between 0 and 1. This is the fraction of the random catalogue you want to use
+            between 0 and 1. This is the fraction of the random catalogue you want to use
             for your computation. Sometimes the random cataloge is huge, and using it all
             leads to very time consuming pair counting
         
         FKP_weights : bool
-            Whether to include the FKP weights or not when computing window function
+            whether to include the FKP weights or not when computing window function
 
         n_bar_r : str
-           Name of the file containing the radial number density of objects in the survey.
+           name of the file containing the radial number density of objects in the survey.
            This should have shape (n,2) in which the first column contains values of comoving distance
            and the second contains the number density in units of (Mpc/h)^{-3}. Useful for
            computing FKP and MTOE weights to be included in window function
 
         P_eff : float
-            Value of the power spectrum in units of (Mpc/h)^3 at a chosen scale k_eff. Useful
+            value of the power spectrum in units of (Mpc/h)^3 at a chosen scale k_eff. Useful
             for computing FKP and MTOE weights to be included in window function
 
         Returns
         -------
         
         r_centers : float array
-            An array of length N_r containing the center values for the bins in r
+            an array of length N_r containing the center values for the bins in r
 
         q_ells : float array
-            An array of shape (N_ell, N_r) containing all the q_ell requested. N_ell is the 
+            an array of shape (N_ell, N_r) containing all the q_ell requested. N_ell is the 
             number of multipoles and N_r is the number points in r
         
     '''
@@ -511,7 +516,7 @@ def q_ell(random, cosmo, **kwargs):
     P_eff          = default_kwargs['P_eff']
     Normalize      = default_kwargs['Normalize']
 
-    comov = np.vectorize(cosmo.comoving)
+    comov = np.vectorize(my_cosmology.comoving)
     z_interp = np.linspace(zmin,zmax,2000)#np.linspace(0.3,1.3,2000)
     d_interp = comov(z_interp, True)
     comov = scipy.interpolate.interp1d(z_interp, d_interp)
@@ -528,7 +533,7 @@ def q_ell(random, cosmo, **kwargs):
         n_bar = np.loadtxt(n_bar_r)
         print("Done!") 
 
-        n_bar = n_bar[np.where( (n_bar[:,2]>cosmo.comoving(zmin,True)) & (n_bar[:,2]<cosmo.comoving(zmax,True)) )]
+        n_bar = n_bar[np.where( (n_bar[:,2]>my_cosmology.comoving(zmin,True)) & (n_bar[:,2]<my_cosmologycomoving(zmax,True)) )]
 
     '''
         LOAD RANDOM CATALOGUE AND PROCESS IT
@@ -629,31 +634,31 @@ def q_ell(random, cosmo, **kwargs):
 
 
 def convolved_multipoles(rsd_params, cosmo, redshifts, whichspec, r_centers, Q_ell, **kwargs):
-    '''
-    Code to compute the power-spectrum multipoles convolved with the survey window function
+    '''Code to compute the power-spectrum multipoles convolved with the
+        survey window function
 
         Parameters
         ----------
         rsd_params  : dictionary
-            Dictionary containing values of parameters such as bias, velocity dispersion, etc.
+            dictionary containing values of parameters such as bias, velocity dispersion, etc.
 
         cosmo       : dictionary
-            Dictionary containing values of cosmological parameters
+            dictionary containing values of cosmological parameters
 
         redshifts   : array of floats
-            Array containing values of redshifts 
+            array containing values of redshifts 
 
         whichspec   : integer
-            Integer controlling which kind of spectrum we want:
+            integer controlling which kind of spectrum we want:
                 0 -> linear
                 1 -> Halofit Mead version
                 2 -> Halofit Casarini version
 
         kmin        : float
-            Minimum wave-vector (h/Mpc)
+            minimum wave-vector (h/Mpc)
 
         kmax        : float
-            Maximum wave-vector (h/Mpc)
+            maximum wave-vector (h/Mpc)
 
         Nk          : int
             Number of k bins
@@ -662,16 +667,16 @@ def convolved_multipoles(rsd_params, cosmo, redshifts, whichspec, r_centers, Q_e
 
 
         Q_ell       : array of floats
-            Array of shape (n, Nk) in which n is the number of multipoles computed
+            array of shape (n, Nk) in which n is the number of multipoles computed
             and Nk is the number of k bins used.
 
         matgrowrate : float, optional
-            Optional parameter to pass a value of matgrowrate.
+            optional parameter to pass a value of matgrowrate.
             If this is not given, will use cosmological parameters
             to obtain f through f(z) = Omega_m(z)^gamma
 
         Pk_dict     : Dictionary
-            Optional parameter to pass a certain pre-computed power-spectrum over which
+            optional parameter to pass a certain pre-computed power-spectrum over which
             we'll place the RSD amplitudes and will convolve it with the relevant window
             function.
 
@@ -689,7 +694,7 @@ def convolved_multipoles(rsd_params, cosmo, redshifts, whichspec, r_centers, Q_e
     try:
         matgrowrate
     except:
-        matgrowrate = cosmo.f_evolving(redshifts)
+        matgrowrate = my_cosmology.f_evolving(redshifts)
     
     try:
         n_bias = len(rsd_params['b1'])

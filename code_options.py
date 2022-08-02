@@ -140,10 +140,10 @@ class code_parameters:
       Min and max k (in units of h^-1 Mpc) for CAMB
     
     whichspec : integer
-      Which spectrum to use in the ln sims and estimation:
-       (0) linear 
-       (1) HaloFit 
-       (2) PkEqual
+      Which spectrum we wish to use in the ln sims and estimation:
+       (0) linear  -> Linear power-spectrum
+       (1) HaloFit -> Halofit implementation by A. Mead
+       (2) PkEqual -> Halofit implementation by L. Casarini
 
     ntracers : integer
       Number of halo bins as tracers. It is defined to be equal to nbins
