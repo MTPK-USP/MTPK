@@ -14,7 +14,7 @@ def power_spectrum(my_cosmology, my_code_options):
 
         Parameters
         ----------
-        cosmo : object
+        my_cosmology : object
             object containing a predefined cosmology
         
         whichspec : str
@@ -78,7 +78,67 @@ def power_spectrum(my_cosmology, my_code_options):
     k_min = my_code_options.k_min_CAMB
     k_max = my_code_options.k_max_CAMB
 
-    if(k_min >=1e-4):
+    try:
+    	import camb
+    	from camb import model
+    	
+    	h = my_cosmology.h
+    	
+    	pars = camb.CAMBparams()
+    	
+    	pars.omk = my_cosmology.Omega0_k
+    	pars.DarkEnergy.w = my_cosmology.w0
+    	pars.DarkEnergy.wa = my_cosmology.w1
+    	pars.ombh2 = my_cosmology.Omega0_b*h**2
+    	pars.omch2 = my_cosmology.Omega0_cdm*h**2
+    	pars.H0 = h*100.
+    	pars.InitPower.As = my_cosmology.A_s
+    	pars.InitPower.ns = my_cosmology.n_s
+    	pars.Reion.redshift = my_cosmology.z_re
+    	zcentral = my_code_options.zcentral
+    	k_min = my_code_options.k_min_CAMB
+    	k_max = my_code_options.k_max_CAMB
+    	pars.set_matter_power(redshifts = [zcentral], kmax = k_max)
+    	
+    	results = camb.get_background(pars)
+    	Pk_dict = {'r_s_drag' : results['rdrag']}
+    	
+    	if(whicspec == 0):
+    		results = camb.get_results(pars)
+    		kh, z, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
+    		pk = pk[0,:]
+    		s8 = np.array(results.get_sigma8())
+    		Pk_dict = {'k' : kh}
+    		Pk_dict = {'Pk_1' : pk}
+    		Pk_dict = {'sigma_8' : s8}
+    		return Pk_dict
+    		
+    	elif(whicspec == 1):
+    		pars.NonLinear = model.NonLinear_both
+    		results = camb.get_results(pars)
+    		results.calc_power_spectra(pars)
+    		kh, z_nl, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
+    		pk = pk[0,:]
+    		s8 = np.array(results.get_sigma8())
+    		Pk_dict = {'k' : kh}
+    		Pk_dict = {'Pk_1' : pk}
+    		Pk_dict = {'sigma_8' : s8}
+    		return Pk_dict
+    		
+    	else:
+    		pars.NonLinear = model.NonLinear_both
+    		pars.NonLinearModel.halofit_version = 'casarini'
+    		results = camb.get_results(pars)
+    		results.calc_power_spectra(pars)
+    		kh, z, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
+    		pk = pk[0,:]
+    		s8 = np.array(results.get_sigma8())
+    		Pk_dict = {'k' : kh}
+    		Pk_dict = {'Pk_1' : pk}
+    		Pk_dict = {'sigma_8' : s8}
+    		return Pk_dict
+
+    except:
         t0 = time.time()
         
         os.chdir(camb_dir)
@@ -203,71 +263,7 @@ def power_spectrum(my_cosmology, my_code_options):
         Pk_dict['r_s_drag'] = r_s_drag
         Pk_dict['sigma_8']  = sigma8
 
-        return Pk_dict
-	
-    else:
-    	import camb
-    	from camb import model
-    	
-    	h = my_cosmology.h
-    	
-    	pars = camb.CAMBparams()
-    	
-    	pars.omk = my_cosmology.Omega0_k
-    	pars.DarkEnergy.w = my_cosmology.w0
-    	pars.DarkEnergy.wa = my_cosmology.w1
-    	pars.ombh2 = my_cosmology.Omega0_b*h**2
-    	pars.omch2 = my_cosmology.Omega0_cdm*h**2
-    	pars.H0 = h*100.
-    	pars.InitPower.As = my_cosmology.A_s
-    	pars.InitPower.ns = my_cosmology.n_s
-    	pars.Reion.redshift = my_cosmology.z_re
-    	zcentral = my_code_options.zcentral
-    	k_min = my_code_options.k_min_CAMB
-    	k_max = my_code_options.k_max_CAMB
-    	pars.set_matter_power(redshifts = [zcentral], kmax = k_max)
-    	
-    	results = camb.get_background(pars)
-    	Pk_dict = {'r_s_drag' : results['rdrag']}
-    	
-    	if(whicspec == 0):
-    		results = camb.get_results(pars)
-    		kh, z, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
-    		pk = pk[0,:]
-    		s8 = np.array(results.get_sigma8())
-    		Pk_dict = {'k' : kh}
-    		Pk_dict = {'Pk_z1' : pk}
-    		Pk_dict = {'sigma_8' : s8}
-    		return Pk_dict
-    		
-    	elif(whicspec == 1):
-    		pars.NonLinear = model.NonLinear_both
-    		results = camb.get_results(pars)
-    		results.calc_power_spectra(pars)
-    		kh, z_nl, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
-    		pk = pk[0,:]
-    		s8 = np.array(results.get_sigma8())
-    		Pk_dict = {'k' : kh}
-    		Pk_dict = {'Pk_z1' : pk}
-    		Pk_dict = {'sigma_8' : s8}
-    		return Pk_dict
-    		
-    	else:
-    		pars.NonLinear = model.NonLinear_both
-    		pars.NonLinearModel.halofit_version = 'casarini'
-    		results = camb.get_results(pars)
-    		results.calc_power_spectra(pars)
-    		kh, z, pk = results.get_matter_power_spectrum(minkh = k_min, maxkh = k_max, npoints = 1000)
-    		pk = pk[0,:]
-    		s8 = np.array(results.get_sigma8())
-    		Pk_dict = {'k' : kh}
-    		Pk_dict = {'Pk_z1' : pk}
-    		Pk_dict = {'sigma_8' : s8}
-    		return Pk_dict
-
-#    else:
-#        print('Warning! Minimum k value too small, code will not work')
-#        sys.exit(-1)
+        return Pk_dict	
 
 def rsd_params( **kwargs):
     '''Method to organize RSD parameters inside a dictionary from which they can
@@ -303,13 +299,13 @@ def rsd_params( **kwargs):
 
 
 
-def pk_multipoles_gauss(rsd_params, cosmo, redshifts, whichspec, kmin, kmax, Nk, **kwargs):
+def pk_multipoles_gauss(rsd_params, my_cosmology, my_code_options, Nk, **kwargs):
     '''Method to compute the monopole and quadrupole of the redshift-space power-spectrum
 
         Parameters
         ----------
 
-        cosmo : cosmology object
+        my_cosmology : cosmology object
             object containing a predefined cosmology
         
         rsd_params : dictionary
@@ -376,11 +372,15 @@ def pk_multipoles_gauss(rsd_params, cosmo, redshifts, whichspec, kmin, kmax, Nk,
         if(key=='k'):
             kphys=value
 
+    kmin = my_code_options.k_min_CAMB
+    kmax = my_code_options.k_max_CAMB
+
     try:
         kphys
     except:
         kphys = np.logspace(np.log10(kmin), np.log10(kmax), Nk)
 
+    redshifts = my_cosmology.zcentral
     try:
         len(redshifts)
     except:
@@ -437,7 +437,7 @@ def pk_multipoles_gauss(rsd_params, cosmo, redshifts, whichspec, kmin, kmax, Nk,
     return M_dict
 
 
-def q_ell(random, cosmo, **kwargs):
+def q_ell(random, my_cosmology, **kwargs):
     '''Computes window function multipoles in real space, using a pair-counting approach.
 
         We'll take a random catalogue and compute the random-random pairs weighted by the 
@@ -452,7 +452,7 @@ def q_ell(random, cosmo, **kwargs):
             (N, 3) in which N is the number of random points and the columns store RA, 
             DEC, z respectively.        
 
-        cosmo : dictionary
+        my_cosmology : dictionary
             contains cosmological parameters which can be accessed through keywords
 
         ell_max : int
@@ -693,7 +693,7 @@ def q_ell(random, cosmo, **kwargs):
     return (r_centers, Q_ell)
 
 
-def convolved_multipoles(rsd_params, cosmo, redshifts, whichspec, r_centers, Q_ell, **kwargs):
+def convolved_multipoles(rsd_params, my_cosmology, my_code_options, r_centers, Q_ell, **kwargs):
     '''Code to compute the power-spectrum multipoles convolved with the
         survey window function
 
@@ -702,7 +702,7 @@ def convolved_multipoles(rsd_params, cosmo, redshifts, whichspec, r_centers, Q_e
         rsd_params  : dictionary
             dictionary containing values of parameters such as bias, velocity dispersion, etc.
 
-        cosmo       : dictionary
+        my_cosmology: dictionary
             dictionary containing values of cosmological parameters
 
         redshifts   : array of floats
@@ -742,6 +742,15 @@ def convolved_multipoles(rsd_params, cosmo, redshifts, whichspec, r_centers, Q_e
 
     '''
 
+#    redshifts = my_cosmology.zcentral
+#    redshifts = np.array(redshifts)
+
+    redshifts = my_cosmology.zcentral
+    try:
+        len(redshifts)
+    except:
+        redshifts = np.asarray([redshifts])
+
     import mcfit
     str_redshifts = redshifts.astype('str').tolist()
 
@@ -761,17 +770,18 @@ def convolved_multipoles(rsd_params, cosmo, redshifts, whichspec, r_centers, Q_e
     except:
         n_bias = len(np.asarray([rsd_params['b1']]))
 
+    whichspec = my_code_options.whichspec
     try:
         Pk_dict
     except:
-        Pk_dict = power_spectrum(cosmo, whichspec, redshifts, 1e-4, 1e2)
+        Pk_dict = power_spectrum(my_cosmology, my_code_options)
 
     # Compute the W_ell from the Q_ell
     k_ell, W0_temp = mcfit.xi2P(r_centers, l=0)(Q_ell[0,:])
     k_ell, W2_temp = mcfit.xi2P(r_centers, l=2)(Q_ell[1,:])
     
     k       = Pk_dict['k']
-    M_dict  = pk_multipoles_gauss(rsd_params, cosmo, redshifts, whichspec, kmin=1e-4, kmax=1e2, Nk=len(k), k=k, matgrowrate=matgrowrate)
+    M_dict  = pk_multipoles_gauss(rsd_params, my_cosmology, my_code_options, Nk=len(k), k=k, matgrowrate=matgrowrate)
 
     conv_dict = {}
 
