@@ -10,21 +10,25 @@ c_light = 299792.458 #km/s
 camb_dir = "CAMB"
 
 def power_spectrum(my_cosmology, my_code_options):
-    '''Method to compute the matter power-spectrum using CAMB
+    '''
+    Method to compute the matter power-spectrum using CAMB
 
         Parameters
         ----------
         my_cosmology : object
-            object containing a predefined cosmology
+            Object containing a predefined cosmology
+
+        my_code_options : object
+            Object containing a predefined code options
         
         whichspec : str
-            string indicating which spectrum we wish to obtain.
+            String indicating which spectrum we wish to obtain.
             'Linear'           -> Linear power-spectrum
             'Halofit-Mead'     -> Halofit implementation by A. Mead
             'Halofit-Casarini' -> Halofit implementation by L. Casarini
         
         redshifts : array of floats
-            array containing different redshifts 
+            Array containing different redshifts 
         
         k_min : float
             Minimum wave-vector for which we want the spectrum to be computed
@@ -38,7 +42,7 @@ def power_spectrum(my_cosmology, my_code_options):
             Dictionay containing k(h/Mpc),  Pk(Mpc/h)^3, r_s_drag (Mpc) and sigma_8 
 
             The dictionary's
-            structure is as follows
+            Structure is as follows
             Pk_dict = { 'k'        : k_array,
                         'Pk_z1'    : Pk_at_redshift_z1,
                         ...
@@ -272,8 +276,9 @@ def power_spectrum(my_cosmology, my_code_options):
         return Pk_dict	
 
 def rsd_params( **kwargs):
-    '''Method to organize RSD parameters inside a dictionary from which they can
-        be easily accessed
+    '''
+    Method to organize RSD parameters inside a dictionary from which they can
+    be easily accessed
 
         Parameters
         ----------
@@ -313,6 +318,9 @@ def pk_multipoles_gauss(rsd_params, my_cosmology, my_code_options, Nk, **kwargs)
 
         my_cosmology : cosmology object
             object containing a predefined cosmology
+
+        my_code_options : object
+            object containing a predefined code options
         
         rsd_params : dictionary
             dictionary containing the main RSD parameters
@@ -446,7 +454,8 @@ def pk_multipoles_gauss(rsd_params, my_cosmology, my_code_options, Nk, **kwargs)
 
 
 def q_ell(random, my_cosmology, my_code_options, **kwargs):
-    '''Computes window function multipoles in real space, using a pair-counting approach.
+    '''
+    Computes window function multipoles in real space, using a pair-counting approach.
 
         We'll take a random catalogue and compute the random-random pairs weighted by the 
         Legendre polynomial of order \ell evaluated on the angle between the two objects, 
@@ -456,76 +465,82 @@ def q_ell(random, my_cosmology, my_code_options, **kwargs):
         ----------
 
         random : array of floats
-            array containing the random catalogue. This should have the shape
+            Array containing the random catalogue. This should have the shape
             (N, 3) in which N is the number of random points and the columns store RA, 
             DEC, z respectively.        
 
         my_cosmology : dictionary
-            contains cosmological parameters which can be accessed through keywords
+            Contains cosmological parameters which can be accessed through keywords
 
         ell_max : int
-            maximum multipole we wish to compute
+            Maximum multipole we wish to compute
         
         rmin : float
-            value of the minimum r for which we'll compute Q_ell(r)
+            Value of the minimum r for which we'll compute Q_ell(r)
 
         rmax : float
-            value of the maximum r for which we'll compute Q_ell(r)
+            Value of the maximum r for which we'll compute Q_ell(r)
 
         Nr : int
-            number of points in r to be computed
+            Number of points in r to be computed
         
         Nmu : int
-            number of bins in mu
+            Number of bins in mu
 
         all_multipoles : bool
-            boolean variable to control whether the user wants all the multipoles or only
+            Boolean variable to control whether the user wants all the multipoles or only
             the even ones
 
         zmin : float
-            minimum redshift we wish to consider in the random catalogue
+            Minimum redshift we wish to consider in the random catalogue
         
         zmax : float
-            maximum redshift we wish to consider in the random catalogue
+            Maximum redshift we wish to consider in the random catalogue
 
         mu_max : float
-            maximum value of mu we wish to consider. Should be kept to 1 unless you have
+            Maximum value of mu we wish to consider. Should be kept to 1 unless you have
             strong reasons to change it
 
         autocorr : int
             0 or 1. Controls whether we're computing auto or cross correlations
 
         N_cores : int 
-            number of cores available in your computer
+            Number of cores available in your computer
         
         fraction : float
-            between 0 and 1. This is the fraction of the random catalogue you want to use
+            Between 0 and 1. This is the fraction of the random catalogue you want to use
             for your computation. Sometimes the random cataloge is huge, and using it all
             leads to very time consuming pair counting
         
         FKP_weights : bool
-            whether to include the FKP weights or not when computing window function
+            Whether to include the FKP weights or not when computing window function
 
         n_bar_r : str
-           name of the file containing the radial number density of objects in the survey.
+           Name of the file containing the radial number density of objects in the survey.
            This should have shape (n,2) in which the first column contains values of comoving distance
            and the second contains the number density in units of (Mpc/h)^{-3}. Useful for
            computing FKP and MTOE weights to be included in window function
 
         P_eff : float
-            value of the power spectrum in units of (Mpc/h)^3 at a chosen scale k_eff. Useful
+            Value of the power spectrum in units of (Mpc/h)^3 at a chosen scale k_eff. Useful
             for computing FKP and MTOE weights to be included in window function
 
         Returns
         -------
         
         r_centers : float array
-            an array of length N_r containing the center values for the bins in r
+            An array of length N_r containing the center values for the bins in r
 
         q_ells : float array
-            an array of shape (N_ell, N_r) containing all the q_ell requested. N_ell is the 
+            An array of shape (N_ell, N_r) containing all the q_ell requested. N_ell is the 
             number of multipoles and N_r is the number points in r
-        
+
+        Yields
+        ------
+
+        ValueError
+         Raised when a function gets an argument of correct type but improper value
+   
     '''
     import numpy as np
     from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
@@ -560,11 +575,11 @@ def q_ell(random, my_cosmology, my_code_options, **kwargs):
     
     # Check if paramters were provided correctly
     if(isinstance(default_kwargs['ell_max'], int) == False):
-        print("ERROR: ell_max has to be an integer!")
+        raise ValueError("ell_max has to be an integer")
         return -1
 
     if( default_kwargs['fraction'] > 1 or default_kwargs['fraction'] <=0 ):
-        print("ERROR: fraction should be a number between 0 and 1, {} is not a valid entry ".format(fraction) )
+        raise ValueError("Fraction should be a number between 0 and 1, {} is not a valid entry ".format(fraction) )
         return -1
 
     ell_max        = default_kwargs['ell_max']
@@ -742,31 +757,35 @@ def q_ell(random, my_cosmology, my_code_options, **kwargs):
 
 
 def convolved_multipoles(rsd_params, my_cosmology, my_code_options, r_centers, Q_ell, **kwargs):
-    '''Code to compute the power-spectrum multipoles convolved with the
-        survey window function
+    '''
+    Code to compute the power-spectrum multipoles convolved with the
+    survey window function
 
         Parameters
         ----------
         rsd_params  : dictionary
-            dictionary containing values of parameters such as bias, velocity dispersion, etc.
+            Dictionary containing values of parameters such as bias, velocity dispersion, etc.
 
         my_cosmology: dictionary
-            dictionary containing values of cosmological parameters
+            Dictionary containing values of cosmological parameters
+
+        my_code_options : object
+            Object containing a predefined code options
 
         redshifts   : array of floats
-            array containing values of redshifts 
+            Array containing values of redshifts 
 
         whichspec   : integer
-            integer controlling which kind of spectrum we want:
+            Integer controlling which kind of spectrum we want:
                 0 -> linear
                 1 -> Halofit Mead version
                 2 -> Halofit Casarini version
 
         kmin        : float
-            minimum wave-vector (h/Mpc)
+            Minimum wave-vector (h/Mpc)
 
         kmax        : float
-            maximum wave-vector (h/Mpc)
+            Maximum wave-vector (h/Mpc)
 
         Nk          : int
             Number of k bins
@@ -775,16 +794,16 @@ def convolved_multipoles(rsd_params, my_cosmology, my_code_options, r_centers, Q
 
 
         Q_ell       : array of floats
-            array of shape (n, Nk) in which n is the number of multipoles computed
+            Array of shape (n, Nk) in which n is the number of multipoles computed
             and Nk is the number of k bins used.
 
         matgrowrate : float, optional
-            optional parameter to pass a value of matgrowrate.
+            Optional parameter to pass a value of matgrowrate.
             If this is not given, will use cosmological parameters
             to obtain f through f(z) = Omega_m(z)^gamma
 
         Pk_dict     : Dictionary
-            optional parameter to pass a certain pre-computed power-spectrum over which
+            Optional parameter to pass a certain pre-computed power-spectrum over which
             we'll place the RSD amplitudes and will convolve it with the relevant window
             function.
 
