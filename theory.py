@@ -78,6 +78,8 @@ def power_spectrum(my_cosmology, my_code_options):
     k_min = my_code_options.k_min_CAMB
     k_max = my_code_options.k_max_CAMB
 
+    verbose = my_code_options.verbose
+
     try:
     	import camb
     	from camb import model
@@ -214,7 +216,11 @@ def power_spectrum(my_cosmology, my_code_options):
             os.system('camb ' + out_name + ' > camb_out.txt')
 
             t1 = time.time()
-            print("Time elapsed for CAMB + I/O:",t1-t0)
+
+            if verbose:
+                print("Time elapsed for CAMB + I/O:",t1-t0)
+            else:
+                pass
             ###################################################
 
             os.chdir(this_dir)
@@ -375,6 +381,8 @@ def pk_multipoles_gauss(rsd_params, my_cosmology, my_code_options, Nk, **kwargs)
     kmin = my_code_options.k_min_CAMB
     kmax = my_code_options.k_max_CAMB
 
+    verbose = my_code_options.verbose
+
     try:
         kphys
     except:
@@ -437,7 +445,7 @@ def pk_multipoles_gauss(rsd_params, my_cosmology, my_code_options, Nk, **kwargs)
     return M_dict
 
 
-def q_ell(random, my_cosmology, **kwargs):
+def q_ell(random, my_cosmology, my_code_options, **kwargs):
     '''Computes window function multipoles in real space, using a pair-counting approach.
 
         We'll take a random catalogue and compute the random-random pairs weighted by the 
@@ -585,13 +593,23 @@ def q_ell(random, my_cosmology, **kwargs):
     rz_min = comov(zmin)
     rz_max = comov(zmax)
 
+    verbose = my_code_options.verbose
+
     '''
         LOAD N_BAR_R
     '''
     if(FKP_weights):
-        print("Loading n_bar")
+        if verbose:
+            print("Loading n_bar")
+        else:
+            pass
+        
         n_bar = np.loadtxt(n_bar_r)
-        print("Done!") 
+
+        if verbose:
+            print("Done!")
+        else:
+            pass
 
         n_bar = n_bar[np.where( (n_bar[:,2]>my_cosmology.comoving(zmin,True)) & (n_bar[:,2]<my_cosmologycomoving(zmax,True)) )]
 
@@ -602,7 +620,11 @@ def q_ell(random, my_cosmology, **kwargs):
     rand_cat = random
 
     if ( np.abs(rand_cat[:,2]).max() > 100 ):
-        print("\n Third column is comoving distance \n")
+        if verbose:
+            print("\n Third column is comoving distance \n")
+        else:
+            pass
+        
         rand_cat[np.where( (rand_cat[:,2]>=rz_min) & (rand_cat[:,2]<=rz_max) )]
 
     else:
@@ -610,8 +632,10 @@ def q_ell(random, my_cosmology, **kwargs):
         # Transforming the third axis into comoving distance
         rand_cat[:,2] = comov(rand_cat[:,2])
 
-
-    print("Considering all redshifts from {} to {}".format(zmin, zmax) )
+    if verbose:
+        print("Considering all redshifts from {} to {}".format(zmin, zmax) )
+    else:
+        pass
     
     # Remove a fraction of it, as requested by the user
     npoints = len(rand_cat[:,2])
@@ -619,19 +643,30 @@ def q_ell(random, my_cosmology, **kwargs):
     r_vec = rand_cat[rem_list,2]
     
     if(FKP_weights):
-        print("Including FKP weights")
+        if verbose:
+            print("Including FKP weights")
+        else:
+            pass
+        
         n_bar_interp = np.interp(r_vec, n_bar[:,2], n_bar[:,4])
         weights_FKP = 1/(1 + P_eff*n_bar_interp)
     else:
         weights_FKP = np.ones(len(rem_list))
 
-    print(" \n Mean of the weights is of {} \n".format(np.mean(weights_FKP)))
+    if verbose:
+        print(" \n Mean of the weights is of {} \n".format(np.mean(weights_FKP)))
+    else:
+        pass
 
     '''
         COUNT THE RANDOM PAIRS IN BINS OF S AND MU
     '''
 
-    print("Computing random pair counts... This could take a while")
+    if verbose:
+        print("Computing random pair counts... This could take a while")
+    else:
+        pass
+    
     dmu = mu_max / Nmu
     cosmology = 2 # Planck cosmology
     c_light = 299792.458
@@ -643,7 +678,10 @@ def q_ell(random, my_cosmology, **kwargs):
     r_centers = np.unique(r_ctrs)
 
     mu = results_DDsmu['mumax'] - dmu/2
-    print("Done! It took {} seconds to complete".format(c_api_time) )
+    if verbose:
+        print("Done! It took {} seconds to complete".format(c_api_time) )
+    else:
+        pass
    
     '''
         COMPUTE THE Q_ELL
@@ -662,15 +700,22 @@ def q_ell(random, my_cosmology, **kwargs):
         poles = 2.*np.linspace(0,N_poles-1,N_poles)
         str_poles = poles.astype('str').tolist()
 
-    print("Computing the multipoles {} ".format(poles) )
+    if verbose:
+        print("Computing the multipoles {} ".format(poles) )
+    else:
+        pass
+    
     w_ell = np.zeros( (N_poles, len(mu) ) )
     rr_ell = np.zeros( (N_poles, len(rbins) - 1 ) )
     q_ell = np.zeros( (N_poles, len(rbins) -1 ) )
     
     for i in range(N_poles):
         ell = int(poles[i])
-    
-        print( "Now in ell = {}".format(ell) )
+
+        if verbose:
+            print( "Now in ell = {}".format(ell) )
+        else:
+            pass
     
         w_ell[i,:] = scipy.special.eval_legendre(ell, mu)
     
@@ -687,8 +732,11 @@ def q_ell(random, my_cosmology, **kwargs):
     else:
         for i in range(N_poles):
             Q_ell[i,:] = q_ell[i,:]
-           
-    print("Done!")
+
+    if verbose:
+        print("Done!")
+    else:
+        pass
 
     return (r_centers, Q_ell)
 
@@ -746,6 +794,7 @@ def convolved_multipoles(rsd_params, my_cosmology, my_code_options, r_centers, Q
 #    redshifts = np.array(redshifts)
 
     redshifts = my_cosmology.zcentral
+    verbose = my_code_options.verbose
     try:
         len(redshifts)
     except:
