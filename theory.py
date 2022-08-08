@@ -35,6 +35,7 @@ def power_spectrum(my_cosmology, my_code_options):
 
         k_max : float 
             Maxmimum wave-vector for which we want the spectrum to be computed
+            
         Returns
         -------
         
@@ -415,7 +416,6 @@ def pk_multipoles_gauss(rsd_params, my_cosmology, my_code_options, Nk, **kwargs)
 
     sig_tot         = rsd_params['sigma_tot']
     sig_tot         = sig_tot / my_cosmology.H(redshifts, True)
-    #cH              = c_light / my_cosmology.H(redshifts, True)
 
     # Let's try to do it numerically 
 
@@ -440,7 +440,7 @@ def pk_multipoles_gauss(rsd_params, my_cosmology, my_code_options, Nk, **kwargs)
     # This is to regularize the behaviour of the functions at k -> 0
     small = 0.005
 
-    # # k * sigma_z
+    # k * sigma_z
     KZ = np.zeros( (len(redshifts), len(biases), len(kphys)) )
         
     M_dict = {'mono' : np.zeros(KZ.shape),
@@ -616,6 +616,7 @@ def q_ell(random, my_cosmology, my_code_options, **kwargs):
     '''
         LOAD N_BAR_R
     '''
+    
     if(FKP_weights):
         if verbose:
             print("Loading n_bar")
@@ -811,9 +812,6 @@ def convolved_multipoles(rsd_params, my_cosmology, my_code_options, r_centers, Q
             function.
 
     '''
-
-#    redshifts = my_cosmology.zcentral
-#    redshifts = np.array(redshifts)
 
     redshifts = my_cosmology.zcentral
     verbose = my_code_options.verbose
