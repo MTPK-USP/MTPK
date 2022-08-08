@@ -93,6 +93,8 @@ class code_parameters:
             
     n_x_orig, n_y_orig, n_z_orig : float
       Displacement of the origin (0,0,0) of the box with respect to Earth (in cell units)
+      Used in order to account for the redshift space distortions (RSD)
+      Usually, the z displacement is large because we want to use the flat sky approximation
             
     sel_fun_data : bool
       True -> If the tracer selection function is given by a separate map
