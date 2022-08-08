@@ -216,6 +216,8 @@ class cosmo:
         self.z_re       = default_params['z_re']
         self.flat       = default_params['flat']
         self.gamma      = default_params['gamma']
+        self.matgrow    = default_params['matgrow']
+        self.zcentral   = default_params['zcentral']
         self.c_light    = default_params['c_light']
         
         self.default_params = default_params

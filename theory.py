@@ -68,7 +68,6 @@ def power_spectrum(my_cosmology, my_code_options):
 
     # Array of strings with redshifts ordered from high to low
     str_redshifts = (ord_redshifts).astype('str').tolist()
-    print('str_redshifts', str_redshifts)
 
     # Array of file names for transfer functions and power_spectra
     transf_filenames=[]
@@ -116,7 +115,6 @@ def power_spectrum(my_cosmology, my_code_options):
     		pk = pk[0,:]
     		s8 = np.array(results.get_sigma8())
     		Pk_dict = {'k' : kh}
-    		#Pk_dict = {'Pk_1' : pk} #AQUI
     		key = 'Pk_' + str_redshifts
     		Pk_dict = {key : pk}
     		Pk_dict = {'sigma_8' : s8}
@@ -130,7 +128,6 @@ def power_spectrum(my_cosmology, my_code_options):
     		pk = pk[0,:]
     		s8 = np.array(results.get_sigma8())
     		Pk_dict = {'k' : kh}
-    		#Pk_dict = {'Pk_1' : pk} #AQUI
     		key = 'Pk_' + str_redshifts
     		Pk_dict = {key : pk}
     		Pk_dict = {'sigma_8' : s8}
@@ -145,7 +142,6 @@ def power_spectrum(my_cosmology, my_code_options):
     		pk = pk[0,:]
     		s8 = np.array(results.get_sigma8())
     		Pk_dict = {'k' : kh}
-    		#Pk_dict = {'Pk_1' : pk} #AQUI
     		key = 'Pk_' + str_redshifts
     		Pk_dict = {key : pk}
     		Pk_dict = {'sigma_8' : s8}
