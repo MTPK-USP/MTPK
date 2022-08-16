@@ -19,6 +19,6 @@ z_EQ (if v_nu=1)     =  3422.15
 k_EQ Mpc (if v_nu=1) =  0.010437
 100*theta_EQ         =  0.808743
 100*theta_rs_EQ      =  0.447210
-tau_recomb/Mpc       =  280.23  tau_now/Mpc =  14160.2
-at z =  5.900 sigma8 (all matter) =  0.1530
-at z =  5.900 sigma8^2_vd/sigma8  =  0.1523
+tau_recomb/Mpc       =  280.24  tau_now/Mpc =  14160.2
+at z =  5.900 sigma8 (all matter) =  0.1531
+at z =  5.900 sigma8^2_vd/sigma8  =  0.1524
