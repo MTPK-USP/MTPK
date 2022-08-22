@@ -12,7 +12,7 @@ class cat_specs:
     You have to specify catalog properties
 
     ntracers : integer
-      Number of halo tracers to consider
+      Number of tracers to consider
     
     n_maps : integer
       Number maps

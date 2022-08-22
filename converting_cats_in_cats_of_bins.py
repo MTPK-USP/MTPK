@@ -5,12 +5,12 @@ in catalogs of tracers with different masses to be used in the MTPK code
 --------
 Inputs
 --------
- .dat halo catalogs contaning their masses, ..., and positions
+ .dat tracer catalogs contaning their masses, ..., and positions
 
 --------
 Outputs
 --------
- Halo position catalogs splited according to their masses
+ Tracer position catalogs splited according to their masses
 
 '''
 

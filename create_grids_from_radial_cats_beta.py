@@ -420,7 +420,7 @@ for nc in range(Ncats):
 mean_counts = mean_counts/Ncats
 tot_counts = np.sum(mean_counts,axis=0)
 
-# Mean total number of halos of each type in box
+# Mean total number of tracers of each type in box
 np.savetxt(file_ntot,np.sum(mean_counts,axis=(1,2,3)))
 
 print("Number of tracers per cell:", np.sum(mean_counts,axis=(1,2,3))/n_x/n_y/n_z)
