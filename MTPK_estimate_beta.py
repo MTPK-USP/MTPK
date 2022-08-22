@@ -133,8 +133,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     shift_sel_fun = my_code_options.shift_sel_fun
     mass_fun = my_code_options.mass_fun
     n_maps = cat_specs.n_maps
-    use_cell_low_count_thresh = my_code_options.use_cell_low_count_thresh
-    cell_low_count_thresh = my_code_options.cell_low_count_thresh
     use_kmax_phys = my_code_options.use_kmax_phys
     kmax_phys = my_code_options.kmax_phys
     dkph_bin = my_code_options.dkph_bin
@@ -314,15 +312,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             sys.exit(-1)
     if verbose:
         print ('Will use the N =', n_maps, ' simulation-only maps contained in directory', dir_maps)
-    else:
-        pass
-
-    ## !! NEW !! Low-cell-count threshold. Will apply to data AND to mocks
-    ## We will treat this as an additional MASK (thresh_mask) for data and mocks
-    if use_cell_low_count_thresh:
-        thresh_mask = np.ones_like(n_bar_matrix_fid)
-        thresh_mask[n_bar_matrix_fid < cell_low_count_thresh] = 0.0
-        n_bar_matrix_fid = thresh_mask * n_bar_matrix_fid
     else:
         pass
 
@@ -754,12 +743,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 else:
                     pass
 
-                ## !! NEW !! Additional mask from low-cell-count threshold
-                if use_cell_low_count_thresh:
-                    maps = thresh_mask*maps
-                else:
-                    pass
-
                 if use_mask:
                     maps = maps * mask
 
@@ -1056,12 +1039,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
                 if verbose:
                     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
-                else:
-                    pass
-
-                ## !! NEW !! Additional mask from low-cell-count threshold
-                if use_cell_low_count_thresh:
-                    maps = thresh_mask*maps
                 else:
                     pass
 
@@ -1377,12 +1354,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 else:
                     pass
 
-                ## !! NEW !! Additional mask from low-cell-count threshold
-                if use_cell_low_count_thresh:
-                    maps = thresh_mask*maps
-                else:
-                    pass
-
                 if use_mask:
                     maps = maps * mask
 
@@ -1693,12 +1664,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 else:
                     pass
 
-                ## !! NEW !! Additional mask from low-cell-count threshold
-                if use_cell_low_count_thresh:
-                    maps = thresh_mask*maps
-                else:
-                    pass
-
                 if use_mask:
                     maps = maps * mask
 
@@ -1939,12 +1904,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
                 if verbose:
                     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
-                else:
-                    pass
-
-                ## !! NEW !! Additional mask from low-cell-count threshold
-                if use_cell_low_count_thresh:
-                    maps = thresh_mask*maps
                 else:
                     pass
 
@@ -2202,12 +2161,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
                 if verbose:
                     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
-                else:
-                    pass
-
-                ## !! NEW !! Additional mask from low-cell-count threshold
-                if use_cell_low_count_thresh:
-                    maps = thresh_mask*maps
                 else:
                     pass
 
@@ -2493,12 +2446,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                 else:
                     pass
 
-                ## !! NEW !! Additional mask from low-cell-count threshold
-                if use_cell_low_count_thresh:
-                    maps = thresh_mask*maps
-                else:
-                    pass
-
                 if use_mask:
                     maps = maps * mask
 
@@ -2682,12 +2629,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
                 if verbose:
                     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
-                else:
-                    pass
-
-                ## !! NEW !! Additional mask from low-cell-count threshold
-                if use_cell_low_count_thresh:
-                    maps = thresh_mask*maps
                 else:
                     pass
 
@@ -2880,12 +2821,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
                 if verbose:
                     print( "Total number of objects in this map:", np.sum(maps,axis=(1,2,3)))
-                else:
-                    pass
-
-                ## !! NEW !! Additional mask from low-cell-count threshold
-                if use_cell_low_count_thresh:
-                    maps = thresh_mask*maps
                 else:
                     pass
 

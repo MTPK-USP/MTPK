@@ -103,14 +103,6 @@ class code_parameters:
 
     sel_fun_file : string
       Name of the map of the selection function
-                        
-    use_cell_low_count_thresh : bool
-      True -> to use the cell low count threshold
-      False -> otherwise
-
-    cell_low_count_thresh : float
-      If low-count cells must be masked out, then cells with counts below this threshold will be 
-     eliminated from the mocks AND from the data
 
     mult_sel_fun, shift_sel_fun : float
       One may add a shift and/or a multiplicative factor, for testing: 
@@ -262,8 +254,6 @@ class code_parameters:
             'use_kmax_phys'        : True,
             'kmax_phys'            : 1.0,
             'whichspec'            : 1,
-            'use_cell_low_count_thresh': False,
-            'cell_low_count_thresh': 0.0,
             'mult_sel_fun'         : 1.0,
             'shift_sel_fun'        : 0.0,
             'k_min_CAMB'           : 1.e-4,
@@ -314,8 +304,6 @@ class code_parameters:
         self.n_z_orig = default_params['n_z_orig']
         self.sel_fun_data = default_params['sel_fun_data']
         self.sel_fun_file = default_params['sel_fun_file']
-        self.use_cell_low_count_thresh = default_params['use_cell_low_count_thresh']
-        self.cell_low_count_thresh = default_params['cell_low_count_thresh']
         self.mult_sel_fun = default_params['mult_sel_fun']
         self.shift_sel_fun = default_params['shift_sel_fun']
         self.k_min_CAMB = default_params['k_min_CAMB']
