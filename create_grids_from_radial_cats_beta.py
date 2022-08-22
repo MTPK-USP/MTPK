@@ -141,15 +141,6 @@ input_filename = "Unit_LoS_TSC"
 # Boundary method: wrap galaxies around (i.e., use periodic B.C.)?
 wrap=False
 
-####
-#  Save mask with zero'ed cells?
-save_mask = False
-
-
-#  Save rough/estimated selection function from mean of catalogs?
-save_mean_sel_fun = False
-
-
 #
 # (End of user definitions)
 #
@@ -414,46 +405,6 @@ tot_counts = np.sum(mean_counts,axis=0)
 np.savetxt(file_ntot,np.sum(mean_counts,axis=(1,2,3)))
 
 print("Number of tracers per cell:", np.sum(mean_counts,axis=(1,2,3))/n_x/n_y/n_z)
-
-if save_mean_sel_fun:
-	nf1=len(tot_counts[tot_counts!=0])
-
-	# Smooth to catch non-zero cells
-	sig_filter = 0.5
-	tg=gaussian_filter(tot_counts,sigma=(sig_filter,sig_filter,sig_filter))
-
-	# Number of cells inside mask
-	nfull=len(tg[tg!=0])
-
-	sel_fun = np.zeros((ntracers_grid,n_x,n_y,n_z))
-	num_densities = np.zeros(ntracers_grid)
-	print("Estimating APPROXIMATE number densities:")
-	for i in range(ntracers_grid):
-		num_densities[i] = np.sum(mean_counts[i])/nfull/cell_size**3
-		print(np.around(num_densities[i],5))
-		sel_fun[i] = num_densities[i]*np.sign(tg)
-
-	print("Saving estimated selection function")
-	print("(ATTENTION! USE WITH CARE. YOU SHOULD NOT RELY ON THIS ESTIMATE!)")
-
-
-	h5f = h5py.File(dir_out + "Rough_sel_fun.hdf5",'w')
-	h5f.create_dataset('grid', data=sel_fun, dtype='float32', compression='gzip')
-	h5f.close()
-
-
-if save_mask:
-	mask = np.ones((n_x,n_y,n_z))
-	mask[:padding_length] = 0
-	mask[:,:padding_length] = 0
-	mask[:,:,:padding_length] = 0
-	mask[-padding_length:] = 0
-	mask[:,-padding_length:] = 0
-	mask[:,:,-padding_length:] = 0
-
-	h5f = h5py.File(dir_out + "mask.hdf5",'w')
-	h5f.create_dataset('grid', data=mask, dtype='float32', compression='gzip')
-	h5f.close()
 
 print()
 print("...done!")

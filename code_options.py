@@ -160,16 +160,6 @@ class code_parameters:
     tracers_sigz_est : list of floats
       Redshift errors and dipoles of tracers
 
-    save_mask : bool
-      Save the redshift mask
-       True -> Save mask with zero'ed cells                                                           
-       False -> Otherwise                                                                             
-
-    save_mean_sel_fun : bool
-      While creating the catalogs
-       True -> Save rough/estimated selection function from mean of catalogs                           
-       False -> Otherwise 
-
     split_tracers : bool									       
       Create grids for those tracers from a single catalog					       
        True -> Create										       
@@ -239,8 +229,6 @@ class code_parameters:
             'whichspec'            : 1,
             'k_min_CAMB'           : 1.e-4,
             'k_max_CAMB'           : 1.e+0,
-            'save_mask'            : False,
-            'save_mean_sel_fun'    : False,
             'split_tracers'        : False,
             'tracer_bins'          : np.array([3.16e+11, 1.00e+12, 3.16e+12, 1.00e+13]),
             'mask_spillover_cells' : False,
@@ -294,9 +282,7 @@ class code_parameters:
         self.use_kmax_phys = default_params['use_kmax_phys']
         self.kmax_phys = default_params['kmax_phys']
         self.whichspec = default_params['whichspec']
-        self.save_mask = default_params['save_mask']
-        self.save_mean_sel_fun = default_params['save_mean_sel_fun']
-        self.split_tracers = default_params['save_mean_sel_fun']
+        self.split_tracers = default_params['split_tracers']
         self.tracer_bins = default_params['tracer_bins']
         self.mask_spillover_cells = default_params['mask_spillover_cells']
         self.batch_size = default_params['batch_size']

@@ -77,8 +77,6 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 	x_cat_max = cat_specs.x_cat_max
 	y_cat_max = cat_specs.y_cat_max
 	z_cat_max = cat_specs.z_cat_max
-	save_mask = my_code_options.save_mask
-	save_mean_sel_fun = my_code_options.save_mean_sel_fun
 	split_tracers = my_code_options.split_tracers
 	tracer_bins = my_code_options.tracer_bins
 	mask_spillover_cells = my_code_options.mask_spillover_cells
@@ -322,53 +320,5 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 		print("Number of tracers per cell:", np.sum(mean_counts,axis=(1,2,3))/n_x/n_y/n_z)
 	else:
 		pass
-
-	if save_mean_sel_fun:
-		nf1=len(tot_counts[tot_counts!=0])
-
-		# Smooth to catch non-zero cells
-		sig_filter = 0.5
-		tg=gaussian_filter(tot_counts,sigma=(sig_filter,sig_filter,sig_filter))
-
-		# Number of cells inside mask
-		nfull=len(tg[tg!=0])
-
-		sel_fun = np.zeros((ntracers_grid,n_x,n_y,n_z))
-		num_densities = np.zeros(ntracers_grid)
-		if verbose:
-			print("Estimating APPROXIMATE number densities:")
-		else:
-			pass
-		for i in range(ntracers_grid):
-			num_densities[i] = np.sum(mean_counts[i])/nfull/cell_size**3
-			if verbose:
-				print(np.around(num_densities[i],5))
-			else:
-                                pass
-			sel_fun[i] = num_densities[i]*np.sign(tg)
-
-		if verbose:
-			print("Saving estimated selection function")
-			print("(ATTENTION! USE WITH CARE. YOU SHOULD NOT RELY ON THIS ESTIMATE!)")
-		else:
-			pass
-
-
-		h5f = h5py.File(dir_out + "Rough_sel_fun.hdf5",'w')
-		h5f.create_dataset('grid', data=sel_fun, dtype='float32', compression='gzip')
-		h5f.close()
-
-	if save_mask:
-		mask = np.ones((n_x,n_y,n_z))
-		mask[:padding_length] = 0
-		mask[:,:padding_length] = 0
-		mask[:,:,:padding_length] = 0
-		mask[-padding_length:] = 0
-		mask[:,-padding_length:] = 0
-		mask[:,:,-padding_length:] = 0
-
-		h5f = h5py.File(dir_out + "mask.hdf5",'w')
-		h5f.create_dataset('grid', data=mask, dtype='float32', compression='gzip')
-		h5f.close()
 	
 	return print("Done!")
