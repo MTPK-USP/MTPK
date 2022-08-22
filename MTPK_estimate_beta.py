@@ -129,8 +129,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
     ncentral = my_code_options.ncentral
     nsigma = my_code_options.nsigma
     sel_fun_file = my_code_options.sel_fun_file
-    mult_sel_fun = my_code_options.mult_sel_fun
-    shift_sel_fun = my_code_options.shift_sel_fun
     mass_fun = my_code_options.mass_fun
     n_maps = cat_specs.n_maps
     use_kmax_phys = my_code_options.use_kmax_phys
@@ -240,8 +238,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             h5map = h5py.File(dir_data + '/' + sel_fun_file,'r')
             h5data = h5map.get(list(h5map.keys())[0])
             nbm = np.asarray(h5data,dtype='float32')
-            #updated to shift selection function by small=1.e-9
-            nbm = np.asarray(small + mult_sel_fun*(nbm + shift_sel_fun),dtype='float32')
             h5map.close
         except:
             raise NameError('Files with data selection function not to found! Check your directory ', dir_data)
@@ -257,7 +253,6 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
 
     else:
         try:
-            mass_fun = mult_sel_fun*mass_fun
             nbar = mass_fun*cell_size**3
             ncentral = 10.0*nbar**0
             nsigma = 10000.0*nbar**0 

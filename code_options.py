@@ -104,10 +104,6 @@ class code_parameters:
     sel_fun_file : string
       Name of the map of the selection function
 
-    mult_sel_fun, shift_sel_fun : float
-      One may add a shift and/or a multiplicative factor, for testing: 
-       n_bar --> factor * (n_bar + shift)
-
     kmin_bias, kmax_bias: float
       Interval in k that to estimate the bias
             
@@ -163,16 +159,6 @@ class code_parameters:
 
     tracers_sigz_est : list of floats
       Redshift errors and dipoles of tracers
-
-    use_redshifts: bool
-      Necessary to create the catalogs
-       True -> Use redshifts collumn                                                                    
-       False -> Otherwise
-
-    mask_redshift : bool
-      While creating the catalogs
-       True -> Mask out some redshift range                                                             
-       False -> Otherwise                                                                              
 
     save_mask : bool
       Save the redshift mask
@@ -251,12 +237,8 @@ class code_parameters:
             'use_kmax_phys'        : True,
             'kmax_phys'            : 1.0,
             'whichspec'            : 1,
-            'mult_sel_fun'         : 1.0,
-            'shift_sel_fun'        : 0.0,
             'k_min_CAMB'           : 1.e-4,
             'k_max_CAMB'           : 1.e+0,
-            'use_redshifts'        : False,
-            'mask_redshift'        : False,
             'save_mask'            : False,
             'save_mean_sel_fun'    : False,
             'split_tracers'        : False,
@@ -301,8 +283,6 @@ class code_parameters:
         self.n_z_orig = default_params['n_z_orig']
         self.sel_fun_data = default_params['sel_fun_data']
         self.sel_fun_file = default_params['sel_fun_file']
-        self.mult_sel_fun = default_params['mult_sel_fun']
-        self.shift_sel_fun = default_params['shift_sel_fun']
         self.k_min_CAMB = default_params['k_min_CAMB']
         self.k_max_CAMB = default_params['k_max_CAMB']
         self.kmin_bias = default_params['kmin_bias']
@@ -314,8 +294,6 @@ class code_parameters:
         self.use_kmax_phys = default_params['use_kmax_phys']
         self.kmax_phys = default_params['kmax_phys']
         self.whichspec = default_params['whichspec']
-        self.use_redshifts = default_params['use_redshifts']
-        self.mask_redshift = default_params['mask_redshift']
         self.save_mask = default_params['save_mask']
         self.save_mean_sel_fun = default_params['save_mean_sel_fun']
         self.split_tracers = default_params['save_mean_sel_fun']

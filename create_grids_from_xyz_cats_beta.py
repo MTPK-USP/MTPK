@@ -67,7 +67,6 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 	ntracers_catalog = cat_specs.ntracers
 	ntracers_grid = cat_specs.ntracers	
 	Ncats = cat_specs.n_maps
-	use_redshifts = my_code_options.use_redshifts
 	col_tracer = cat_specs.col_m
 	col_x = cat_specs.col_x
 	col_y = cat_specs.col_y
@@ -78,7 +77,6 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 	x_cat_max = cat_specs.x_cat_max
 	y_cat_max = cat_specs.y_cat_max
 	z_cat_max = cat_specs.z_cat_max
-	mask_redshift = my_code_options.mask_redshift
 	save_mask = my_code_options.save_mask
 	save_mean_sel_fun = my_code_options.save_mean_sel_fun
 	split_tracers = my_code_options.split_tracers
@@ -220,40 +218,20 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 			try:
 				if use_h5py:
 					f = h5py.File(filenames_catalogs[nc,nt], 'r')
-					if use_redshifts:
-						tracer_redshift , tracer_x, tracer_y, tracer_z = np.array(f['redshift']), np.array(f['x']), np.array(f['y']), np.array(f['z'])
-					else:
-						tracer_x, tracer_y, tracer_z = np.array(f['x']), np.array(f['y']), np.array(f['z'])
+					tracer_x, tracer_y, tracer_z = np.array(f['x']), np.array(f['y']), np.array(f['z'])
 					if split_tracers:
 						tracer_type = np.array(f['m'])
 					f.close()
-					if mask_redshift:
-						mask = np.where( (tracer_redshift >= zmin) & (tracer_redshift <= zmax))[0]
-						tracer_x = tracer_x[mask]
-						tracer_y = tracer_y[mask]
-						tracer_z = tracer_z[mask]
-						if split_tracers:
-							tracer_type = tracer_type[mask]
 				else:
 					f = filenames_catalogs[nc,nt]
 					this_cat = np.loadtxt(f)
 					# Fix dimensions if catalog has switched lines/columns
 					if this_cat.shape[0] < this_cat.shape[1]:
 						this_cat = this_cat.T
-					if use_redshifts:
-						tracer_redshift, tracer_x, tracer_y, tracer_z = this_cat[:,col_redshift] , this_cat[:,col_x] , this_cat[:,col_y] , this_cat[:,col_z]
-					else:
-						tracer_x, tracer_y, tracer_z = this_cat[:,col_x] , this_cat[:,col_y] , this_cat[:,col_z]
+					tracer_x, tracer_y, tracer_z = this_cat[:,col_x] , this_cat[:,col_y] , this_cat[:,col_z]
 					# Redshift mask
 					if split_tracers:
 						tracer_type = this_cat[:,col_tracer]
-					if mask_redshift:
-						mask = np.where( (tracer_redshift >= zmin) & (tracer_redshift <= zmax))[0]
-						tracer_x = tracer_x[mask]
-						tracer_y = tracer_y[mask]
-						tracer_z = tracer_z[mask]
-						if split_tracers:
-							tracer_type = tracer_type[mask]
 			except:
 				raise AttributeError("Could not read file:" , filenames_catalogs[nc,nt])
 

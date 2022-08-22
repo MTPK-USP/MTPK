@@ -83,10 +83,6 @@ tracer_bins = [1.e11,1.e13,1.e15]
 # ordering: first index is catalog/sub-box, second index is tracer
 filenames_catalogs = np.reshape(filenames_catalogs,(Ncats,ntracers_catalog))
 
-# Specify columns for x, y, z, redshift
-use_redshifts = False
-#col_redshift = 0
-
 col_r = 0
 col_theta = 2
 col_phi = 1
@@ -315,10 +311,7 @@ for nc in range(Ncats):
 			#h5map.close
 			if use_h5py:
 				f = h5py.File(filenames_catalogs[nc,nt], 'r')
-				if use_redshifts:
-					tracer_redshift , tracer_r, tracer_theta, tracer_phi = np.array(f['redshift']), np.array(f['r']), np.array(f['theta']), np.array(f['phi'])
-				else:
-					tracer_r, tracer_theta, tracer_phi = np.array(f['r']), np.array(f['theta']), np.array(f['phi'])
+				tracer_r, tracer_theta, tracer_phi = np.array(f['r']), np.array(f['theta']), np.array(f['phi'])
 				if split_tracers:
 					tracer_type = np.array(f['m'])
 				f.close()
@@ -336,10 +329,7 @@ for nc in range(Ncats):
 				# Fix dimensions if catalog has switched lines/columns
 				if this_cat.shape[0] < this_cat.shape[1]:
 					this_cat = this_cat.T
-				if use_redshifts:
-					tracer_redshift, tracer_r, tracer_theta, tracer_phi = this_cat[:,col_redshift] , this_cat[:,col_r] , this_cat[:,col_theta] , this_cat[:,col_phi]
-				else:
-					tracer_r, tracer_theta, tracer_phi = this_cat[:,col_r] , this_cat[:,col_theta] , this_cat[:,col_phi]
+				tracer_r, tracer_theta, tracer_phi = this_cat[:,col_r] , this_cat[:,col_theta] , this_cat[:,col_phi]
 				# Redshift mask
 				if split_tracers:
 					tracer_type = this_cat[:,col_tracer]
