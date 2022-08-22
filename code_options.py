@@ -32,8 +32,8 @@ class code_parameters:
        mas_method = 'TSC' -> Triangular Shaped Cloud
        mas_method = 'PCS' -> Piecewise Cubic Spline
 
-   nhalos : integer                                                                                     
-      Number of halo bins/number of tracers to consider
+   ntracers : integer                                                                                     
+      Number of tracers to consider
 
     use_kdip_phys : bool
       True -> use kdip_phys
@@ -83,7 +83,7 @@ class code_parameters:
       It is a list that keeps the mass function of each tracer
       Number density in function of the volume: # of objects per tracer/box volume
             
-    halo_bias : ndarray of floats
+    tracer_bias : ndarray of floats
       It is a list that keeps the bias of each tracer
    
     cell_size : float
@@ -140,11 +140,8 @@ class code_parameters:
        (1) HaloFit -> Halofit implementation by A. Mead
        (2) PkEqual -> Halofit implementation by L. Casarini
 
-    ntracers : integer
-      Number of halo bins as tracers. It is defined to be equal to nbins
-
     bias_file : string
-      Path and name of the file that keeps the halo bias as tracers
+      Path and name of the file that keeps the tracer bias
 
     nbar : list of floats
       It is the mass function times cell_size^3
@@ -164,8 +161,8 @@ class code_parameters:
     vdisp : list of floats
       Velocity dispersions for RSDs
 
-    halos_sigz_est : list of floats
-      Redshift errors and dipoles of halos
+    tracers_sigz_est : list of floats
+      Redshift errors and dipoles of tracers
 
     use_redshifts: bool
       Necessary to create the catalogs
@@ -223,7 +220,7 @@ class code_parameters:
             'verbose'              : False,
             'method'               : 'both',
             'mas_method'           : 'CIC',
-            'nhalos'               : 3,
+            'ntracers'             : 3,
             'use_kdip_phys'        : False,
             'kdip_phys'            : 0.005,
             'multipoles_order'     : 4,
@@ -235,7 +232,7 @@ class code_parameters:
             'use_mask'             : False,
             'mask_filename'        : "mask.hdf5",
             'mass_fun'             : np.array([1.56e-02, 4.43e-03, 1.43e-03]),
-            'halo_bias'            : np.array([1.572, 1.906, 2.442]),
+            'tracer_bias'          : np.array([1.572, 1.906, 2.442]),
             'cell_size'            : 1.0,
             'n_x'                  : 128,
             'n_y'                  : 128,
@@ -281,7 +278,7 @@ class code_parameters:
         self.verbose = default_params['verbose']
         self.method = default_params['method']
         self.mas_method = default_params['mas_method']
-        self.nhalos = default_params['nhalos']
+        self.ntracers = default_params['ntracers']
         self.use_kdip_phys = default_params['use_kdip_phys']
         self.kdip_phys = default_params['kdip_phys']
         self.multipoles_order = default_params['multipoles_order']
@@ -294,7 +291,7 @@ class code_parameters:
         self.use_mask = default_params['use_mask']
         self.mask_filename = default_params['mask_filename']
         self.mass_fun = default_params['mass_fun']
-        self.halo_bias = default_params['halo_bias']
+        self.tracer_bias = default_params['tracer_bias']
         self.cell_size = default_params['cell_size']
         self.n_x = default_params['n_x']
         self.n_y = default_params['n_y']
@@ -329,23 +326,22 @@ class code_parameters:
         
 
         #Computed Parameters
-        self.ntracers = self.nhalos
-        self.bias_file = self.halo_bias
+        self.bias_file = self.tracer_bias
         self.nbar = self.mass_fun*(self.cell_size**3)
         self.ncentral = self.ntracers*[20.0]
         self.nsigma = self.ntracers*[1000000.0]
         self.sigz_est = self.ntracers*[0.0000001]
         self.adip = self.ntracers*[0.0000000001]
         self.vdisp = self.adip
-        self.halos_sigz_est = self.nhalos*[0.00001]
-        self.halos_adip = self.halos_sigz_est
-        self.halos_vdisp = self.halos_sigz_est
+        self.tracers_sigz_est = self.ntracers*[0.00001]
+        self.tracers_adip = self.tracers_sigz_est
+        self.tracers_vdisp = self.tracers_sigz_est
 
         self.default_params = default_params
 
-        #Error between number of halos and cross spec computation
-        if self.do_cross_spectra == True and self.nhalos == 1:
-            raise KeyError("You can only compute the cross spectrum for more than one halo!")
+        #Error between number of tracers and cross spec computation
+        if self.do_cross_spectra == True and self.ntracers == 1:
+            raise KeyError("You can only compute the cross spectrum for more than one tracer!")
 
     def parameters_print(self):
         '''

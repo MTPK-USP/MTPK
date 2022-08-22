@@ -11,14 +11,14 @@ class cat_specs:
     
     You have to specify catalog properties
 
-    nhalos : integer
-      Number of halo bins/number of tracers to consider
+    ntracers : integer
+      Number of halo tracers to consider
     
     n_maps : integer
       Number maps
 
     col_m: integer                                                                                      
-      It is the collumn in the catalog corresponding to the mass of the halos
+      It is the collumn in the catalog corresponding to the mass of the tracers
 
     col_x, col_y, col_z : integers                                                                      
       Necessary to create the catalogs
@@ -46,7 +46,7 @@ class cat_specs:
     
     def __init__(self, **kwargs):
         default_params = {
-            'nhalos'               : 3,
+            'ntracers'             : 3,
             'n_maps'               : 4,
             'col_m'                : 6,
             'col_x'                : 0,
@@ -71,7 +71,7 @@ class cat_specs:
             default_params[key] = value
 
         #Main Parameters
-        self.nhalos = default_params['nhalos']
+        self.ntracers = default_params['ntracers']
         self.n_maps = default_params['n_maps']
         self.col_m = default_params['col_m']
         self.col_x = default_params['col_x']

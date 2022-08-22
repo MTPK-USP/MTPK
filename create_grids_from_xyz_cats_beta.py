@@ -64,8 +64,8 @@ def create_grids_from_xyz_cats(cat_specs, my_cosmology, my_code_options,
 		raise NameError('Files not found!')
 
 	verbose = my_code_options.verbose
-	ntracers_catalog = cat_specs.nhalos
-	ntracers_grid = cat_specs.nhalos	
+	ntracers_catalog = cat_specs.ntracers
+	ntracers_grid = cat_specs.ntracers	
 	Ncats = cat_specs.n_maps
 	use_redshifts = my_code_options.use_redshifts
 	col_tracer = cat_specs.col_m
