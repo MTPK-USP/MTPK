@@ -76,8 +76,8 @@ class cosmo:
             	Parameter of matgrowth.
             	You can use the default value or:
             	0) Define a new value
-            	1) Compute using method f_evolving(z)
-            	2) Compute using method f_phenomenological()
+            	1) Compute using method f_evolving(z) according to LCDM model
+            	2) Compute using method f_phenomenological() according to LCDM model
 
             zcentral : float
                 Central (mean, or median) redshift of the catalog 
@@ -245,7 +245,7 @@ class cosmo:
 
     def f_evolving(self, z):
         '''
-        Matgrowth function - evolving with z
+        Matgrowth function - evolving with z according to LCDM model
         '''
         Omega0_m = self.default_params['Omega0_b'] + self.default_params['Omega0_cdm']
         Omega0_DE = self.default_params['Omega0_DE']
@@ -260,7 +260,7 @@ class cosmo:
 
     def f_phenomenological(self):
         '''
-        Matgrowth function - phenomenological
+        Matgrowth function - phenomenological according to LCDM model
         '''
         Omega0_m = self.default_params['Omega0_b'] + self.default_params['Omega0_cdm']
         gamma = self.default_params['gamma'] 
