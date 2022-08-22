@@ -81,6 +81,7 @@ class code_parameters:
         
     mass_fun : ndarray of floats
       It is a list that keeps the mass function of each tracer
+      Number density in function of the volume: # of objects per tracer/box volume
             
     halo_bias : ndarray of floats
       It is a list that keeps the bias of each tracer
