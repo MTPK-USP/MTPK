@@ -171,15 +171,18 @@ class code_parameters:
     mask_spillover_cells : bool
       Mask out cells outside bounds of the box:
        True -> Mask										
-       False -> Otherwise								
+       False -> Otherwise
+      See the mass assignment choice (mas_method)
 
     batch_size : integer
-      Batch size for mass assignement								
+      Batch size for mass assignement (number of objects to run the method)
+      See the mass assignment choice (mas_method)
 
     wrap : bool											       
       Boundary method to wrap galaxies around (i.e., use periodic B.C.)				
        True -> Use										
        False -> Otherwise    
+      See the mass assignment choice (mas_method)
 
     Yields
     ------
