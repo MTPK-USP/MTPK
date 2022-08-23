@@ -27,8 +27,9 @@ class cat_specs:
     x_cat_min , y_cat_min , z_cat_min, x_cat_max , y_cat_max , z_cat_max : float                        
       Min and max of coordinates for the catalogs 
 
-    m_min, m_max: floats                                                                               
-      Correspond to the log10 of the mininum and maximum masses to be considered   
+    crit_min, crit_max: floats                                                                         
+      Correspond to the criterium of the mininum and maximum choice to split the tracers   
+      E.g., log10[mass] of the tracers
 
     V: float                                                                               
       Correspond to box volume, without padding, without mask and everything
@@ -58,8 +59,8 @@ class cat_specs:
             'x_cat_max'            : 128.,
             'y_cat_max'            : 128.,
             'z_cat_max'            : 128.,
-            'm_min'                : 11.5,
-            'm_max'                : 13.
+            'crit_min'             : 11.5,
+            'crit_max'             : 13.
         }
 
         #Error for type and wrong/new parameters
@@ -83,8 +84,8 @@ class cat_specs:
         self.x_cat_max = default_params['x_cat_max']
         self.y_cat_max = default_params['y_cat_max']
         self.z_cat_max = default_params['z_cat_max']
-        self.m_min = default_params['m_min']
-        self.m_max = default_params['m_max']
+        self.crit_min = default_params['crit_min']
+        self.crit_max = default_params['crit_max']
 
         #Computed Parameters
         self.V = (self.x_cat_max - self.x_cat_min)*(self.y_cat_max - self.y_cat_min)*(self.z_cat_max - self.z_cat_min)

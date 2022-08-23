@@ -1,6 +1,7 @@
 '''
 This class convert complete tracer catalogs (given their positions, velocities, mass, etc.)
-in catalogs of tracers with different masses to be used in the MTPK code
+in catalogs of tracers with different criterium (e.g., mass) to be used as different tracers 
+in the MTPK code
 
 --------
 Inputs
@@ -10,7 +11,7 @@ Inputs
 --------
 Outputs
 --------
- Tracer position catalogs splited according to their masses
+ Tracer position catalogs splited according to their criterium
 
 '''
 
@@ -81,9 +82,9 @@ class converting_cats_in_cats_of_bins:
 
     def to_bins(self, cat_specs):
         '''
-        Method to split the tracers in bins according to their masses
+        Method to split the tracers in bins according to their criterium
 
-        It return the Mass Function of the catalogs
+        In the case of mass, it return the Mass Function (MF) of the catalogs
         '''
         
         cats = self.default_params['cats']
@@ -91,8 +92,8 @@ class converting_cats_in_cats_of_bins:
         col_x = cat_specs.col_x
         col_y = cat_specs.col_y
         col_z = cat_specs.col_z
-        m_min = cat_specs.m_min
-        m_max = cat_specs.m_max
+        crit_min = cat_specs.crit_min
+        crit_max = cat_specs.crit_max
         ntracers = cat_specs.ntracers
         skiprows = self.default_params['skiprows']
         V = cat_specs.V
@@ -101,13 +102,13 @@ class converting_cats_in_cats_of_bins:
         if not os.path.exists(path_to_save):
             os.makedirs(path_to_save)
         
-        m_lims = np.logspace(m_min, m_max, ntracers + 1)
+        crit_lims = np.logspace(crit_min, crit_max, ntracers + 1)
         dataj = {}
         MF = []
         for i in range( len(cats) ):
             data = np.loadtxt(cats[i], skiprows = skiprows)
             for j in range(ntracers):
-                dataj[j] = data[ np.where( (data[:, col_m] > m_lims[j] ) & (data[:, col_m] <= m_lims[j+1]) ) ]
+                dataj[j] = data[ np.where( (data[:, col_m] > crit_lims[j] ) & (data[:, col_m] <= crit_lims[j+1]) ) ]
                 MF.append( dataj[j].shape[0] )
                 np.savetxt(path_to_save+f'seed{i}_bin{j}.dat', dataj[j][:, [col_x, col_y, col_z] ])
         MF = np.array(MF)
@@ -115,17 +116,17 @@ class converting_cats_in_cats_of_bins:
         print('Catalogs created!')
         return np.mean(MF, axis = 0)/V
 
-    def central_masses(self, cat_specs):
+    def central_criteria(self, cat_specs):
         '''
         Method to give log10 of the central masses of tracers
         '''
-        m_min = cat_specs.m_min
-        m_max = cat_specs.m_max
+        crit_min = cat_specs.crit_min
+        crit_max = cat_specs.crit_max
         ntracers = cat_specs.ntracers
 
-        m_lims = np.logspace(m_min, m_max, ntracers + 1)
-        m_ctrs = []
+        crit_lims = np.logspace(crit_min, crit_max, ntracers + 1)
+        crit_ctrs = []
         for i in range(ntracers):
-            m_ctrs.append( (m_lims[i+1] + m_lims[i])/2 )
+            crit_ctrs.append( (crit_lims[i+1] + crit_lims[i])/2 )
 
-        return np.log10(m_ctrs)
+        return crit_ctrs
