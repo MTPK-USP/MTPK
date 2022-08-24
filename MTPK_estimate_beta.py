@@ -31,6 +31,8 @@ import pk_crossmultipoles_gauss as pkmg_cross
 from camb_spec import camb_spectrum
 from analytical_selection_function import *
 import grid3D as gr
+from itertools import combinations
+import pandas as pd
 
 def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, dir_specs, handle_data = "ExSHalos"):
     '''
@@ -933,13 +935,34 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             else:
                 pass
 
-            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
             if do_cross_spectra == True and ntracers > 1:
-                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+                        data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_MT_map{i}_tracer{j}' )
+                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
             else:
-                pass
+                data = [ kph ]
+                columns = ['k']
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+                        data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_MT_map{i}_tracer{j}' )
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
+
             
         elif multipoles_order == 2:
             # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
@@ -1237,19 +1260,46 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             else:
                 pass
 
-            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-
-            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-
-            np.savetxt(dir_specs + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
-
             if do_cross_spectra == True and ntracers > 1:
-                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+                        data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_MT_map{i}_tracer{j}' )
+                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+
+                        data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_FKP_map{i}_tracer{j}' )
+                        data.append( P2_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_MT_map{i}_tracer{j}' )
+                        data.append( C2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS2_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
             else:
-                pass
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+                        data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_MT_map{i}_tracer{j}' )
+
+                        data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_FKP_map{i}_tracer{j}' )
+                        data.append( P2_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_MT_map{i}_tracer{j}' )
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
 
         else:
             # Multitracer method: monopole, quadrupole, th. covariance(FKP-like)
@@ -1578,23 +1628,60 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             else:
                 pass
 
-            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-            
-            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-            
-            np.savetxt(dir_specs + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
-            
-            np.savetxt(dir_specs + handle_estimates + '_P4_MTOE.dat',P4_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
-
             if do_cross_spectra == True and ntracers > 1:
-                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+                        data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_MT_map{i}_tracer{j}' )
+                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+
+                        data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_FKP_map{i}_tracer{j}' )
+                        data.append( P2_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_MT_map{i}_tracer{j}' )
+                        data.append( C2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS2_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+
+                        data.append( P4_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P4_FKP_map{i}_tracer{j}' )
+                        data.append( P4_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P4_MT_map{i}_tracer{j}' )
+                        data.append( C4_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS4_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
             else:
-                pass
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+                        data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_MT_map{i}_tracer{j}' )
+
+                        data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_FKP_map{i}_tracer{j}' )
+                        data.append( P2_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_MT_map{i}_tracer{j}' )
+
+                        data.append( P4_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P4_FKP_map{i}_tracer{j}' )
+                        data.append( P4_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P4_MT_map{i}_tracer{j}' )
+
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
 
     elif method == 'FKP':
 
@@ -1831,13 +1918,32 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             else:
                 pass
 
-            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-
             if do_cross_spectra == True and ntracers > 1:
-                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
             else:
-                pass
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
 
         elif multipoles_order == 2:
 
@@ -2083,16 +2189,40 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             else:
                 pass
 
-            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-
-            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
-
             if do_cross_spectra == True and ntracers > 1:
-                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+
+                        data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_FKP_map{i}_tracer{j}' )
+                        data.append( C2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS2_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
             else:
-                pass
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+
+                        data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_FKP_map{i}_tracer{j}' )
+
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
 
         else:
             # Traditional (FKP) method
@@ -2355,18 +2485,49 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             else:
                 pass
 
-            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-            
-            np.savetxt(dir_specs + handle_estimates + '_P0_FKP.dat',P0_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P2_FKP.dat',P2_fkp_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P4_FKP.dat',P4_fkp_save,fmt="%6.4f")
-
             if do_cross_spectra == True and ntracers > 1:
-                np.savetxt(dir_specs + handle_estimates + '_C0_FKP.dat',C0_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + handle_estimates + '_C2_FKP.dat',C2_fkp_save,fmt="%6.4f")
-                np.savetxt(dir_specs + handle_estimates + '_C4_FKP.dat',C4_fkp_save,fmt="%6.4f")
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+
+                        data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_FKP_map{i}_tracer{j}' )
+                        data.append( C2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS2_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+
+                        data.append( P4_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P4_FKP_map{i}_tracer{j}' )
+                        data.append( C4_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS4_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
+
             else:
-                pass
+                data = [ kph ]
+                columns = ['k']
+                comb = list( combinations( [i for i in range(ntracers)], 2 ) )
+                for i in range(n_maps):
+                    for j in range(ntracers):
+                        data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P0_FKP_map{i}_tracer{j}' )
+
+                        data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P2_FKP_map{i}_tracer{j}' )
+
+                        data.append( P4_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                        columns.append( f'P4_FKP_map{i}_tracer{j}' )
+
+                data = np.array(data).T
+                df = pd.DataFrame(data = data, columns = columns)
+                df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
 
     elif method == 'MT':
 
@@ -2551,9 +2712,16 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             # SAVE spectra
             P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
 
-            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-            
-            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
+            data = [ kph ]
+            columns = ['k']
+            for i in range(n_maps):
+                for j in range(ntracers):
+                    data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                    columns.append( f'P0_MT_map{i}_tracer{j}' )
+            data = np.array(data).T
+            df = pd.DataFrame(data = data, columns = columns)
+            df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
+
 
         elif multipoles_order == 2:
 
@@ -2741,10 +2909,19 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             P0_save=np.reshape(P0_data,(n_maps,ntracers*pow_bins))
             P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
 
-            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-            
-            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
+            data = [ kph ]
+            columns = ['k']
+            for i in range(n_maps):
+                for j in range(ntracers):
+                    data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                    columns.append( f'P0_MT_map{i}_tracer{j}' )
+
+                    data.append( P2_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                    columns.append( f'P2_MT_map{i}_tracer{j}' )
+
+            data = np.array(data).T
+            df = pd.DataFrame(data = data, columns = columns)
+            df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
 
         else:
 
@@ -2939,10 +3116,21 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             P2_save=np.reshape(P2_data,(n_maps,ntracers*pow_bins))
             P4_save=np.reshape(P4_data,(n_maps,ntracers*pow_bins))
 
-            np.savetxt(dir_specs + handle_estimates + '_vec_k.dat',kph,fmt="%6.4f")
-            
-            np.savetxt(dir_specs + handle_estimates + '_P0_MTOE.dat',P0_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P2_MTOE.dat',P2_save,fmt="%6.4f")
-            np.savetxt(dir_specs + handle_estimates + '_P4_MTOE.dat',P4_save,fmt="%6.4f")
+            data = [ kph ]
+            columns = ['k']
+            for i in range(n_maps):
+                for j in range(ntracers):
+                    data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                    columns.append( f'P0_MT_map{i}_tracer{j}' )
+
+                    data.append( P2_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                    columns.append( f'P2_MT_map{i}_tracer{j}' )
+
+                    data.append( P4_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
+                    columns.append( f'P4_MT_map{i}_tracer{j}' )
+
+            data = np.array(data).T
+            df = pd.DataFrame(data = data, columns = columns)
+            df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
 
     return print('Done!')
