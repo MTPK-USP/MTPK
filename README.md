@@ -52,4 +52,5 @@ Otherwise to python camb you can use camb usual installation. You only need to s
 In this package we provide some **cookbooks** with interactive environment containing some **recipes** with complete examples on _how to_:
 
 * `cookbook-ExSHalos_maps.ipynb`: compute the power spectra of 3 tracers from 4 halo mock catalogues from the code ExSHalos
+* `spectra_window_function.ipynb`: compute the power spectra of the catalog chosen to compute the window function example
 * `cookbook-window_function_estimate.ipynb`: to compute the Q$_{\ell}$s coefficients for a halo map far away from the observer, considering redshift space distortions
