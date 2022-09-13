@@ -303,7 +303,6 @@ class cosmo:
         return ( H0*np.sqrt( Omega0_m*a**(-3) + Omega0_DE*a**(-3*(1+w)) ) )
 
     def comoving(self, z, h_units):
-        # from scipy.integrate import simps
         '''
         Method to compute comoving distance using the cosmology defined 
         above, for a certain redshift

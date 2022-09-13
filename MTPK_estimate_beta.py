@@ -22,6 +22,7 @@ from scipy import interpolate
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
 from scipy.sparse import vstack
+import pandas as pd
 
 # My classes -- functions used by the MTPK suite
 import fkp_multitracer_beta as fkpmt
@@ -32,7 +33,6 @@ from camb_spec import camb_spectrum
 from analytical_selection_function import *
 import grid3D as gr
 from itertools import combinations
-import pandas as pd
 
 def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, dir_specs, handle_data = "ExSHalos"):
     '''

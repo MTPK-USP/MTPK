@@ -4,6 +4,8 @@ import time
 import os
 import sys
 import scipy.integrate
+import os, ctypes
+from scipy import integrate, LowLevelCallable
 
 c_light = 299792.458 #km/s
 
@@ -376,8 +378,6 @@ def pk_multipoles_gauss(rsd_params, my_cosmology, my_code_options, Nk, **kwargs)
             redshift-space multipoles.
 
     '''
-    import os, ctypes
-    from scipy import integrate, LowLevelCallable
 
     biases          = rsd_params['b1']
     try:

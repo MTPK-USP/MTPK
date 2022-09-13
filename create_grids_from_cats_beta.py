@@ -22,19 +22,6 @@ import os
 from cosmo_funcs import *
 import glob
 
-if sys.platform == "darwin":
-    import pylab as pl
-    from matplotlib import cm
-else:
-    import matplotlib
-    matplotlib.use('Agg')
-    from matplotlib import pylab, mlab, pyplot
-    from matplotlib import cm
-    from IPython.display import display
-    from IPython.core.pylabtools import figsize, getfigs
-    pl=pyplot
-
-
 ####################################################################################################
 #
 # User definitions
