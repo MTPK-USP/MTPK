@@ -53,4 +53,20 @@ In this package we provide some **cookbooks** with interactive environment conta
 
 * `cookbook-ExSHalos_maps.ipynb`: compute the power spectra of 3 tracers from 4 halo mock catalogues from the code ExSHalos
 * `spectra_window_function.ipynb`: compute the power spectra of the catalog chosen to compute the window function example
-* `cookbook-window_function_estimate.ipynb`: to compute the Q$_{\ell}$s coefficients for a halo map far away from the observer, considering redshift space distortions
+* `cookbook-window_function_estimate.ipynb`: to compute the Qls coefficients for a halo map far away from the observer, considering redshift space distortions
+
+## Option for running on a Mac OS X 12 (Monterey)
+
+* Install homebrew and anaconda
+* Use anaconda and anaconda environments
+* Create environment including camb:
+  * conda create -n MTPK_env -c conda-forge python=3.9 numpy scipy pip camb matplotlib pandas jupyter ipython h5py
+* Check if the environment is working
+  * conda env list
+* Activate the environment
+  * conda activate MTPK_env
+* Install colossus, deepdish and mcfit using pip inside the environment
+  * pip install colossus deepdish mcfit
+* Run the scripts/jupyter notebooks of the present repo inside environment
+* After you are done, close the environment
+  * conda deactivate
