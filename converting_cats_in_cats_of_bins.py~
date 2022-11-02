@@ -1,8 +1,0 @@
-'''
-This code convert complete halo catalogs (given their positions, velocities, mass, etc.)
-in catalogs of halos with different masses to be used in the MTPK code
-'''
-
-def to_bins(cats, m_min, m_max, n_bins):
-    m_lims = np.logspace(np.log10(m_min), np.log10(m_max), n_bins + 1)
-    
