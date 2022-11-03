@@ -57,16 +57,31 @@ In this package we provide some **cookbooks** with interactive environment conta
 
 ## Option for running on a Mac OS X 12 (Monterey)
 
-* Install homebrew and anaconda
-* Use anaconda and anaconda environments
-* Create environment including camb:
-  * conda create -n MTPK_env -c conda-forge python=3.9 numpy scipy pip camb matplotlib pandas jupyter ipython h5py
-* Check if the environment is working
-  * conda env list
-* Activate the environment
-  * conda activate MTPK_env
-* Install colossus, deepdish and mcfit using pip inside the environment
-  * pip install colossus deepdish mcfit
-* Run the scripts/jupyter notebooks of the present repo inside environment
-* After you are done, close the environment
-  * conda deactivate
+On a Mac, use anaconda and anaconda environments:
+
+* 1. Install homebrew and then install anaconda ($ brew install anacoda)
+* If you already have both skip to #2
+* 2. Create the "conda environment" inside which you will run de codes:
+  * $ conda create -n MTPK_env -c conda-forge python=3.9 numpy scipy pip camb matplotlib pandas jupyter ipython h5py gsl dak c-compiler gfortran
+* 3. Check the environment
+  * $ conda env list
+* 4. Activate the environment
+  * $ conda activate MTPK_env
+* 5. Install Corrfunc, colossus, deepdish and mcfit using pip:
+  * $ pip install Corrfunc
+  * $ pip install colossus
+  * $ pip install deepdish
+  * $ pip install mcfit
+* 6. Testthe packages, run your codes, etc.
+* 7. After you are done, close the environment
+  * $ conda deactivate
+
+* **NOTE:** After creating the environment, activate it and test to see if Corrfunc is working properly
+(Corrfunc is a package needed to obtain the Q_ell window functions in redshift space.
+  * After activating the environment, open a python shell and run the test:
+    * $ python3
+      * > from Corrfunc.tests import tests
+      * > tests()
+  *  If you get an error message complaining that you are missing the gsl library, this may be because the Anaconda gsl is not the latest one.
+  * _Quick fix:_ find the latest library, e.g., libgsl.27.dylib , somewhere else in your system, and then copy it to your conda environment:
+    * > cp [your_dir]/libgsl.27.dylib  /usr/local/anaconda3/envs/MTPK_env/lib/libgsl.27.dylib
