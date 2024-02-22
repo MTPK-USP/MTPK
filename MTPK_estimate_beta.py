@@ -49,6 +49,7 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
         
     small=1.e-8
 
+    
     # Bias computed given the monopole and quadrupole.
     # Returns a single value
     def est_bias(m,q):
@@ -657,8 +658,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             P0_fkp = np.zeros((n_maps,ntracers,num_binsk))
 
             # Cross spectra
+
             if do_cross_spectra == True and ntracers > 1:
                 Cross0 = np.zeros((n_maps,ntracers*(ntracers-1)//2,num_binsk))
+
             else:
                 pass
 
@@ -910,7 +913,7 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
             # We can easily put back the bias by multiplying:
             # CrossX = cross_effbias**2 * CrossX
             if do_cross_spectra == True and ntracers > 1:
-                cross_effbias = np.zeros(ntracers*(ntracers-1)//2)
+                cross_effbias = np.zeros(ntracers*(ntracers-1)//2)#AQUI
                 index=0
                 for nt in range(ntracers):
                     for ntp in range(nt+1,ntracers):
@@ -945,8 +948,9 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                         columns.append( f'P0_FKP_map{i}_tracer{j}' )
                         data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P0_MT_map{i}_tracer{j}' )
-                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+                    for k in range( len(comb) ):
+                        data.append( C0_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
                 data = np.array(data).T
                 df = pd.DataFrame(data = data, columns = columns)
                 df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
@@ -1270,15 +1274,17 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                         columns.append( f'P0_FKP_map{i}_tracer{j}' )
                         data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P0_MT_map{i}_tracer{j}' )
-                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
 
                         data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P2_FKP_map{i}_tracer{j}' )
                         data.append( P2_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P2_MT_map{i}_tracer{j}' )
-                        data.append( C2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS2_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+                    for k in range( len(comb) ):
+                        data.append( C0_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
+                    for k in range( len(comb) ):
+                        data.append( C2_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS2_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
                 data = np.array(data).T
                 df = pd.DataFrame(data = data, columns = columns)
                 df.to_csv(dir_specs + handle_estimates + '-spectra.csv', index = False)
@@ -1638,22 +1644,26 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                         columns.append( f'P0_FKP_map{i}_tracer{j}' )
                         data.append( P0_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P0_MT_map{i}_tracer{j}' )
-                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
 
                         data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P2_FKP_map{i}_tracer{j}' )
                         data.append( P2_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P2_MT_map{i}_tracer{j}' )
-                        data.append( C2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS2_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
 
                         data.append( P4_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P4_FKP_map{i}_tracer{j}' )
                         data.append( P4_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P4_MT_map{i}_tracer{j}' )
-                        data.append( C4_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS4_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+                        
+                    for k in range( len(comb) ):
+                        data.append( C0_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
+                    for k in range( len(comb) ):
+                        data.append( C2_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS2_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
+                    for k in range( len(comb) ):
+                        data.append( C4_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS4_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
 
                 data = np.array(data).T
                 df = pd.DataFrame(data = data, columns = columns)
@@ -1926,8 +1936,10 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                     for j in range(ntracers):
                         data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P0_FKP_map{i}_tracer{j}' )
-                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+                    for k in range( len(comb) ):
+                        print('monopole FKP', C0_fkp_save.shape)
+                        data.append( C0_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
 
                 data = np.array(data).T
                 df = pd.DataFrame(data = data, columns = columns)
@@ -2197,13 +2209,15 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                     for j in range(ntracers):
                         data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P0_FKP_map{i}_tracer{j}' )
-                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
 
                         data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P2_FKP_map{i}_tracer{j}' )
-                        data.append( C2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS2_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+                    for k in range( len(comb) ):
+                        data.append( C0_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
+                    for k in range( len(comb) ):
+                        data.append( C2_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS2_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
 
                 data = np.array(data).T
                 df = pd.DataFrame(data = data, columns = columns)
@@ -2493,18 +2507,21 @@ def MTPK_estimate(cat_specs, my_cosmology, my_code_options, dir_maps, dir_data, 
                     for j in range(ntracers):
                         data.append( P0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P0_FKP_map{i}_tracer{j}' )
-                        data.append( C0_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS0_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
 
                         data.append( P2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P2_FKP_map{i}_tracer{j}' )
-                        data.append( C2_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS2_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
 
                         data.append( P4_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
                         columns.append( f'P4_FKP_map{i}_tracer{j}' )
-                        data.append( C4_fkp_save[i, j*(kph.shape[0]):(j+1)*(kph.shape[0])] )
-                        columns.append( f'CROSS4_map{i}_tracers{comb[j][0]}{comb[j][1]}' )
+                    for k in range( len(comb) ):
+                        data.append( C0_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS0_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
+                    for k in range( len(comb) ):
+                        data.append( C2_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS2_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
+                    for k in range( len(comb) ):
+                        data.append( C4_fkp_save[i, k*(kph.shape[0]):(k+1)*(kph.shape[0])] )
+                        columns.append( f'CROSS4_map{i}_tracers{comb[k][0]}{comb[k][1]}' )
 
                 data = np.array(data).T
                 df = pd.DataFrame(data = data, columns = columns)
